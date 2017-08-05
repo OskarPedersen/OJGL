@@ -30,12 +30,12 @@ void GLState::render(Music& music) const
         auto sc = kv.second;
         std::vector<GLfloat> values;
         for (int i = 0; i < sc.numNotes; i++)
-            values.push_back((GLfloat)sc.getNoteVelocity(i) / 128.0);
+            values.push_back((GLfloat)(sc.getNoteVelocity(i) / 128.0));
         std::string uniform = "CHANNEL_" + std::to_string(sc.channel) + "_VELOCITY";
         glUniform1fv(glGetUniformLocation(_programID, uniform.c_str()), sc.numNotes, &values[0]);
     }
-    glUniform1f(glGetUniformLocation(_programID, "CHANNEL_12_TOTAL"), music.syncChannels[12].getTotalHitsPerNote(0));
-    glUniform1f(glGetUniformLocation(_programID, "CHANNEL_13_TOTAL"), music.syncChannels[13].getTotalHitsPerNote(0));
+    glUniform1f(glGetUniformLocation(_programID, "CHANNEL_12_TOTAL"), (GLfloat)music.syncChannels[12].getTotalHitsPerNote(0));
+    glUniform1f(glGetUniformLocation(_programID, "CHANNEL_13_TOTAL"), (GLfloat)music.syncChannels[13].getTotalHitsPerNote(0));
     glBindVertexArray(_vaoID);
     glDrawArrays(GL_TRIANGLES, 0, _vertexCount);
     glBindVertexArray(0);

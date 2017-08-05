@@ -32,8 +32,6 @@ void Music::play()
 
 void Music::initSync()
 {
-    const int MIN = -1;
-    const int MAX = 999999;
     std::map<int, int> channelMinNote;
     std::map<int, int> channelMaxNote;
     std::set<int> channels;
@@ -44,9 +42,9 @@ void Music::initSync()
         channels.insert(channel);
 
         if (channelMinNote.find(channel) == channelMinNote.end())
-            channelMinNote[channel] = MAX;
+            channelMinNote[channel] = (std::numeric_limits<int>::max)();
         if (channelMaxNote.find(channel) == channelMaxNote.end())
-            channelMaxNote[channel] = MIN;
+            channelMaxNote[channel] = std::numeric_limits<int>::lowest();
 
         channelMinNote[channel] = min(channelMinNote[channel], note);
         channelMaxNote[channel] = max(channelMaxNote[channel], note);

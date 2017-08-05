@@ -1,4 +1,5 @@
 #include "SyncChannel.h"
+#include <numeric>
 #include <stdexcept>
 
 SyncChannel::SyncChannel()
@@ -27,7 +28,7 @@ SyncChannel::~SyncChannel()
 void SyncChannel::tick()
 {
     for (auto& velocity : _currentNoteVelocities)
-        velocity *= 0.95f;
+        velocity *= _decay;
 }
 
 void SyncChannel::setVelocity(int absoluteNote, double velocity)
@@ -38,28 +39,22 @@ void SyncChannel::setVelocity(int absoluteNote, double velocity)
     }
 }
 
-double SyncChannel::getNoteVelocity(int relativeNote)
+double SyncChannel::getNoteVelocity(int relativeNote) const
 {
     return _currentNoteVelocities[relativeNote];
 }
 
-double SyncChannel::getTotalNoteVelocity()
+double SyncChannel::getTotalNoteVelocity() const
 {
-    double sum = 0.0;
-    for (auto& velocity : _currentNoteVelocities)
-        sum += velocity;
-    return sum;
+    return std::accumulate(_currentNoteVelocities.begin(), _currentNoteVelocities.end(), 0.0);
 }
 
-int SyncChannel::getTotalHitsPerNote(int relativeNote)
+int SyncChannel::getTotalHitsPerNote(int relativeNote) const
 {
     return _totalHitsPerNote[relativeNote];
 }
 
-int SyncChannel::getTotalHits()
+int SyncChannel::getTotalHits() const
 {
-    int sum = 0;
-    for (auto& amount : _totalHitsPerNote)
-        sum += amount;
-    return sum;
+    return std::accumulate(_totalHitsPerNote.begin(), _totalHitsPerNote.end(), 0);
 }

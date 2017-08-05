@@ -4,14 +4,14 @@
 class SyncChannel {
 public:
     SyncChannel();
-    SyncChannel(int numNotes, int minNote, int channel, double decay = 1.0);
+    SyncChannel(int numNotes, int minNote, int channel, double decay = 0.95);
     ~SyncChannel();
     void tick();
     void setVelocity(int absoluteNote, double velocity);
-    double getNoteVelocity(int relativeNote);
-    double getTotalNoteVelocity();
-    int getTotalHitsPerNote(int absoluteNote);
-    int getTotalHits();
+    double getNoteVelocity(int relativeNote) const;
+    double getTotalNoteVelocity() const;
+    int getTotalHitsPerNote(int absoluteNote) const;
+    int getTotalHits() const;
     int numNotes;
     int channel;
 
