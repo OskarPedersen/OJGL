@@ -9,10 +9,6 @@ namespace ojgl {
 
 class UniformBase {
 public:
-    UniformBase(const char* location)
-        : _location(std::string(location))
-    {
-    }
     UniformBase(std::string location)
         : _location(location)
     {
@@ -28,9 +24,6 @@ protected:
 
 class Uniform1f : public UniformBase {
 public:
-    Uniform1f(const char* location, float x)
-        : UniformBase(location)
-        , _x(x){};
     Uniform1f(std::string location, float x)
         : UniformBase(location)
         , _x(x){};
@@ -45,9 +38,6 @@ private:
 
 class Uniform1fv : public UniformBase {
 public:
-    Uniform1fv(const char* location, std::vector<float> values)
-        : UniformBase(location)
-        , _values(values){};
     Uniform1fv(std::string location, std::vector<float> values)
         : UniformBase(location)
         , _values(values){};
