@@ -1,4 +1,5 @@
 #include "GLState.h"
+#include "Uniform.hpp"
 #include "music/Music.h"
 #include <iostream>
 #include <memory>
@@ -6,6 +7,7 @@
 #include <vector>
 
 namespace ojgl {
+
 GLState::GLState(const std::string& vertexShader, const std::string& fragmentShader)
 {
     _startTime = GetTickCount();
@@ -21,21 +23,15 @@ GLState::~GLState()
     glDeleteProgram(_programID);
 }
 
-void GLState::render(Music& music) const
+void GLState::render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(_programID);
-    glUniform1f(glGetUniformLocation(_programID, "iGlobalTime"), (GLfloat)((GetTickCount() - _startTime) / 1000.0));
-    for (auto& kv : music.syncChannels) {
-        auto sc = kv.second;
-        std::vector<GLfloat> values;
-        for (int i = 0; i < sc.numNotes; i++)
-            values.push_back((GLfloat)(sc.getNoteVelocity(i) / 128.0));
-        std::string uniform = "CHANNEL_" + std::to_string(sc.channel) + "_VELOCITY";
-        glUniform1fv(glGetUniformLocation(_programID, uniform.c_str()), sc.numNotes, &values[0]);
+
+    for (auto& um : _uniforms) {
+        um.second->setUniform(_programID);
     }
-    glUniform1f(glGetUniformLocation(_programID, "CHANNEL_12_TOTAL"), (GLfloat)music.syncChannels[12].getTotalHitsPerNote(0));
-    glUniform1f(glGetUniformLocation(_programID, "CHANNEL_13_TOTAL"), (GLfloat)music.syncChannels[13].getTotalHitsPerNote(0));
+
     glBindVertexArray(_vaoID);
     glDrawArrays(GL_TRIANGLES, 0, _vertexCount);
     glBindVertexArray(0);
@@ -131,5 +127,10 @@ GLuint GLState::getVAO() const
 GLuint GLState::getVBO() const
 {
     return this->_vboID;
+}
+
+DWORD GLState::startTime() const
+{
+    return this->_startTime;
 }
 }

@@ -39,6 +39,7 @@
     <ClInclude Include="src\music\V2MPlayer.h" />
     <ClInclude Include="src\OJGL.h" />
     <ClInclude Include="src\render\GLState.h" />
+    <ClInclude Include="src\render\Uniform.hpp" />
     <ClInclude Include="src\render\Window.h" />
     <ClInclude Include="src\utility\Timer.hpp" />
     <ClInclude Include="src\winapi\glext.h" />

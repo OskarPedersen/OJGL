@@ -27,5 +27,6 @@
     <ClInclude Include="src\music\SyncEvent.hpp" />
     <ClInclude Include="src\music\Music.h" />
     <ClInclude Include="src\music\SyncChannel.h" />
+    <ClInclude Include="src\render\Uniform.hpp" />
   </ItemGroup>
 </Project>
