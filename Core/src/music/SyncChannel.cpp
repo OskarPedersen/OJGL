@@ -1,23 +1,22 @@
 #include "SyncChannel.h"
+#include <iostream>
 #include <numeric>
 #include <stdexcept>
 
 SyncChannel::SyncChannel()
-    : _decay(-1.0)
-    , _minNote(-1)
+    : _minNote(-1)
     , channel(-1)
     , numNotes(-1)
 {
-    //throw std::logic_error("This constructor should not be called");
 }
 
-SyncChannel::SyncChannel(int numNotes, int minNote, int channel, double decay)
-    : _decay(decay)
-    , _minNote(minNote)
+SyncChannel::SyncChannel(int numNotes, int minNote, int channel)
+    : _minNote(minNote)
     , channel(channel)
     , numNotes(numNotes)
 {
-    _currentNoteVelocities.resize(numNotes);
+    _lastTimePerNote.resize(numNotes);
+    _timesPerNote.resize(numNotes);
     _totalHitsPerNote.resize(numNotes);
 }
 
@@ -25,28 +24,37 @@ SyncChannel::~SyncChannel()
 {
 }
 
-void SyncChannel::tick()
+void SyncChannel::pushNote(int absoluteNote, int time)
 {
-    for (auto& velocity : _currentNoteVelocities)
-        velocity *= _decay;
+    _timesPerNote[absoluteNote - _minNote].push(time);
 }
 
-void SyncChannel::setVelocity(int absoluteNote, double velocity)
+void SyncChannel::tick(int currentTime)
 {
-    if (velocity > 1.0) {
-        _totalHitsPerNote[absoluteNote - _minNote]++;
-        _currentNoteVelocities[absoluteNote - _minNote] = velocity;
+    _currentTime = currentTime;
+    for (int note = 0; note < numNotes; note++) {
+        std::queue<int>& s = _timesPerNote[note];
+        while (!s.empty() && s.front() <= _currentTime) {
+            _lastTimePerNote[note] = _currentTime;
+            _totalHitsPerNote[note]++;
+            s.pop();
+        }
     }
 }
 
-double SyncChannel::getNoteVelocity(int relativeNote) const
+float SyncChannel::getTimeToNext(int relativeNote) const
 {
-    return _currentNoteVelocities[relativeNote];
+    const std::queue<int>& times = _timesPerNote[relativeNote];
+    if (times.empty())
+        return std::numeric_limits<float>::max();
+    return (float)(times.front() - _currentTime);
 }
 
-double SyncChannel::getTotalNoteVelocity() const
+float SyncChannel::getTimeSinceLast(int relativeNote) const
 {
-    return std::accumulate(_currentNoteVelocities.begin(), _currentNoteVelocities.end(), 0.0);
+    if (_totalHitsPerNote[relativeNote] == 0)
+        return std::numeric_limits<float>::max();
+    return (float)(_currentTime - _lastTimePerNote[relativeNote]);
 }
 
 int SyncChannel::getTotalHitsPerNote(int relativeNote) const

@@ -8,10 +8,13 @@
 /*************************************************************************************/
 /*************************************************************************************/
 
+// Small additions concerning sync made by OJ
+
 #pragma once
 
 #include "SyncEvent.hpp"
 #include "winapi/libv2.h"
+#include <map>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -103,8 +106,6 @@ public:
     // returns if song is currently playing
     sBool IsPlaying();
 
-#ifdef V2MPLAYER_SYNC_FUNCTIONS
-
     // Retrieves an array of timer<->song position
     //
     // a_dest: pointer to a variable which will receive the address of an array of long
@@ -124,42 +125,9 @@ public:
     //
     sU32 CalcPositions(sS32** a_dest);
 
-#endif
-
     // ------------------------------------------------------------------------------------------------------
     //  no need to look beyond this point.
     // ------------------------------------------------------------------------------------------------------
-
-private:
-    std::mutex syncEventsMutex;
-    std::vector<ojgl::SyncEvent> syncEvents;
-    // struct defs
-
-    // General info from V2M file
-    struct V2MBase {
-        sBool valid;
-        const sU8* patchmap;
-        const sU8* globals;
-        sU32 timediv;
-        sU32 timediv2;
-        sU32 maxtime;
-        const sU8* gptr;
-        sU32 gdnum;
-        struct Channel {
-            sU32 notenum;
-            const sU8* noteptr;
-            sU32 pcnum;
-            const sU8* pcptr;
-            sU32 pbnum;
-            const sU8* pbptr;
-            struct CC {
-                sU32 ccnum;
-                const sU8* ccptr;
-            } ctl[7];
-        } chan[16];
-        const char* speechdata;
-        const char* speechptrs[256];
-    };
 
     // player state
     struct PlayerState {
@@ -208,13 +176,47 @@ private:
         sU32 tdif;
     };
 
+    PlayerState m_state;
+
+private:
+    std::mutex _syncEventsMutex;
+    std::vector<ojgl::SyncEvent> _syncEvents;
+    std::map<int, int> _barTickToMs;
+    // struct defs
+
+    // General info from V2M file
+    struct V2MBase {
+        sBool valid;
+        const sU8* patchmap;
+        const sU8* globals;
+        sU32 timediv;
+        sU32 timediv2;
+        sU32 maxtime;
+        const sU8* gptr;
+        sU32 gdnum;
+        struct Channel {
+            sU32 notenum;
+            const sU8* noteptr;
+            sU32 pcnum;
+            const sU8* pcptr;
+            sU32 pbnum;
+            const sU8* pbptr;
+            struct CC {
+                sU32 ccnum;
+                const sU8* ccptr;
+            } ctl[7];
+        } chan[16];
+        const char* speechdata;
+        const char* speechptrs[256];
+    };
+
     // \o/
     sU8 m_synth[3 * 1024 * 1024]; // TODO: keep me uptodate or use "new"
 
     // member variables
     sU32 m_tpc;
     V2MBase m_base;
-    PlayerState m_state;
+    //PlayerState m_state;
     sU32 m_samplerate;
     sS32 m_timeoffset;
     sU8 m_midibuf[4096];

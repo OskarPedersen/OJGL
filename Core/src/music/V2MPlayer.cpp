@@ -8,6 +8,8 @@
 /*************************************************************************************/
 /*************************************************************************************/
 
+// Small additions concerning sync made by OJ
+
 #include "Music.h"
 #include "V2MPlayer.h"
 #include "winapi/libv2.h"
@@ -175,8 +177,8 @@ void V2MPlayer::Reset()
 
 std::vector<ojgl::SyncEvent> V2MPlayer::popSyncEvents()
 {
-    std::lock_guard<std::mutex> lock(syncEventsMutex);
-    return std::move(syncEvents);
+    std::lock_guard<std::mutex> lock(_syncEventsMutex);
+    return std::move(_syncEvents);
 }
 
 void V2MPlayer::Tick()
@@ -200,7 +202,6 @@ void V2MPlayer::Tick()
     m_state.nexttime = (sU32)-1;
     sU8* mptr = m_midibuf;
     sU32 laststat = -1;
-
     if (m_state.gnr < m_base.gdnum && m_state.time == m_state.gnt) // neues global-event?
     {
         m_state.usecs = (*(sU32*)(m_state.gptr + 3 * m_base.gdnum + 4 * m_state.gnr)) * (m_samplerate / 100);
@@ -261,8 +262,10 @@ void V2MPlayer::Tick()
             sc.notenr++;
             sc.noteptr++;
             UPDATENT2(sc.notenr, sc.notent, sc.noteptr, bc.notenum);
-            std::lock_guard<std::mutex> lock(syncEventsMutex);
-            syncEvents.push_back(ojgl::SyncEvent(ch, sc.lastnte, sc.lastvel));
+            int index = m_state.bar * 32 + (m_state.beat * 128 + m_state.tick) / 16;
+            int time = _barTickToMs[index];
+            std::lock_guard<std::mutex> lock(_syncEventsMutex);
+            _syncEvents.push_back(ojgl::SyncEvent(ch, sc.lastnte, sc.lastvel, time));
         }
         UPDATENT3(sc.notenr, sc.notent, sc.noteptr, bc.notenum);
     }
@@ -310,7 +313,6 @@ void V2MPlayer::Play(sU32 a_time)
 
     Stop();
     Reset();
-
     m_base.valid = sFALSE;
     sU32 destsmpl, cursmpl = 0;
     __asm
@@ -323,7 +325,6 @@ void V2MPlayer::Play(sU32 a_time)
 			idiv ebx
 			mov[destsmpl], eax
         }
-
     m_state.state = PlayerState::PLAYING;
     m_state.smpldelta = 0;
     m_state.smplrem = 0;
@@ -340,6 +341,19 @@ void V2MPlayer::Play(sU32 a_time)
     m_fadeval = 1.0f;
     m_fadedelta = 0.0f;
     m_base.valid = sTRUE;
+
+    int* arr;
+    int num = CalcPositions(&arr);
+    for (int i = 0; i < num; i++) {
+        int ms = arr[i * 2];
+        int sp = arr[i * 2 + 1];
+        int bar = (sp & 0xFFFF0000) >> 16;
+        int tick = (sp & 0x0000FF00) >> 8;
+        int nn = sp & 0x000000FF;
+        int index = bar * 32 + tick;
+        _barTickToMs[index] = ms;
+    }
+    delete arr;
 }
 
 void V2MPlayer::Stop(sU32 a_fadetime)
@@ -374,6 +388,7 @@ void V2MPlayer::Render(sF32* a_buffer, sU32 a_len, sBool a_add)
     if (m_base.valid && m_state.state == PlayerState::PLAYING) {
         sU32 todo = a_len;
         while (todo) {
+
             sInt torender = (todo > m_state.smpldelta) ? m_state.smpldelta : todo;
             if (torender) {
                 synthRender(m_synth, a_buffer, torender, 0, a_add);
@@ -382,6 +397,7 @@ void V2MPlayer::Render(sF32* a_buffer, sU32 a_len, sBool a_add)
                 m_state.smpldelta -= torender;
                 m_state.cursmpl += torender;
             }
+
             if (!m_state.smpldelta) {
                 Tick();
                 if (m_state.state == PlayerState::PLAYING)
@@ -422,8 +438,6 @@ sBool V2MPlayer::IsPlaying()
 {
     return m_base.valid && m_state.state == PlayerState::PLAYING;
 }
-
-#ifdef V2MPLAYER_SYNC_FUNCTIONS
 
 sU32 V2MPlayer::CalcPositions(sS32** a_dest)
 /////////////////////////////////////////////
@@ -491,6 +505,4 @@ sU32 V2MPlayer::CalcPositions(sS32** a_dest)
     }
     return pn;
 }
-
-#endif
 }

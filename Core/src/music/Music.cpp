@@ -28,6 +28,7 @@ void Music::play()
     initSync();
     dsInit(this->_player->RenderProxy, this->_player.get(), GetForegroundWindow());
     this->_player->Play();
+    _start = std::chrono::system_clock::now();
 }
 
 void Music::initSync()
@@ -35,7 +36,8 @@ void Music::initSync()
     std::map<int, int> channelMinNote;
     std::map<int, int> channelMaxNote;
     std::set<int> channels;
-    for (auto& se : _player->popSyncEvents()) {
+    auto& events = _player->popSyncEvents();
+    for (auto& se : events) {
         int channel = se.channel;
         int note = se.note;
 
@@ -55,17 +57,15 @@ void Music::initSync()
         std::cout << "Channel " << c << " with " << numNotes << " notes\n";
         syncChannels[c] = SyncChannel(numNotes, channelMinNote[c], c);
     }
+
+    for (auto& se : events)
+        syncChannels[se.channel].pushNote(se.note, se.time);
 }
 
 void Music::updateSync()
 {
-    for (auto& se : this->_player->popSyncEvents()) {
-        syncChannels[se.channel].setVelocity(se.note, (double)se.velocity);
-    }
-
-    for (auto& kv : syncChannels) {
-        kv.second.tick();
-    }
+    int time = (int)(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - _start).count());
+    for (auto& kv : syncChannels)
+        kv.second.tick(time);
 }
-
 } //namespace ojgl

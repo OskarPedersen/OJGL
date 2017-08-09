@@ -95,7 +95,7 @@ HWND Window::CreateOpenGLWindow(char* title, int x, int y, int width, int height
     hDC = GetDC(hWnd);
 
     /* there is no guarantee that the contents of the stack that become
-	the pfd are zeroed, therefore _make sure_ to clear these bits. */
+		the pfd are zeroed, therefore _make sure_ to clear these bits. */
     memset(&pfd, 0, sizeof(pfd));
     pfd.nSize = sizeof(pfd);
     pfd.nVersion = 1;

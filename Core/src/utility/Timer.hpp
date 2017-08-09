@@ -18,7 +18,7 @@ namespace timer {
         void end() { endTime = std::chrono::high_resolution_clock::now(); };
 
         template <typename T>
-        auto time() { return std::chrono::duration_cast<T>(startTime - endTime).count(); };
+        auto time() { return std::chrono::duration_cast<T>(endTime - startTime).count(); };
 
     private:
         clock_t startTime, endTime;
