@@ -30,6 +30,7 @@
     <None Include="examples\shaders\post.fs" />
     <None Include="examples\shaders\post.vs" />
     <None Include="examples\shaders\dofScene.fs" />
+    <None Include="examples\shaders\roomScene.fs" />
     <None Include="examples\shaders\tunnelScene.fs" />
     <None Include="examples\songs\song.inc" />
   </ItemGroup>
