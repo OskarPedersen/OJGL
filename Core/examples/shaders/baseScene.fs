@@ -145,13 +145,13 @@ float shadowFunction(in vec3 ro, in vec3 rd, float mint, float maxt)
 #define shadowFunction(ro, rd, mint, maxt) 1.0
 #endif
 
-void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, vec3 lightPos, vec3 lightCol, float shadow)
+void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, vec3 lightPos, vec3 lightCol, float shadow, vec3 pos)
 {
 	vec3 col = vec3(0.0);
-	vec3 invLight = normalize(-lightPos);
+	vec3 invLight = normalize(lightPos - pos);
 	float diffuse = max(0.0, dot(invLight, normal));
-	float spec = specular(normal, -invLight, normalize(eye - lightPos), 50.0);
-	float dis = length(-lightPos);
+	float spec = specular(normal, -invLight, normalize(eye - pos), 80.0);
+	float dis = length(lightPos);
 	float str = 1.0/(0.5 + 0.01*dis + 0.1*dis*dis); 
 	diffRes += diffuse * lightCol * str * shadow;
 	specRes += spec * str * shadow;
@@ -165,14 +165,14 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 	{
 		// Lights without shadow
 		vec3 posLightOrigo = lightAModifyPos(pos);
-		addLight(diffuse, specular, normal, eye, posLightOrigo, lightA(posLightOrigo).rgb, 1.0);
+		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos);
 	}
 	{	
 		// Light with shadow
 		vec3 posLightOrigo = lightBModifyPos(pos);
 		float shadow = shadowFunction(pos, normalize(-posLightOrigo), 0.1, length(posLightOrigo));
 		//if (shadow != 0.0) // TODO: Test if this gives better performance
-		addLight(diffuse, specular, normal, eye, posLightOrigo, lightB(posLightOrigo).rgb, shadow);
+		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightB(posLightOrigo).rgb, shadow, pos);
 	}
 	color = color * (ambient + diffuse) + specular;
 }

@@ -90,7 +90,7 @@ void debugRereadShaderFiles()
 
     shaders[&fragmentRoomScene] = "examples/" SHADER_FRAGMENT_ROOM_SCENE;
 
-    for (auto [stringptr, path] : shaders) {
+    for (auto[stringptr, path] : shaders) {
         std::ifstream shaderFile(path);
         assert(!shaderFile.fail());
 
@@ -152,7 +152,7 @@ int main()
 
     buildSceneGraph(glState);
 
-    auto [width, height, channels, data] = readTexture("examples/textures/image.png");
+    auto[width, height, channels, data] = readTexture("examples/textures/image.png");
     auto texture = Texture::construct(width, height, channels, data.get());
 
     //glState[3]["main"] << Uniform1t("image", texture);
@@ -238,6 +238,7 @@ int main()
         }
         t.end();
         auto durationMs = t.time<timer::ms_t>();
+        LOG_INFO("ms: " << durationMs.count());
         if (durationMs < desiredFrameTime) {
             std::this_thread::sleep_for(desiredFrameTime - durationMs);
         }

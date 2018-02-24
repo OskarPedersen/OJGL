@@ -1,5 +1,5 @@
 R""(
-#version 430
+#version 450
 
 in vec2 fragCoord;
 out vec4 fragColor;
@@ -99,47 +99,115 @@ float noiseOctave(in vec2 p, int octaves, float persistence)
 	return n / maxValue; 
 }
 
-
-
-float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
+#define S2(x,y) abs(fract(x))<0.8 ? 0.65 +0.35* sin(1.5707*(y-ceil(x))) : 0.0
+float Basketwork2Pattern(in vec2 uv)
 {
-	float nrm = (s + 8.0) / (3.1415 * 8.0);
-	float k = max(0.0, dot(viewdir, reflect(light, normal)));
-    return  pow(k, s);
+  vec2 p = uv * 4.0;
+  return max (S2( p.x, p.y), S2(p.y, p.x+1.) ); 
+}
+
+float CheckerPattern(in vec2 uv)   // no AA
+{
+  uv = 0.5 - fract(uv);
+  return 0.5 + 0.5*sign(uv.x*uv.y);
+}
+#define RandomSign sign(cos(1234.*cos(h.x+9.*h.y))); 
+float HexagonalTruchetPattern(vec2 p) 
+{
+  vec2 h = p + vec2(0.58, 0.15)*p.y;
+  vec2 f = fract(h);  
+  h -= f;
+  float v = fract((h.x + h.y) / 3.0);
+  //(v < 0.6) ?   (v < 0.3) ?  h : h++ : h += step(f.yx,f) ; 
+  if (v < 0.6) {
+	if (v >= 0.3) {
+		h++;
+	} 	
+  } else {
+	h += step(f.yx,f);
+  }
+  p += vec2(0.5, 0.13)*h.y - h;          // -1/2, sqrt(3)/2
+  v = RandomSign;
+  return 0.1 / abs(0.5 -  min(min
+    (length(p - v*vec2(-1., 0.00)  ),    // closest neighbor (even or odd set, dep. s)
+     length(p - v*vec2(0.5, 0.87)) ),    // 1/2, sqrt(3)/2
+     length(p - v*vec2(0.5,-0.87))));    
+}
+
+float StarPattern( vec2 g )
+{
+  g = abs(fract(g / 100.)-0.5);
+  return max(max(g.x, g.y), min(g.x, g.y)*2.);
+}
+
+float HexagonalPattern(in vec2 p)   // no AA
+{
+  p.y = p.y * 0.866 + p.x*0.5;
+  p = mod(p, vec2(3.0));
+  return length(p);
+  /*if(p.y < p.x+1.0 && p.y > 0.0 && p.x > 0.0
+  && p.y > p.x-1.0 && p.x < 2.0 && p.y < 2.0)
+    return 0.0;
+  else if(p.y > 1.0 && (p.y < p.x || p.x < 1.0))
+    return 0.5;
+  return 1.0;*/
+
+}
+
+float lengthN(vec2 v, float n)
+{
+  return pow(pow(abs(v.x), n)+pow(abs(v.y), n), 0.89/n);
+}
+//---------------------------------------------------------
+float QCirclePattern(vec2 p)
+{
+	p*= 0.25;
+  vec2 p2 = mod(p*8.0, 4.0)-2.0;
+  return sin(lengthN(p2, 4.0)*16.0);
 }
 
 vec2 map(vec3 p, vec3 rd) 
 {
-	vec2 res = vec2(-sdBox(p - vec3(0, 0.0, 0), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
+	vec3 po = p;
+	vec2 res = vec2(0.0);
+	if (abs(p.y) >= 1.9) {
+		p *= 0.2;
+	
+		float n = noiseOctave(vec2(p.x, p.z) * 4., 10, 0.7);
+		float gs = 0.5 + 0.5 * sin(p.x * 50.0 + n * 60.0);
+		float n2 = noiseOctave(vec2(p.x, p.z) * 100., 10, 0.7);
+
+		res = vec2(-sdBox(po - vec3(0.0, sign(p.y)*gs*0.0075, 0.0), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
+		//vec2 res = vec2(-sdBox(po - vec3(0.0, 0.0, 0.0), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
+		//return res;
+	} else {
+		float basket =  QCirclePattern(vec2(p.x + p.z + iGlobalTime, p.y));
+		res = vec2(-sdBox(po - vec3(basket*0.0075, 0.0, basket*0.0075), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
+		//return res;
+
+		/*p *= 0.2;
+	
+		float n = noiseOctave(vec2(p.x + p.z, p.y) * 4., 10, 0.7);
+		float gs = 0.5 + 0.5 * sin(p.x * 50.0 + n * 60.0);
+		float n2 = noiseOctave(vec2(p.x + p.z, p.y) * 100., 10, 0.7);
+
+		vec2 res = vec2(-sdBox(po - vec3(gs*0.0075, 0.0, gs*0.0075), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
+		return res;*/
+	}
+	res = un(res, vec2(udRoundBox(p - vec3(1, 0, 0), vec3(0.4), 0.1), MAT_MIRROR));
 	return res;
 }
 
 vec3 lightAModifyPos(vec3 p)
 {
-	float size = 4.0;
-	p.z = mod(p.z, size) - size * 0.5;
-	return p - vec3(2.0 + 3.0 * sin(iGlobalTime), 0, 0);
+	return p - vec3(2.0 + sin(iGlobalTime), -0.8, -2.0);
 }
 
 vec4 lightA(vec3 p)
 {
 	float dis = length(p);
-	vec3 col = vec3(1.0, 0.0, 0.0);
-	const float strength = 3.0;
-	vec3 res = col * strength / (dis * dis * dis);
-	return vec4(res, dis);
-}
-
-vec3 lightBModifyPos(vec3 p)
-{
-	return p - vec3(-1.0, 1.0 + 2.0 * sin(iGlobalTime), 0.0);
-}
-
-vec4 lightB(vec3 p)
-{
-	float dis = length(p);
-	vec3 col = vec3(0.0, 0.0, 1.0);
-	const float strength = 10.0;
+	vec3 col = vec3(1.0, 1.0, 1.0);
+	const float strength = 0.5;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
 }
@@ -152,7 +220,6 @@ vec4 lightUnion(vec4 a, vec4 b)
 vec4 evaluateLight(vec3 pos)
 {
 	vec4 res = lightA(lightAModifyPos(pos));
-	res = lightUnion(res, lightB(lightBModifyPos(pos)));
 	return res;
 }
 
@@ -176,13 +243,20 @@ float shadowFunction(in vec3 ro, in vec3 rd, float mint, float maxt)
 #define shadowFunction(ro, rd, mint, maxt) 1.0
 #endif
 
-void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, vec3 lightPos, vec3 lightCol, float shadow)
+float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
+{
+	float nrm = (s + 8.0) / (3.1415 * 8.0);
+	float k = max(0.0, dot(viewdir, reflect(light, normal)));
+    return  pow(k, s);
+}
+
+void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, vec3 lightPos, vec3 lightCol, float shadow, vec3 pos)
 {
 	vec3 col = vec3(0.0);
-	vec3 invLight = normalize(-lightPos);
+	vec3 invLight = normalize(lightPos - pos);
 	float diffuse = max(0.0, dot(invLight, normal));
-	float spec = specular(normal, -invLight, normalize(eye - lightPos), 50.0);
-	float dis = length(-lightPos);
+	float spec = specular(normal, -invLight, normalize(eye - pos), 80.0);
+	float dis = length(lightPos);
 	float str = 1.0/(0.5 + 0.01*dis + 0.1*dis*dis); 
 	diffRes += diffuse * lightCol * str * shadow;
 	specRes += spec * str * shadow;
@@ -196,14 +270,8 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 	{
 		// Lights without shadow
 		vec3 posLightOrigo = lightAModifyPos(pos);
-		addLight(diffuse, specular, normal, eye, posLightOrigo, lightA(posLightOrigo).rgb, 1.0);
-	}
-	{	
-		// Light with shadow
-		vec3 posLightOrigo = lightBModifyPos(pos);
 		float shadow = shadowFunction(pos, normalize(-posLightOrigo), 0.1, length(posLightOrigo));
-		//if (shadow != 0.0) // TODO: Test if this gives better performance
-		addLight(diffuse, specular, normal, eye, posLightOrigo, lightB(posLightOrigo).rgb, shadow);
+		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, shadow, pos);
 	}
 	color = color * (ambient + diffuse) + specular;
 }
@@ -229,7 +297,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 {
 	const int maxIter = 90;
 	const float maxDis = 200.0;
-	const int jumps = 4;
+	const int jumps = 2;
 
 	vec3 col = vec3(0);	
 	float ref = 1.0;
@@ -244,7 +312,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 			float d = res.x;
 			float m = res.y;
 #ifdef VOLUMETRIC_LIGHTNING
-			float fogAmount = 0.005;
+			float fogAmount = 0.2;
 			vec4 lightColDis = evaluateLight(p);
 			vec3 light = lightColDis.rgb;
 			d = min(d, lightColDis.w);
@@ -264,18 +332,37 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				} else if (m == MAT_BOX) {
 					c = vec3(1.0, 0.0, 0.0);
 				} else if (m == MAT_ROOM) {
-					float n = noiseOctave(p.xz * 4., 10, 0.7);
-					float gs = 0.5 + 0.5 * sin(p.x * 50.0 + n * 60.0);
+					vec3 po = p;
+					/*p *= 0.2;
+					float n = noiseOctave(vec2(p.x + p.z, p.y) * 4., 10, 0.7);
+					float gs = 0.5 + 0.5 * sin((p.x + p.z) * 50.0 + n * 60.0);
     
-					vec3 blue = vec3(.25, .8, 1.);
-					vec3 rust = vec3(1., .7, .15);
+					vec3 blue = vec3(0.8);
+					vec3 rust = vec3(0.5, 0.5, 0.5);
     
 					vec3 color = mix(rust, blue, 0.8 * gs);
-					float n2 = noiseOctave(p.xz * 100., 10, 0.7);
-					color = mix(color, vec3(n2 * 0.5 + 0.25), 0.3);
+					float n2 = noiseOctave(vec2(p.x + p.z, p.y) * 100., 10, 0.7);
+					color = mix(color, vec3(n2 * 0.5 + 0.25), 0.3);*/
 
-					c = vec3(0.5);
-					c = color;
+					float basket = QCirclePattern(vec2(p.x + p.z + iGlobalTime, p.y));
+					c = vec3( 0.5, 0.0, basket);
+
+					//c = vec3(0.5);
+					//c = color;
+					
+					if (abs(p.y) >= 1.99) {
+						float n = noiseOctave(vec2(p.z, p.x) * 4., 10, 0.7);
+						float gs = 0.5 + 0.5 * sin(p.z * 50.0 + n * 60.0);
+    
+						vec3 blue = vec3(0.8);
+						vec3 rust = vec3(0.5, 0.5, 0.5);
+    
+						vec3 color = mix(rust, blue, 0.8 * gs);
+						float n2 = noiseOctave(vec2(p.z, p.x) * 100., 10, 0.7);
+						color = mix(color, vec3(n2 * 0.5 + 0.25), 0.3);
+						c = color;
+					}
+					p = po;
 				}
 
 				c *= occlusion(p, normal, rd);
@@ -287,7 +374,14 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				col = mix(col, transmittance * c + scatteredLight, ref);
 
 				if (m == MAT_ROOM) {
-					return col;
+					//if (abs(p.y) <= 1.99) {
+					
+					//}else{
+						return col;
+					//}
+					
+					
+					
 				} else if (m == MAT_MIRROR) {
 					ref *= 0.9;
 				} else if (m == MAT_BOX) {
@@ -314,8 +408,8 @@ void main()
     float u = fragCoord.x * 2.0 - 1.0;
 	float v = fragCoord.y * 2.0 - 1.0;
 
-    vec3 eye = vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
-	vec3 tar = vec3(0 ,0, 0); 
+    vec3 eye = vec3(2.1, 0.1, 1.85); //vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
+	vec3 tar = eye + vec3(0.0, 0.0, -1.0);// + vec3(sin(iGlobalTime), 0.0, cos(iGlobalTime)); 
 
 	vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
