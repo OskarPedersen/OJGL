@@ -166,23 +166,41 @@ float QCirclePattern(vec2 p)
   return sin(lengthN(p2, 4.0)*16.0);
 }
 
+float cubePattern(in vec3 p, in vec3 n, in float k )
+{
+	float x = QCirclePattern(p.yz);
+	float y = QCirclePattern(p.zx);
+	float z = QCirclePattern(p.xy);
+    vec3 w = pow( abs(n), vec3(k) );
+	return (x*w.x + y*w.y + z*w.z) / (w.x+w.y+w.z);
+}
+
+
+
 vec2 map(vec3 p, vec3 rd) 
 {
 	vec3 po = p;
-	vec2 res = vec2(0.0);
-	if (abs(p.y) >= 1.9) {
-		p *= 0.2;
+	vec3 normal;
+    vec3 ep = vec3(0.01, 0, 0);
+    normal.x = udRoundBox(p + ep.xyz, vec3(5.0, 2.0, 5.0), 2.0) - udRoundBox(p - ep.xyz, vec3(5.0, 2.0, 5.0), 2.0);
+    normal.y = udRoundBox(p + ep.yxz, vec3(5.0, 2.0, 5.0), 2.0) - udRoundBox(p - ep.yxz, vec3(5.0, 2.0, 5.0), 2.0);
+    normal.z = udRoundBox(p + ep.yzx, vec3(5.0, 2.0, 5.0), 2.0) - udRoundBox(p - ep.yzx, vec3(5.0, 2.0, 5.0), 2.0);
+	normal = normalize(normal);
+	float pattern = cubePattern(p, normal, 1.0);
+	vec2 res = vec2(-udRoundBox(po - normal * pattern * 0.01, vec3(5.0, 2.0, 5.0), 2.0), MAT_ROOM);
+	//if (abs(p.y) >= 1.9) {
+		//p *= 0.2;
 	
-		float n = noiseOctave(vec2(p.x, p.z) * 4., 10, 0.7);
-		float gs = 0.5 + 0.5 * sin(p.x * 50.0 + n * 60.0);
-		float n2 = noiseOctave(vec2(p.x, p.z) * 100., 10, 0.7);
+		//float n = noiseOctave(vec2(p.x, p.z) * 4., 10, 0.7);
+		//float gs = 0.5 + 0.5 * sin(p.x * 50.0 + n * 60.0);
+		//float n2 = noiseOctave(vec2(p.x, p.z) * 100., 10, 0.7);
 
-		res = vec2(-sdBox(po - vec3(0.0, sign(p.y)*gs*0.0075, 0.0), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
+		//res = vec2(-sdBox(po - vec3(0.0, sign(p.y)*gs*0.0075, 0.0), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
 		//vec2 res = vec2(-sdBox(po - vec3(0.0, 0.0, 0.0), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
 		//return res;
-	} else {
-		float basket =  QCirclePattern(vec2(p.x + p.z + iGlobalTime, p.y));
-		res = vec2(-sdBox(po - vec3(basket*0.0075, 0.0, basket*0.0075), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
+	//} else {
+		//float basket =  QCirclePattern(vec2(p.x + p.z + iGlobalTime, p.y));
+		//res = vec2(-sdBox(po - vec3(basket*0.0075, 0.0, basket*0.0075), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
 		//return res;
 
 		/*p *= 0.2;
@@ -193,21 +211,21 @@ vec2 map(vec3 p, vec3 rd)
 
 		vec2 res = vec2(-sdBox(po - vec3(gs*0.0075, 0.0, gs*0.0075), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
 		return res;*/
-	}
-	res = un(res, vec2(udRoundBox(p - vec3(1, 0, 0), vec3(0.4), 0.1), MAT_MIRROR));
+	//}
+	//res = un(res, vec2(udRoundBox(p - vec3(1, 0, 0), vec3(0.4), 0.1), MAT_MIRROR));
 	return res;
 }
 
 vec3 lightAModifyPos(vec3 p)
 {
-	return p - vec3(2.0 + sin(iGlobalTime), -0.8, -2.0);
+	return p - vec3(2.0 + sin(iGlobalTime), -0.8 + sin(iGlobalTime), -2.0);
 }
 
 vec4 lightA(vec3 p)
 {
 	float dis = length(p);
 	vec3 col = vec3(1.0, 1.0, 1.0);
-	const float strength = 0.5;
+	const float strength = 1.5;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
 }
@@ -293,6 +311,7 @@ float occlusion(vec3 p, vec3 normal, vec3 rd)
 }
 
 
+
 vec3 raymarch(vec3 ro, vec3 rd, vec3 eye) 
 {
 	const int maxIter = 90;
@@ -312,7 +331,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 			float d = res.x;
 			float m = res.y;
 #ifdef VOLUMETRIC_LIGHTNING
-			float fogAmount = 0.2;
+			float fogAmount = 0.1;
 			vec4 lightColDis = evaluateLight(p);
 			vec3 light = lightColDis.rgb;
 			d = min(d, lightColDis.w);
@@ -333,6 +352,8 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					c = vec3(1.0, 0.0, 0.0);
 				} else if (m == MAT_ROOM) {
 					vec3 po = p;
+					float pattern = cubePattern(p, normal, 3.0);
+					c = vec3( 0.5, 0.0, pattern);
 					/*p *= 0.2;
 					float n = noiseOctave(vec2(p.x + p.z, p.y) * 4., 10, 0.7);
 					float gs = 0.5 + 0.5 * sin((p.x + p.z) * 50.0 + n * 60.0);
@@ -344,24 +365,24 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					float n2 = noiseOctave(vec2(p.x + p.z, p.y) * 100., 10, 0.7);
 					color = mix(color, vec3(n2 * 0.5 + 0.25), 0.3);*/
 
-					float basket = QCirclePattern(vec2(p.x + p.z + iGlobalTime, p.y));
-					c = vec3( 0.5, 0.0, basket);
+					//float basket = QCirclePattern(vec2(p.x + p.z + iGlobalTime, p.y));
+					//c = vec3( 0.5, 0.0, basket);
 
 					//c = vec3(0.5);
 					//c = color;
 					
-					if (abs(p.y) >= 1.99) {
-						float n = noiseOctave(vec2(p.z, p.x) * 4., 10, 0.7);
-						float gs = 0.5 + 0.5 * sin(p.z * 50.0 + n * 60.0);
+					//if (abs(p.y) >= 1.99) {
+					//	float n = noiseOctave(vec2(p.z, p.x) * 4., 10, 0.7);
+					//	float gs = 0.5 + 0.5 * sin(p.z * 50.0 + n * 60.0);
     
-						vec3 blue = vec3(0.8);
-						vec3 rust = vec3(0.5, 0.5, 0.5);
+					//	vec3 blue = vec3(0.8);
+					//	vec3 rust = vec3(0.5, 0.5, 0.5);
     
-						vec3 color = mix(rust, blue, 0.8 * gs);
-						float n2 = noiseOctave(vec2(p.z, p.x) * 100., 10, 0.7);
-						color = mix(color, vec3(n2 * 0.5 + 0.25), 0.3);
-						c = color;
-					}
+					//	vec3 color = mix(rust, blue, 0.8 * gs);
+					//	float n2 = noiseOctave(vec2(p.z, p.x) * 100., 10, 0.7);
+					//	color = mix(color, vec3(n2 * 0.5 + 0.25), 0.3);
+					///	c = color;
+					//}
 					p = po;
 				}
 
@@ -409,7 +430,7 @@ void main()
 	float v = fragCoord.y * 2.0 - 1.0;
 
     vec3 eye = vec3(2.1, 0.1, 1.85); //vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
-	vec3 tar = eye + vec3(0.0, 0.0, -1.0);// + vec3(sin(iGlobalTime), 0.0, cos(iGlobalTime)); 
+	vec3 tar = eye + vec3(0.0, -1.0, -1.0);// + vec3(sin(iGlobalTime), 0.0, cos(iGlobalTime)); 
 
 	vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
