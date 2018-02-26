@@ -1,5 +1,5 @@
 R""(
-#version 450
+#version 440
 
 in vec2 fragCoord;
 out vec4 fragColor;
@@ -38,6 +38,7 @@ uniform float CHANNEL_13_TOTAL;
 #define MAT_MIRROR 1.0
 #define MAT_BOX 2.0
 #define MAT_ROOM 3.0
+#define MAT_CORRIDOR 4.0
 
 vec2 un(vec2 a, vec2 b)
 {
@@ -166,6 +167,28 @@ float QCirclePattern(vec2 p)
   return sin(lengthN(p2, 4.0)*16.0);
 }
 
+float BrickPattern(in vec2 p) 
+{
+  p *= vec2 (1.0, 2.8);  // scale
+  vec2 f = floor (p);
+  if (2. * floor (f.y * 0.5) != f.y) 
+    p.x += 0.5;  // brick shift
+  p = smoothstep (0.03, 0.08, abs (fract (p + 0.5) - 0.5));
+  return 1. - 0.9 * p.x * p.y;
+}
+
+float HexagonalGrid (in vec2 position         
+	                ,in float gridSize
+	                ,in float gridThickness) 
+{
+  vec2 pos = position / gridSize; 
+  pos.x *= 0.57735 * 2.0;
+  pos.y += 0.5 * mod(floor(pos.x), 2.0);
+  pos = abs(fract(pos) - 0.5);
+  float d = abs(max(pos.x*1.5 + pos.y, pos.y*2.0) - 1.0);
+  return smoothstep(0.0, gridThickness, d);
+}
+
 float cubePattern(in vec3 p, in vec3 n, in float k )
 {
 	float x = QCirclePattern(p.yz);
@@ -179,15 +202,17 @@ float cubePattern(in vec3 p, in vec3 n, in float k )
 
 vec2 map(vec3 p, vec3 rd) 
 {
-	vec3 po = p;
+	float pattern = BrickPattern(p.zy * 2.1 + vec2(0.0, 0.0));
+	vec2 res = vec2(-sdBox(p - vec3(sign(p.x)*pattern * 0.02, 0.0, 0.0), vec3(1.0, 1.0, 50.0)), MAT_CORRIDOR);
+	/*vec3 po = p;
 	vec3 normal;
     vec3 ep = vec3(0.01, 0, 0);
     normal.x = udRoundBox(p + ep.xyz, vec3(5.0, 2.0, 5.0), 2.0) - udRoundBox(p - ep.xyz, vec3(5.0, 2.0, 5.0), 2.0);
     normal.y = udRoundBox(p + ep.yxz, vec3(5.0, 2.0, 5.0), 2.0) - udRoundBox(p - ep.yxz, vec3(5.0, 2.0, 5.0), 2.0);
     normal.z = udRoundBox(p + ep.yzx, vec3(5.0, 2.0, 5.0), 2.0) - udRoundBox(p - ep.yzx, vec3(5.0, 2.0, 5.0), 2.0);
 	normal = normalize(normal);
-	float pattern = cubePattern(p, normal, 1.0);
-	vec2 res = vec2(-udRoundBox(po - normal * pattern * 0.01, vec3(5.0, 2.0, 5.0), 2.0), MAT_ROOM);
+	float pattern = cubePattern(p, normal, 1.0);	
+	vec2 res = vec2(-udRoundBox(po - normal * pattern * 0.01, vec3(5.0, 2.0, 5.0), 2.0), MAT_ROOM);*/
 	//if (abs(p.y) >= 1.9) {
 		//p *= 0.2;
 	
@@ -203,14 +228,14 @@ vec2 map(vec3 p, vec3 rd)
 		//res = vec2(-sdBox(po - vec3(basket*0.0075, 0.0, basket*0.0075), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
 		//return res;
 
-		/*p *= 0.2;
+		//p *= 0.2;
 	
-		float n = noiseOctave(vec2(p.x + p.z, p.y) * 4., 10, 0.7);
-		float gs = 0.5 + 0.5 * sin(p.x * 50.0 + n * 60.0);
-		float n2 = noiseOctave(vec2(p.x + p.z, p.y) * 100., 10, 0.7);
+		//float n = noiseOctave(vec2(p.x + p.z, p.y) * 4., 10, 0.7);
+		//float gs = 0.5 + 0.5 * sin(p.x * 50.0 + n * 60.0);
+		//float n2 = noiseOctave(vec2(p.x + p.z, p.y) * 100., 10, 0.7);
 
-		vec2 res = vec2(-sdBox(po - vec3(gs*0.0075, 0.0, gs*0.0075), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
-		return res;*/
+	//	vec2 res = vec2(-sdBox(po - vec3(gs*0.0075, 0.0, gs*0.0075), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
+	//	return res;
 	//}
 	//res = un(res, vec2(udRoundBox(p - vec3(1, 0, 0), vec3(0.4), 0.1), MAT_MIRROR));
 	return res;
@@ -218,7 +243,7 @@ vec2 map(vec3 p, vec3 rd)
 
 vec3 lightAModifyPos(vec3 p)
 {
-	return p - vec3(2.0 + sin(iGlobalTime), -0.8 + sin(iGlobalTime), -2.0);
+	return p - vec3(0.0, 0.8, 5.0);
 }
 
 vec4 lightA(vec3 p)
@@ -348,6 +373,19 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 
 				if (m == MAT_MIRROR) {
 					c = vec3(0.0);
+				} else if (m == MAT_CORRIDOR) {
+					if (normal.y == 1.0) {
+						float pattern = HexagonalGrid(p.xz*3.0, 0.5, 0.1);
+						c = vec3(pattern);
+					} else if (normal.y == -1.0) {
+						c = vec3(0.0, 1.0, 0.0);
+					} else {
+						float pattern = BrickPattern(p.zy * 2.1 + vec2(0.0, 0.0));
+						vec3 brick = vec3(1.0, 0.6, 0.35);
+						vec3 mortar = vec3(1.0);
+						c = mix(brick, mortar, pattern);
+					}
+					
 				} else if (m == MAT_BOX) {
 					c = vec3(1.0, 0.0, 0.0);
 				} else if (m == MAT_ROOM) {
@@ -399,14 +437,14 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					
 					//}else{
 						return col;
-					//}
-					
-					
+					//}				
 					
 				} else if (m == MAT_MIRROR) {
 					ref *= 0.9;
 				} else if (m == MAT_BOX) {
 					ref *= 0.5;
+				}  else if (m == MAT_CORRIDOR) {
+					return col;
 				}
 
 #ifdef REFLECTION
@@ -429,8 +467,8 @@ void main()
     float u = fragCoord.x * 2.0 - 1.0;
 	float v = fragCoord.y * 2.0 - 1.0;
 
-    vec3 eye = vec3(2.1, 0.1, 1.85); //vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
-	vec3 tar = eye + vec3(0.0, -1.0, -1.0);// + vec3(sin(iGlobalTime), 0.0, cos(iGlobalTime)); 
+    vec3 eye = vec3(0.0); //vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
+	vec3 tar = eye + vec3(0.0, 0.0, 1.0); 
 
 	vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
