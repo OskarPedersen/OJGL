@@ -39,6 +39,8 @@ uniform float CHANNEL_13_TOTAL;
 #define MAT_BOX 2.0
 #define MAT_ROOM 3.0
 #define MAT_CORRIDOR 4.0
+#define MAT_FLOOR 5.0
+#define MAT_ROOF 6.0
 
 vec2 un(vec2 a, vec2 b)
 {
@@ -203,7 +205,14 @@ float cubePattern(in vec3 p, in vec3 n, in float k )
 vec2 map(vec3 p, vec3 rd) 
 {
 	float pattern = BrickPattern(p.zy * 2.1 + vec2(0.0, 0.0));
-	vec2 res = vec2(-sdBox(p - vec3(sign(p.x)*pattern * 0.02, 0.0, 0.0), vec3(1.0, 1.0, 50.0)), MAT_CORRIDOR);
+	float n = noiseOctave(vec2(p.z, p.y) * 5.0, 10, 0.7);
+	vec2 res = vec2(-sdBox(p - vec3(sign(p.x)*pattern * 0.02+n*0.02*sign(p.x), 0.0, 0.0), vec3(0.8, 10.0, 50.0)), MAT_CORRIDOR);
+
+	float floorPattern = HexagonalGrid(p.xz, 0.15, 0.2);
+	res = un(res, vec2(p.y + 1.0 - floorPattern*0.01, MAT_FLOOR));
+	
+	float roofPattern = Basketwork2Pattern(p.xz*2.5);
+	res = un(res, vec2(-p.y + 1.0 -roofPattern * 0.02, MAT_ROOF));
 	/*vec3 po = p;
 	vec3 normal;
     vec3 ep = vec3(0.01, 0, 0);
@@ -243,14 +252,16 @@ vec2 map(vec3 p, vec3 rd)
 
 vec3 lightAModifyPos(vec3 p)
 {
-	return p - vec3(0.0, 0.8, 5.0);
+	float s = 5.0;
+	p.z = mod(p.z, s) - s * 0.5;
+	return p - vec3(0.0, 0.8, 0.0);
 }
 
 vec4 lightA(vec3 p)
 {
 	float dis = length(p);
 	vec3 col = vec3(1.0, 1.0, 1.0);
-	const float strength = 1.5;
+	const float strength = 0.5;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
 }
@@ -298,23 +309,25 @@ void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, ve
 	vec3 col = vec3(0.0);
 	vec3 invLight = normalize(lightPos - pos);
 	float diffuse = max(0.0, dot(invLight, normal));
-	float spec = specular(normal, -invLight, normalize(eye - pos), 80.0);
+	float spec = specular(normal, -invLight, normalize(eye - pos), 200.0);
 	float dis = length(lightPos);
-	float str = 1.0/(0.5 + 0.01*dis + 0.1*dis*dis); 
-	diffRes += diffuse * lightCol * str * shadow;
-	specRes += spec * str * shadow;
+	float str = 1.0/(0.5 + 0.01*dis + 0.1*dis*dis);
+	float specStr = 1.0/(0.0 + 0.00*dis + dis*dis*dis);
+	diffRes += diffuse * lightCol * shadow;
+	
+	specRes += spec * specStr * shadow * length(lightCol) * 20.0;
 }
 
 void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 	vec3 diffuse = vec3(0.0);
 	float specular = 0.0;
-	const float ambient = 0.3;
+	const float ambient = 0.0;
 
 	{
 		// Lights without shadow
 		vec3 posLightOrigo = lightAModifyPos(pos);
-		float shadow = shadowFunction(pos, normalize(-posLightOrigo), 0.1, length(posLightOrigo));
-		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, shadow, pos);
+		//float shadow = shadowFunction(pos, normalize(-posLightOrigo), 0.1, length(posLightOrigo));
+		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos);
 	}
 	color = color * (ambient + diffuse) + specular;
 }
@@ -352,11 +365,12 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 		float t = 0.0;
 		for (int i = 0; i < maxIter; i++) {
 			vec3 p = ro + rd * t;
+			p.x += sin(p.z*0.5);
 			vec2 res = map(p, rd);
 			float d = res.x;
 			float m = res.y;
 #ifdef VOLUMETRIC_LIGHTNING
-			float fogAmount = 0.1;
+			float fogAmount = 0.001;
 			vec4 lightColDis = evaluateLight(p);
 			vec3 light = lightColDis.rgb;
 			d = min(d, lightColDis.w);
@@ -373,19 +387,19 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 
 				if (m == MAT_MIRROR) {
 					c = vec3(0.0);
-				} else if (m == MAT_CORRIDOR) {
-					if (normal.y == 1.0) {
-						float pattern = HexagonalGrid(p.xz*3.0, 0.5, 0.1);
-						c = vec3(pattern);
-					} else if (normal.y == -1.0) {
-						c = vec3(0.0, 1.0, 0.0);
-					} else {
-						float pattern = BrickPattern(p.zy * 2.1 + vec2(0.0, 0.0));
-						vec3 brick = vec3(1.0, 0.6, 0.35);
-						vec3 mortar = vec3(1.0);
-						c = mix(brick, mortar, pattern);
-					}
-					
+				} else if (m == MAT_CORRIDOR) {				
+					float pattern = BrickPattern(p.zy * 2.1 + vec2(0.0, 0.0));
+					float n = noiseOctave(vec2(p.z, p.y) * 5.0, 10, 0.7);
+					vec3 brick = vec3(1.0, 0.6, 0.35)*(0.2 + 0.8 * n);
+					vec3 mortar = vec3(1.0);
+					c = mix(brick, mortar, pattern);
+					//c = vec3(n);
+				} else if (m == MAT_ROOF) {
+					float pattern = Basketwork2Pattern(p.xz*2.5);
+					c = vec3(pattern*0.9, pattern*0.8, pattern*0.4);
+				} else if (m == MAT_FLOOR) {
+					float pattern = HexagonalGrid(p.xz, 0.15, 0.2);
+					c = vec3(pattern);
 				} else if (m == MAT_BOX) {
 					c = vec3(1.0, 0.0, 0.0);
 				} else if (m == MAT_ROOM) {
@@ -432,7 +446,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				}
 				col = mix(col, transmittance * c + scatteredLight, ref);
 
-				if (m == MAT_ROOM) {
+				if (m == MAT_ROOM ) {
 					//if (abs(p.y) <= 1.99) {
 					
 					//}else{
@@ -444,6 +458,10 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				} else if (m == MAT_BOX) {
 					ref *= 0.5;
 				}  else if (m == MAT_CORRIDOR) {
+					return col;
+				} else if (m == MAT_ROOF) {
+					return col;
+				} else if (m == MAT_FLOOR) {
 					return col;
 				}
 
@@ -467,8 +485,8 @@ void main()
     float u = fragCoord.x * 2.0 - 1.0;
 	float v = fragCoord.y * 2.0 - 1.0;
 
-    vec3 eye = vec3(0.0); //vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
-	vec3 tar = eye + vec3(0.0, 0.0, 1.0); 
+    vec3 eye = vec3(-sin(iGlobalTime*0.5), 0.0, iGlobalTime); //vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
+	vec3 tar = vec3(-sin((iGlobalTime+1.0)*0.5), 0.0, iGlobalTime + 1.0);//eye + vec3(0.0, 0.0, 1.0); 
 
 	vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
