@@ -103,6 +103,13 @@ float noiseOctave(in vec2 p, int octaves, float persistence)
 }
 
 #define S2(x,y) abs(fract(x))<0.8 ? 0.65 +0.35* sin(1.5707*(y-ceil(x))) : 0.0
+#define S1(x,y) abs(fract(x))<0.8 ? 0.65 +0.35* sin(3.1415*(y-ceil(x))) : 0.0
+
+float Basketwork1Pattern(in vec2 uv)
+{
+  vec2 p = uv * 4.0;
+  return max (S1(p.x, p.y), S1(p.y+1.0, p.x)); 
+}
 float Basketwork2Pattern(in vec2 uv)
 {
   vec2 p = uv * 4.0;
@@ -191,6 +198,19 @@ float HexagonalGrid (in vec2 position
   return smoothstep(0.0, gridThickness, d);
 }
 
+#define PI 3.141592
+float KaroPattern(in vec2 uv)
+{
+  return 0.5*clamp(10.*sin(PI*uv.x), 0.0, 1.0)
+       + 0.5*clamp(10.*sin(PI*uv.y), 0.0, 1.0);
+}
+
+float GridPattern(in vec2 uv)
+{
+  return 0.5*clamp(10.*sin(PI*uv.x) + 10.5, 0.0, 1.0)
+       / 0.5*clamp(10.*sin(PI*uv.y) + 10.5, 0.0, 1.0);
+}
+
 float cubePattern(in vec3 p, in vec3 n, in float k )
 {
 	float x = QCirclePattern(p.yz);
@@ -200,27 +220,45 @@ float cubePattern(in vec3 p, in vec3 n, in float k )
 	return (x*w.x + y*w.y + z*w.z) / (w.x+w.y+w.z);
 }
 
-void distort(inout vec3 p) {
-	
-	float a = atan(p.y, p.x);
+float floorPattern(vec2 p) {
+	 return HexagonalGrid(p, 0.15, 0.15);
+}
+
+float roofPattern(vec2 p) {
+	//return Basketwork2Pattern(p*2.5);
+	return GridPattern(p*5.0);
+}
+
+float corrNoise(vec3 p){
+	return noiseOctave(vec2(p.z, abs(p.y) > 0.9 ? p.x : p.y) * 5.0, 10, 0.7); // Use same noise for walls and floor
+}
+
+vec3 distort(vec3 p) {
+	return p;
+	/*float a = atan(p.y, p.x);
 	float l = length(p.xy);
-	a += 0.5*sin(p.z*0.4 + iGlobalTime*0.3);
-	p.x = cos(a) * l;
-	p.y = sin(a) * l;
+	a += 1.2*sin(p.z*0.4 + iGlobalTime*0.3);
+	return vec3(cos(a) * l, sin(a) * l, p.z);*/
 }
 
 vec2 map(vec3 p, vec3 rd) 
 {
-	distort(p);
-	float pattern = BrickPattern(p.zy * 2.1 + vec2(0.0, 0.0));
-	float n = noiseOctave(vec2(p.z, p.y) * 5.0, 10, 0.7);
-	vec2 res = vec2(-sdBox(p - vec3(sign(p.x)*pattern * 0.02+n*0.02*sign(p.x), 0.0, 0.0), vec3(0.8, 10.0, 5000.0)), MAT_CORRIDOR);
-
-	float floorPattern = HexagonalGrid(p.xz, 0.15, 0.2);
-	res = un(res, vec2(p.y + 1.0 - floorPattern*0.01, MAT_FLOOR));
+	p = distort(p);
 	
-	float roofPattern = Basketwork2Pattern(p.xz*2.5);
-	res = un(res, vec2(-p.y + 1.0 -roofPattern * 0.02, MAT_ROOF));
+	float pattern = BrickPattern(p.zy * 2.1 + vec2(0.0, 0.0));
+	float n = corrNoise(p);
+	vec2 res = vec2(-sdBox(p - vec3(sign(p.x)*pattern * 0.02-n*0.05*sign(p.x), 0.0, 0.0), vec3(0.8, 10.0, 5000.0)), MAT_CORRIDOR);
+	
+	
+	
+	 //n = noiseOctave(vec2(p.x, p.z) * 5.0, 10, 0.7);
+	float fPattern = floorPattern(p.xz);//HexagonalGrid(p.xz, 0.15, 0.2);
+	res = un(res, vec2(p.y + 1.0 - fPattern*0.01  - n*0.03, MAT_FLOOR));
+	
+	
+	
+	float rPattern = roofPattern(p.xz);//Basketwork2Pattern(p.xz*2.5);
+	res = un(res, vec2(-p.y + 1.0 -rPattern * 0.03 - n*0.01, MAT_ROOF));
 
 	//float s = 5.0;
 		//p.z = mod(p.z, s) - s * 0.5;
@@ -271,14 +309,14 @@ vec3 lightAModifyPos(vec3 p)
 {
 	float s = 5.0;
 	p.z = mod(p.z + s*0.5, s) - s * 0.5;
-	return p - vec3(0.0, 0.8, 0.0);
+	return p - vec3(0.0, 0.6, 0.0);
 }
 
 vec4 lightA(vec3 p)
 {
 	float dis = sdCappedCylinder(p.yzx, vec2(0.0, 0.3));//length(p);
 	vec3 col = vec3(1.0, 1.0, 1.0);
-	const float strength = 0.5;
+	const float strength = 1.0;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
 }
@@ -290,7 +328,7 @@ vec4 lightUnion(vec4 a, vec4 b)
 
 vec4 evaluateLight(vec3 pos)
 {
-	distort(pos);
+	pos = distort(pos);
 	vec4 res = lightA(lightAModifyPos(pos));
 	return res;
 }
@@ -342,14 +380,14 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 	const float ambient = 0.0;
 
 	{
-		distort(pos);
+		vec3 dp = distort(pos);
 		// Lights without shadow
-		vec3 posLightOrigo = lightAModifyPos(pos);
+		vec3 posLightOrigo = lightAModifyPos(dp);
 		//float shadow = shadowFunction(pos, normalize(-posLightOrigo), 0.1, length(posLightOrigo));
 		float s = 5.0;
 		//p.z = mod(p.z, s) - s * 0.5;
 		//return p - vec3(0.0, 0.8, 0.0);
-		int q = int(round(pos.z / s));
+		int q = int(round(dp.z / s));
 		vec3 lightPos = vec3(0.0, 0.8, q*s);
 		addLight(diffuse, specular, normal, eye, lightPos, lightA(posLightOrigo).rgb, 1.0, pos);
 	}
@@ -412,21 +450,30 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				if (m == MAT_MIRROR) {
 					c = vec3(0.0);
 				} else if (m == MAT_CORRIDOR) {
-					distort(p);
-					float pattern = BrickPattern(p.zy * 2.1 + vec2(0.0, 0.0));
-					float n = noiseOctave(vec2(p.z, p.y) * 5.0, 10, 0.7);
-					vec3 brick = vec3(1.0, 0.6, 0.35)*(0.2 + 0.8 * n);
+					vec3 dp = distort(p);
+					float pattern = BrickPattern(dp.zy * 2.1 + vec2(0.0, 0.0));
+					float n = noiseOctave(vec2(dp.z, dp.y) * 5.0, 10, 0.7);
+					vec3 brick = vec3(1.0, 0.6, 0.35)*(0.1 + 0.9 * n);
 					vec3 mortar = vec3(1.0);
 					c = mix(brick, mortar, pattern);
 					//c = vec3(n);
 				} else if (m == MAT_ROOF) {
-					distort(p);
-					float pattern = Basketwork2Pattern(p.xz*2.5);
-					c = vec3(pattern*0.9, pattern*0.8, pattern*0.4);
+					vec3 dp = distort(p);
+					float pattern = roofPattern(dp.xz);
+					c = mix(vec3(0.5), vec3(0.9, 0.8, 0.4), pattern);
 				} else if (m == MAT_FLOOR) {
-					distort(p);
-					float pattern = HexagonalGrid(p.xz, 0.15, 0.2);
-					c = vec3(pattern);
+					vec3 dp = distort(p);
+					float n = corrNoise(dp);
+					float pattern = floorPattern(dp.xz);
+					vec3 mortar = vec3(0.4);
+					vec3 tile = mix(vec3(0.4, 0.6, 0.5)*1.0, vec3(0.8), n);
+					/*vec3 tile = vec3(0.45, 0.55, 0.5)*0.8;
+					if (n > 0.5) {
+						tile = vec3(0.8);
+					}*/
+					c = mix(mortar, tile, pattern);
+					//c = tile;
+					//c = vec3(n);
 				} else if (m == MAT_BOX) {
 					c = vec3(1.0, 0.0, 0.0);
 				} else if (m == MAT_ROOM) {
