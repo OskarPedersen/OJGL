@@ -309,13 +309,13 @@ vec3 lightAModifyPos(vec3 p)
 {
 	float s = 5.0;
 	p.z = mod(p.z + s*0.5, s) - s * 0.5;
-	return p - vec3(0.0, 0.6, 0.0);
+	return p - vec3(0.0, 0.75, 0.0);
 }
 
 vec4 lightA(vec3 p)
 {
-	float dis = sdCappedCylinder(p.yzx, vec2(0.0, 0.3));//length(p);
-	vec3 col = vec3(1.0, 1.0, 1.0);
+	float dis = sdCappedCylinder(p.zxy, vec2(0.0, 0.3));//length(p);
+	vec3 col = vec3(1.0, 0.6, 0.6);
 	const float strength = 1.0;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
@@ -433,6 +433,17 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 			float m = res.y;
 #ifdef VOLUMETRIC_LIGHTNING
 			float fogAmount = 0.001;
+			
+				/*vec3 fp = p;
+				float s = 3.0;
+				fp.z = mod(fp.z + s*0.5, s) - s*0.5;
+				fp.y += 0.5;
+				fp.x += 0.4;
+				float fd = length(fp);
+				fogAmount += fd < 0.5 ? 1.0 : 0.0;//max(0.0, 1.0 - d); */
+				//fogAmount += max(0.0, p.y - 0.3);
+			
+
 			vec4 lightColDis = evaluateLight(p);
 			vec3 light = lightColDis.rgb;
 			d = min(d, lightColDis.w);
@@ -460,7 +471,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				} else if (m == MAT_ROOF) {
 					vec3 dp = distort(p);
 					float pattern = roofPattern(dp.xz);
-					c = mix(vec3(0.5), vec3(0.9, 0.8, 0.4), pattern);
+					c = mix(vec3(0.5), vec3(0.85, 0.75, 0.45), pattern);
 				} else if (m == MAT_FLOOR) {
 					vec3 dp = distort(p);
 					float n = corrNoise(dp);
@@ -570,6 +581,7 @@ void main()
 	vec3 rd = normalize(dir + right*u + up*v);
 	
 	vec3 color = raymarch(ro, rd, eye);
+	//color = pow(color, vec3(1.0/2.2)); // simple linear to gamma, exposure of 1.0
 #ifdef TONE_MAPPING
 	color /= (color + vec3(1.0));
 #endif
