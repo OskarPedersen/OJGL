@@ -26,6 +26,319 @@ uniform float CHANNEL_13_TOTAL;
 
 //////////////////////////////////////////////////////
 
+#define PI 3.141592
+
+float udRoundBox( vec3 p, vec3 b, float r )
+{
+  return length(max(abs(p)-b,0.0))-r;
+}
+
+vec2 un(vec2 a, vec2 b)
+{
+	return a.x < b.x ? a : b;
+}
+
+float sdCappedCylinder( vec3 p, vec2 h )
+{
+  vec2 d = abs(vec2(length(p.xz),p.y)) - h;
+  return min(max(d.x,d.y),0.0) + length(max(d,0.0));
+}
+
+float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
+{
+	float nrm = (s + 8.0) / (3.1415 * 8.0);
+	float k = max(0.0, dot(viewdir, reflect(light, normal)));
+    return  pow(k, s);
+}
+
+//////////////////////////////////////////////////
+
+#define TIME mod(iGlobalTime, 26.0)
+#define drum pow(1.0 - 2.0 * mod(TIME, 0.5), 5.0)
+
+
+float udBox( vec3 p, vec3 b )
+{
+  return length(max(abs(p)-b,0.0));
+}
+
+float sdSphere( vec3 p, float r)
+{
+  return length(p)-r;
+}
+
+mat3 rot(float x, float y, float z)
+{
+	float cx = cos(x);
+	float sx = sin(x);
+	float cy = cos(y);
+	float sy = sin(y);
+	float cz = cos(z);
+	float sz = sin(z);
+	mat3 xm = mat3(1, 0, 0,
+					0, cx, -sx,
+					0, sx, cx);
+	mat3 ym = mat3(cy, 0, sy,
+			  		0, 1, 0,
+			  		-sy, 0, cy);
+	mat3 zm = mat3(cz, -sz, 0,
+					sz, cz, 0,
+					0, 0, 1);
+	return xm * ym * zm;
+}
+
+
+
+
+
+#define TEX 0.2
+#define SIZE 8.0
+
+#define MAT_WALL 11.0
+#define MAT_SPIN 12.0
+#define MAT_GROUND 13.0
+
+
+vec2 ground(vec3 p) {
+	p -= vec3(0,0,5);
+	p.y += 10.0*TIME;
+	float s = 1.0;
+	vec3 q = mod(p, s) - s * 0.5;
+	q.z = p.z;
+
+	q.z += sin(p.x) * 0.5;
+	q.z += sin(p.y) * 0.5;
+	float d = udRoundBox(q, vec3(s * 0.3), s * 0.3);
+	return vec2(d, MAT_GROUND);
+}
+
+vec2 spin(vec3 p, vec3 rd, float dir) {
+	p.x = p.x == 0.0 ? 0.00001 : p.x;
+
+	float len = length(p.xy);
+	float lenSize = 6.0;
+	float lenY = mod(len, lenSize) - lenSize * 0.5;
+	float lenPart = floor(len / lenSize);
+	if (lenPart < 0.5 || lenPart > 2.5) {
+		return vec2(99999,  MAT_SPIN);
+	}
+	float angle = atan(p.y, p.x);
+	float numParts =  floor( 5.5*lenPart);
+	float partSize = PI / numParts;
+	angle += PI;
+	float r = dir * sign(cos(lenPart*PI))* TIME * 0.4 / lenPart;
+	float part = floor(mod(angle + r + (lenPart < 1.5 ? partSize / 2.0 : 0.0), PI * 2.0) / partSize);
+
+	angle = mod(0.3*lenPart + angle + r, partSize) + partSize * 0.5 * max(0.0, numParts - 1.0);
+
+
+	vec3 newPos = vec3(len * cos(angle), lenY * sin(angle), p.z);
+	float d = sdSphere(newPos, 1.0);
+	return vec2(d, MAT_SPIN);
+}
+
+
+
+vec2 map2(vec3 p, vec3 rd) {
+	vec2 res = spin(p ,rd, 1.0);
+	res = un(ground(p - vec3(0, 0, 0)), res);
+ 	return res;
+}
+
+vec4 roofLight(vec3 p) {
+	float music = drum; 
+	float s = 15.0;
+	p.y += 10.0*TIME;
+	vec3 q = mod(p, s) - s * 0.5;
+	q.z = p.z;
+	q *= rot(0.0,0.0,TIME * 5.0 + p.x*0.1 + p.z*0.1);
+	vec3 lightCol = vec3(0.5 + 0.5 * sin(p.x), 0.5 + 0.5 * sin(p.y), 0.1);
+	float dis = sdCappedCylinder(q.zxy - vec3(-10, 0, 0), vec2(0.05, 5.0));
+	float distanceToL = max(0.0001, dis);
+	vec3 point = lightCol * 5.0/(0.1*distanceToL + 0.3*distanceToL*distanceToL);
+
+	return vec4(point, distanceToL);
+}
+
+vec4 sunLight(vec3 pos) {
+	vec3 lightCol = vec3(1.0,0.8, 0.5*(cos(TIME) + 1.0));
+
+	float music = drum;
+	float mdis = sdSphere(pos - vec3(0.0,0.0,0.5*sin(10.0*TIME)), 0.8 + 0.8 * music);
+
+
+	float distanceToL = max(0.0001, mdis);
+	vec3 point = lightCol * (80.0 + 80.0 * music)/(distanceToL*distanceToL);
+
+	return vec4(point, distanceToL);
+}
+
+
+vec3 evaluateLight(vec3 pos, inout float dis)
+{
+	vec4 sun = sunLight(pos);
+	vec4 rl = roofLight(pos);
+	dis = min(sun.w, rl.w);
+	return sun.xyz + rl.xyz;
+}
+
+void addLightning2(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
+	vec3 lpos = vec3(0, 0,0);
+
+	float dis = length(lpos - pos);
+	vec3 invLight = normalize(lpos - pos);
+	float diffuse = max(0.0, dot(invLight, normal));
+	float spec = specular(normal, -invLight, normalize(eye - pos), 220.0);
+
+	float str = 1.0/(0.1 + 0.01*dis + 0.1*dis*dis);
+	float tmp = 0.0;
+	str = 1.0;
+	color =  color * (0.0 + 0.8*diffuse*evaluateLight(pos, tmp).xyz) + spec*str;
+}
+
+
+
+vec3 getNormal2(vec3 p, vec3 rd)
+{
+	vec3 normal;
+    vec3 ep = vec3(0.01, 0, 0);
+    normal.x = map2(p + ep.xyz, rd).x - map2(p - ep.xyz, rd).x;
+    normal.y = map2(p + ep.yxz, rd).x - map2(p - ep.yxz, rd).x;
+    normal.z = map2(p + ep.yzx, rd).x - map2(p - ep.yzx, rd).x;
+    return normalize(normal);
+
+}
+
+float occlusion2(vec3 p, vec3 normal, vec3 rd)
+{
+	float o = clamp(2.0*map2(p + normal * 0.5, rd).x, 0.0, 1.0);
+	return 0.2 + 0.8*o;
+}
+
+
+
+vec3 raymarch2(vec3 ro, vec3 rd, inout vec3 finalPos, vec3 eye) {
+	float t = 0.0;
+	const int maxIter = 100;
+	const float maxDis = 300.0;
+	float d = 0.0;
+	vec3 p = vec3(-1.0, -1.0, -1.0);
+	vec3 col = vec3(0);
+	const int jumps = 3;
+	float ref = 1.0;
+	vec3 scatteredLight = vec3(0.0);
+	float transmittance = 1.0;
+	for (int j = 0; j < jumps; j++) {
+		for (int i = 0; i < maxIter; i++) {
+			p = ro + rd * t;
+
+			vec2 res = map2(p, rd);
+			d = res.x;
+			float fogAmount = 0.01;
+			float lightDis = -1.0;
+			vec3 light = evaluateLight(p, lightDis);
+			d = min(min(d, 1.0), max(lightDis, 0.05));
+			vec3 lightIntegrated = light - light * exp(-fogAmount * d);
+			scatteredLight += transmittance * lightIntegrated;
+			transmittance *= exp(-fogAmount * d);
+
+			t += d;
+			float m = res.y;
+			bool end = i == maxIter - 1 ||t > maxDis;
+			if (d < 0.01 || end) {
+				vec3 c = vec3(1);
+				vec3 normal = getNormal2(p, rd);
+				if (m == MAT_WALL) {
+					c = vec3(1,0,0);
+				} else if (m == MAT_SPIN) {
+					c = vec3(0.5);
+				} else if (m == MAT_GROUND) {
+					vec3 q = floor(p);
+					c = vec3(0.3,0.3,1);
+				}
+
+				c *= occlusion2(p, normal, rd);
+				addLightning2(c, normal, eye, p);
+				if (end) {
+					transmittance = 0.0;
+				}
+				col = mix(col, transmittance * c + scatteredLight, ref);
+				if (m == MAT_SPIN) {
+					ref *= 0.8;
+				} else {
+					ref = 0.0;
+				}
+				rd = reflect(rd, getNormal2(p, rd));
+				ro = p + rd*0.05;
+				t = 0.0;
+				break;
+			}
+			if (t > maxDis) {
+				break;
+			}
+		}
+
+		if (ref < 0.1) {
+			break;
+		}
+	}
+	finalPos = p;
+	return col;
+}
+
+
+
+
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+	float u = (fragCoord.x) * 2.0 - 1.0;
+    float v = ((fragCoord.y) * 2.0 - 1.0) * (9.0/ 16.0);//* (iResolution.y/iResolution.x);
+
+    float t = TIME;
+    vec3 start = vec3(0.3*sin(t), -24.0 + 2.0*cos(t) , -4.0 );
+
+    float alpha = smoothstep(200.0, 201.0, TIME);
+	vec3 tar = vec3(0); //eye + vec3(0.0, 0.0, 1.0);
+    vec3 eye = start + alpha*(tar - start);
+    vec3 lol = vec3(0, 1, 0);
+
+      if (t > 16.0) {
+    	eye = vec3(0.0, 0.0, -(TIME + 4.0)*3.0 + 55.0);
+    	tar = vec3(0.1);
+    	lol = vec3(0, 0, -1);
+
+        float alpha = smoothstep(25.0, 26.0, TIME);
+        eye = eye + alpha*(tar - eye);
+    } else if(t > 8.0) {
+    	eye = vec3(11.0*cos(0.4*t + 1.0),11.0*sin(0.4*t+1.0),-0.0);
+    	tar = vec3(0.1, 1.0, 0.0);
+    	lol = vec3(0.0, 0.0, -1.0);
+    }
+
+
+	vec3 dir = normalize(tar - eye);
+	vec3 right = normalize(cross(lol, dir));
+	vec3 up = cross(dir, right);
+	vec3 ro = eye;
+	vec3 rd = normalize(dir + right*u + up*v);
+
+	vec3 light = vec3(0.0, 0.0, 26.0 );
+
+	vec3 finalPos = vec3(-1.0, -1.0, -1.0);
+	float material = -1.0;
+	vec3 color = raymarch2(ro, rd, finalPos, eye);
+
+    fragColor = vec4(color, 1.0);
+    fragColor.rgb = fragColor.rgb / (fragColor.rgb + vec3(1.0));
+}
+
+
+
+////////////////////////////////////////////////
+
+
+
 #define REFLECTION
 //#define REFRACTION // TODO: I don't think this works perfectly.
 
@@ -41,11 +354,8 @@ uniform float CHANNEL_13_TOTAL;
 #define MAT_CORRIDOR 4.0
 #define MAT_FLOOR 5.0
 #define MAT_ROOF 6.0
+#define MAT_SCREEN 7.0
 
-vec2 un(vec2 a, vec2 b)
-{
-	return a.x < b.x ? a : b;
-}
 
 float sdBox( vec3 p, vec3 b )
 {
@@ -58,16 +368,9 @@ float sdCylinder( vec3 p, float r )
   return length(p.xz)-r;
 }
 
-float udRoundBox( vec3 p, vec3 b, float r )
-{
-  return length(max(abs(p)-b,0.0))-r;
-}
 
-float sdCappedCylinder( vec3 p, vec2 h )
-{
-  vec2 d = abs(vec2(length(p.xz),p.y)) - h;
-  return min(max(d.x,d.y),0.0) + length(max(d,0.0));
-}
+
+
 
 
 float hash( in vec2 p ) {
@@ -198,7 +501,7 @@ float HexagonalGrid (in vec2 position
   return smoothstep(0.0, gridThickness, d);
 }
 
-#define PI 3.141592
+
 float KaroPattern(in vec2 uv)
 {
   return 0.5*clamp(10.*sin(PI*uv.x), 0.0, 1.0)
@@ -210,6 +513,9 @@ float GridPattern(in vec2 uv)
   return 0.5*clamp(10.*sin(PI*uv.x) + 10.5, 0.0, 1.0)
        / 0.5*clamp(10.*sin(PI*uv.y) + 10.5, 0.0, 1.0);
 }
+
+)""
+R""(
 
 float cubePattern(in vec3 p, in vec3 n, in float k )
 {
@@ -259,6 +565,11 @@ vec2 map(vec3 p, vec3 rd)
 	
 	float rPattern = roofPattern(p.xz);//Basketwork2Pattern(p.xz*2.5);
 	res = un(res, vec2(-p.y + 1.0 -rPattern * 0.03 - n*0.01, MAT_ROOF));
+
+	vec3 pm = p;
+	float s = 5.0;
+	pm.z = mod(pm.z + s * 0.5, s) - s * 0.5;
+	res = un(res, vec2(udRoundBox(pm - vec3(0.9, 0.0, 0.0), vec3(0.1, 0.5, 0.5), 0.1), MAT_SCREEN));
 
 	//float s = 5.0;
 		//p.z = mod(p.z, s) - s * 0.5;
@@ -333,6 +644,7 @@ vec4 evaluateLight(vec3 pos)
 	return res;
 }
 
+
 #ifdef SHADOWS
 float shadowFunction(in vec3 ro, in vec3 rd, float mint, float maxt)
 {
@@ -353,12 +665,7 @@ float shadowFunction(in vec3 ro, in vec3 rd, float mint, float maxt)
 #define shadowFunction(ro, rd, mint, maxt) 1.0
 #endif
 
-float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
-{
-	float nrm = (s + 8.0) / (3.1415 * 8.0);
-	float k = max(0.0, dot(viewdir, reflect(light, normal)));
-    return  pow(k, s);
-}
+
 
 void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, vec3 lightPos, vec3 lightCol, float shadow, vec3 pos)
 {
@@ -491,36 +798,17 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					vec3 po = p;
 					float pattern = cubePattern(p, normal, 3.0);
 					c = vec3( 0.5, 0.0, pattern);
-					/*p *= 0.2;
-					float n = noiseOctave(vec2(p.x + p.z, p.y) * 4., 10, 0.7);
-					float gs = 0.5 + 0.5 * sin((p.x + p.z) * 50.0 + n * 60.0);
-    
-					vec3 blue = vec3(0.8);
-					vec3 rust = vec3(0.5, 0.5, 0.5);
-    
-					vec3 color = mix(rust, blue, 0.8 * gs);
-					float n2 = noiseOctave(vec2(p.x + p.z, p.y) * 100., 10, 0.7);
-					color = mix(color, vec3(n2 * 0.5 + 0.25), 0.3);*/
-
-					//float basket = QCirclePattern(vec2(p.x + p.z + iGlobalTime, p.y));
-					//c = vec3( 0.5, 0.0, basket);
-
-					//c = vec3(0.5);
-					//c = color;
-					
-					//if (abs(p.y) >= 1.99) {
-					//	float n = noiseOctave(vec2(p.z, p.x) * 4., 10, 0.7);
-					//	float gs = 0.5 + 0.5 * sin(p.z * 50.0 + n * 60.0);
-    
-					//	vec3 blue = vec3(0.8);
-					//	vec3 rust = vec3(0.5, 0.5, 0.5);
-    
-					//	vec3 color = mix(rust, blue, 0.8 * gs);
-					//	float n2 = noiseOctave(vec2(p.z, p.x) * 100., 10, 0.7);
-					//	color = mix(color, vec3(n2 * 0.5 + 0.25), 0.3);
-					///	c = color;
-					//}
 					p = po;
+				} else if (m == MAT_SCREEN) {
+					//float s = 5.0;
+					//pm.z = mod(pm.z + s * 0.5, s) - s * 0.5;
+					//res = un(res, vec2(udRoundBox(pm - vec3(0.9, 0.0, 0.0), vec3(0.1, 0.5, 0.5), 0.1), MAT_SCREEN));
+					vec4 fc;
+					float u = mod(p.z + 0.3, 1.1);
+					float v = mod(p.y + 0.5, 1.1);
+					mainImage(fc, vec2(u, v));
+					c = fc.rgb;
+					//c = vec3(1.0,0.0,0.0);
 				}
 
 				c *= occlusion(p, normal, rd);
@@ -547,6 +835,8 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				} else if (m == MAT_ROOF) {
 					return col;
 				} else if (m == MAT_FLOOR) {
+					return col;
+				} else if (m == MAT_SCREEN) {
 					return col;
 				}
 
@@ -578,7 +868,7 @@ void main()
 	vec3 up = cross(dir, right);
 
 	vec3 ro = eye;
-	vec3 rd = normalize(dir + right*u + up*v);
+	vec3 rd = normalize(dir + right*u*1.0 + up*v*1.0);
 	
 	vec3 color = raymarch(ro, rd, eye);
 	//color = pow(color, vec3(1.0/2.2)); // simple linear to gamma, exposure of 1.0
@@ -586,6 +876,13 @@ void main()
 	color /= (color + vec3(1.0));
 #endif
     fragColor = vec4(color, 1.0);
+
+	/*if (u < 0.0) {
+		//void mainImage(out vec4 fragColor, in vec2 fragCoord)
+		vec4 fc = vec4(1.0);
+		mainImage(fc, vec2(u, v));
+		fragColor = fc;
+	}*/
 } 
 
-)""  
+)""

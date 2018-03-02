@@ -99,9 +99,18 @@ void debugRereadShaderFiles()
         std::string fileContents = buffer.str();
         std::string pre = "R\"\"(";
         std::string post = ")\"\"";
-        size_t start = fileContents.find(pre);
-        size_t end = fileContents.rfind(post);
-        std::string shader = fileContents.substr(start + pre.length(), end - start - pre.length());
+
+        std::string shader;
+        size_t start = -1;
+        while (true) {
+            start = fileContents.find(pre, start + 1);
+            if (start == std::string::npos) {
+                break;
+            }
+            size_t end = fileContents.find(post, start);
+            shader += fileContents.substr(start + pre.length(), end - start - pre.length());
+        }
+
         *stringptr = shader;
     }
 }
@@ -240,8 +249,8 @@ int main()
         auto durationMs = t.time<timer::ms_t>();
         static int dbg = 0;
         if (dbg++ % 100 == 0) {
-          LOG_INFO("ms: " << durationMs.count());
-        }      
+            LOG_INFO("ms: " << durationMs.count());
+        }
         if (durationMs < desiredFrameTime) {
             std::this_thread::sleep_for(desiredFrameTime - durationMs);
         }
