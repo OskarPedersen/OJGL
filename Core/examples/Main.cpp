@@ -132,7 +132,7 @@ void buildSceneGraph(GLState& glState)
 
     auto baseScene = Buffer::construct(1024, 768, "baseScene", vertexShader, fragmentBaseScene);
 
-    auto roomScene = Buffer::construct(1024, 768, "roomScene", vertexShader, fragmentRoomScene);
+    auto roomScene = Buffer::construct(1200, 675, "roomScene", vertexShader, fragmentRoomScene);
 
     glState.addScene(Scene{ roomScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
@@ -153,7 +153,7 @@ int main()
 {
     const timer::ms_t desiredFrameTime(17);
 
-    Window window(1024, 768, false);
+    Window window(1200, 675, false);
     GLState glState;
 
     Music music(song);
