@@ -229,6 +229,13 @@ float GridPattern(in vec2 uv)
        / 0.5*clamp(10.*sin(PI*uv.y) + 10.5, 0.0, 1.0);
 }
 
+float SquareHolePattern(in vec2 uv)
+{
+  float thickness = 0.4;
+  float t = cos(uv.x*2.0) * cos(uv.y*2.0) / thickness;
+  return smoothstep(0.1, 0.0, t*t);
+}
+
  )"" R""( 
 
 float cubePattern(in vec3 p, in vec3 n, in float k )
@@ -241,7 +248,8 @@ float cubePattern(in vec3 p, in vec3 n, in float k )
 }
 
 float floorPattern(vec2 p) {
-	 return HexagonalGrid(p, 0.15, 0.15);
+	 //return HexagonalGrid(p, 0.15, 0.15);
+	 return SquareHolePattern(p*7.2 - vec2(0.0, 0.0));
 }
 
 float roofPattern(vec2 p) {
@@ -291,24 +299,20 @@ vec2 map(vec3 p, vec3 rd)
 	
 	 //n = noiseOctave(vec2(p.x, p.z) * 5.0, 10, 0.7);
 	float fPattern = floorPattern(p.xz);//HexagonalGrid(p.xz, 0.15, 0.2);
-	res = un(res, vec2(p.y + 1.0 - fPattern*0.01  - n*0.03, MAT_FLOOR));
+	res = un(res, vec2(p.y + 1.0 + fPattern*0.01  - n*0.03, MAT_FLOOR));
 	
 	
 	
 	float rPattern = roofPattern(p.xz);//Basketwork2Pattern(p.xz*2.5);
 	res = un(res, vec2(-p.y + 1.0 -rPattern * 0.03 - n*0.01, MAT_ROOF));
 
-	float d = sdCappedCylinder(p.yxz - vec3(0.0, 0, 1).yxz, vec2(0.1, 4.5));
+	/*float d = sdCappedCylinder(p.yxz - vec3(0.0, 0, 1).yxz, vec2(0.1, 4.5));
 	float h = -1.0;
 	float sd = smink(dc, d , 0.5, h);
 	if (sd < res.x) {
 		res = vec2(sd, mix(MAT_PIPE, MAT_CORRIDOR, h));
-	}	
-	/*if (d < dc) {
-		res = vec2(d, MAT_PIPE);
-	} else {
-		res = vec2(sd, res.y);
 	}*/
+
 	
 
 	//float s = 5.0;
@@ -461,7 +465,7 @@ float occlusion(vec3 p, vec3 normal, vec3 rd)
 
 vec3 raymarch(vec3 ro, vec3 rd, vec3 eye) 
 {
-	const int maxIter = 100;
+	const int maxIter = 20;
 	const float maxDis = 200.0;
 	const int jumps = 1;
 
@@ -521,15 +525,15 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					c = mix(vec3(0.5), vec3(0.85, 0.75, 0.45), pattern);
 				} else if (m == MAT_FLOOR) {
 					vec3 dp = distort(p);
-					float n = corrNoise(dp);
+					float n = corrNoise(dp*4.0);
 					float pattern = floorPattern(dp.xz);
-					vec3 mortar = vec3(0.4);
-					vec3 tile = mix(vec3(0.4, 0.6, 0.5)*1.0, vec3(0.8), n);
+					vec3 mortar = vec3(0.5);
+					vec3 tile = mix(vec3(0.4)*1.0, vec3(1.0), n);
 					/*vec3 tile = vec3(0.45, 0.55, 0.5)*0.8;
 					if (n > 0.5) {
 						tile = vec3(0.8);
 					}*/
-					c = mix(mortar, tile, pattern);
+					c = mix(tile,mortar, pattern);
 					//c = tile;
 					//c = vec3(n);
 				} else if (m == MAT_BOX) {
