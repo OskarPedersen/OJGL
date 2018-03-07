@@ -25,6 +25,9 @@ uniform float CHANNEL_13_TOTAL;
 
 //////////////////////////////////////////////////////
 
+#define PART_CURVE 10.0
+#define PART_TWIST 20.0
+
 #define PI 3.141592
 
 float udRoundBox( vec3 p, vec3 b, float r )
@@ -262,6 +265,11 @@ float corrNoise(vec3 p){
 }
 
 vec3 distort(vec3 p) {
+	if (iGlobalTime < PART_CURVE) {
+		p.x += sin(p.z*0.5);
+	} 
+	
+
 	return p;
 	/*float a = atan(p.y, p.x);
 	float l = length(p.xy);
@@ -465,7 +473,7 @@ float occlusion(vec3 p, vec3 normal, vec3 rd)
 
 vec3 raymarch(vec3 ro, vec3 rd, vec3 eye) 
 {
-	const int maxIter = 20;
+	const int maxIter = 100;
 	const float maxDis = 200.0;
 	const int jumps = 1;
 
@@ -611,8 +619,14 @@ void main()
     float u = fragCoord.x * 2.0 - 1.0;
 	float v = fragCoord.y * 2.0 - 1.0;
 
-    vec3 eye = vec3( -0.0*sin(iGlobalTime*0.5), 0.0, -1.0); //vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
-	vec3 tar = vec3(-0.0*sin((iGlobalTime+1.0)*0.5), 0.0, iGlobalTime + 1.0);//eye + vec3(0.0, 0.0, 1.0); 
+    vec3 eye = vec3( -0.0*sin(iGlobalTime*0.5), 0.0, iGlobalTime); //vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
+	vec3 ed = distort(eye);
+	vec3 td = distort(eye + vec3(0, 0, 1));
+	td.x = -td.x;
+	eye.x = -ed.x;
+	//vec3 tar = vec3(-0.0*sin((iGlobalTime+1.0)*0.5), 0.0, iGlobalTime + 1.0);//eye + vec3(0.0, 0.0, 1.0); 
+	
+	vec3 tar = td;
 
 	vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
@@ -626,14 +640,12 @@ void main()
 #ifdef TONE_MAPPING
 	color /= (color + vec3(1.0));
 #endif
+	float t = 0.5;
+	float a = abs(iGlobalTime - PART_CURVE);
+	//if (a < t) {
+		color = mix(color, vec3(0), clamp(1.0 - a / t + length(vec2(u,v)), 0, 1));
+	//}
     fragColor = vec4(color, 1.0);
-
-	/*if (u < 0.0) {
-		//void mainImage(out vec4 fragColor, in vec2 fragCoord)
-		vec4 fc = vec4(1.0);
-		mainImage(fc, vec2(u, v));
-		fragColor = fc;
-	}*/
 } 
 
 )""
