@@ -268,7 +268,12 @@ vec3 distort(vec3 p) {
 	if (iGlobalTime < PART_CURVE) {
 		p.x += sin(p.z*0.5);
 	} 
-	
+	if (iGlobalTime > PART_TWIST) {
+		float a = atan(p.y, p.x);
+		float l = length(p.xy);
+		a += p.z*0.1;
+		return vec3(cos(a) * l, sin(a) * l, p.z);
+	}
 
 	return p;
 	/*float a = atan(p.y, p.x);
@@ -382,7 +387,12 @@ vec4 lightA(vec3 p, vec3 realp)
 	float strength = 1.0;
 	int q = int((realp.z + 2.5) / 5.0);
 	if (iGlobalTime*4.0 +  q *5.0 > 100) {
-		col = vec3(1.0, 0.1, 0.0);
+		if (iGlobalTime > PART_TWIST) {
+			col = vec3(1.0, 0.3, 0.3);
+		} else {
+			col = vec3(0.0, 1.0, 0.0);
+		}
+		
 	}
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
@@ -451,7 +461,7 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 		//p.z = mod(p.z, s) - s * 0.5;
 		//return p - vec3(0.0, 0.8, 0.0);
 		int q = int(round(dp.z / s));
-		vec3 lightPos = vec3(0.0, 0.8, q*s);
+		vec3 lightPos = vec3(0.0, 0.8, q*s); // TODO
 		addLight(diffuse, specular, normal, eye, lightPos, lightA(posLightOrigo, pos).rgb, 1.0, dp);
 	}
 	color = color * (ambient + diffuse) + specular;
@@ -498,9 +508,9 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 			float fogAmount = 0.001;
 
 			int q = int((p.z + 2.5) / 5.0);
-	
+	if (iGlobalTime < PART_TWIST) {
 		fogAmount = mix(fogAmount, 0.5, smoothstep(120, 130, iGlobalTime*4.0 +  p.z));
-	
+	}
 			
 				/*vec3 fp = p;
 				float s = 3.0;
@@ -584,7 +594,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					transmittance = 0;
 				}
 				col = mix(col, transmittance * c + scatteredLight, ref);
-
+				
 				if (m == MAT_ROOM ) {
 					//if (abs(p.y) <= 1.99) {
 					
