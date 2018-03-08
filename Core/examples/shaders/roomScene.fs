@@ -26,7 +26,7 @@ uniform float CHANNEL_13_TOTAL;
 //////////////////////////////////////////////////////
 
 #define PART_CURVE 10.0
-#define PART_TWIST 20.0
+#define PART_TWIST 25.0
 
 #define PI 3.141592
 
@@ -375,11 +375,15 @@ vec3 lightAModifyPos(vec3 p)
 	return p - vec3(0.0, 0.75, 0.0);
 }
 
-vec4 lightA(vec3 p)
+vec4 lightA(vec3 p, vec3 realp)
 {
 	float dis = sdCappedCylinder(p.zxy, vec2(0.0, 0.3));//length(p);
 	vec3 col = vec3(1.0, 0.6, 0.6);
-	const float strength = 1.0;
+	float strength = 1.0;
+	int q = int((realp.z + 2.5) / 5.0);
+	if (iGlobalTime*4.0 +  q *5.0 > 100) {
+		col = vec3(1.0, 0.1, 0.0);
+	}
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
 }
@@ -392,7 +396,7 @@ vec4 lightUnion(vec4 a, vec4 b)
 vec4 evaluateLight(vec3 pos)
 {
 	pos = distort(pos);
-	vec4 res = lightA(lightAModifyPos(pos));
+	vec4 res = lightA(lightAModifyPos(pos), pos);
 	return res;
 }
 
@@ -430,13 +434,13 @@ void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, ve
 	float specStr = 1.0/(0.0 + 0.00*dis + dis*dis*dis);
 	diffRes += diffuse * lightCol * shadow;
 	
-	specRes += spec  * specStr * shadow  * 2.0;
+	specRes += spec  *  shadow  * 1.0 * length(lightCol);
 }
 
 void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 	vec3 diffuse = vec3(0.0);
 	float specular = 0.0;
-	const float ambient = 0.0;
+	const float ambient = 0.01;
 
 	{
 		vec3 dp = distort(pos);
@@ -448,7 +452,7 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 		//return p - vec3(0.0, 0.8, 0.0);
 		int q = int(round(dp.z / s));
 		vec3 lightPos = vec3(0.0, 0.8, q*s);
-		addLight(diffuse, specular, normal, eye, lightPos, lightA(posLightOrigo).rgb, 1.0, pos);
+		addLight(diffuse, specular, normal, eye, lightPos, lightA(posLightOrigo, pos).rgb, 1.0, dp);
 	}
 	color = color * (ambient + diffuse) + specular;
 }
@@ -473,7 +477,7 @@ float occlusion(vec3 p, vec3 normal, vec3 rd)
 
 vec3 raymarch(vec3 ro, vec3 rd, vec3 eye) 
 {
-	const int maxIter = 100;
+	const int maxIter = 200;
 	const float maxDis = 200.0;
 	const int jumps = 1;
 
@@ -492,6 +496,11 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 			float m = res.y;
 #ifdef VOLUMETRIC_LIGHTNING
 			float fogAmount = 0.001;
+
+			int q = int((p.z + 2.5) / 5.0);
+	
+		fogAmount = mix(fogAmount, 0.5, smoothstep(120, 130, iGlobalTime*4.0 +  p.z));
+	
 			
 				/*vec3 fp = p;
 				float s = 3.0;
@@ -645,6 +654,8 @@ void main()
 	//if (a < t) {
 		color = mix(color, vec3(0), clamp(1.0 - a / t + length(vec2(u,v)), 0, 1));
 	//}
+	float b = abs(iGlobalTime - PART_TWIST);
+	color = mix(color, vec3(0), clamp(1.0 - b / t + length(vec2(u,v)), 0, 1));
     fragColor = vec4(color, 1.0);
 } 
 
