@@ -271,7 +271,7 @@ vec3 distort(vec3 p) {
 	if (iGlobalTime > PART_TWIST) {
 		float a = atan(p.y, p.x);
 		float l = length(p.xy);
-		a += p.z*0.1;
+		a += (p.z - PART_TWIST)*0.2*smoothstep(PART_TWIST, PART_TWIST + 5, iGlobalTime);
 		return vec3(cos(a) * l, sin(a) * l, p.z);
 	}
 
@@ -326,6 +326,17 @@ vec2 map(vec3 p, vec3 rd)
 		res = vec2(sd, mix(MAT_PIPE, MAT_CORRIDOR, h));
 	}*/
 
+	if (iGlobalTime > PART_TWIST) {
+		vec3 sp = p;
+		float s = 3.0;
+		sp.z = mod(p.z + s*0.5, s) - s*0.5;
+		float d = sdCylinder(sp.yxz -vec3(0.5, 0.0, 0.0), 0.1 + 0.05 * sin(p.x*5.0 + 5.0*sin(iGlobalTime*3.0)));
+		float h = -1;
+		d = smink(d, res.x, 0.5, h);
+		res.x = d;
+		res.y += h;
+		//res = un(res, vec2(d, h > 0.5 ? MAT_PIPE : res.y));	
+	}
 	
 
 	//float s = 5.0;
@@ -388,7 +399,8 @@ vec4 lightA(vec3 p, vec3 realp)
 	int q = int((realp.z + 2.5) / 5.0);
 	if (iGlobalTime*4.0 +  q *5.0 > 100) {
 		if (iGlobalTime > PART_TWIST) {
-			col = vec3(1.0, 0.3, 0.3);
+			//col = mix(vec3(1.0, 0.4, 0.4), vec3(0.0, .2, 1.0), 0.5 + 0.5 * sin(iGlobalTime*10.0));
+			//strength = 1.0 + 0.5*sin(iGlobalTime*10.0);
 		} else {
 			col = vec3(0.0, 1.0, 0.2);
 			strength = smoothstep(PART_CURVE + 1, PART_CURVE + 2 + 1, iGlobalTime);
@@ -451,7 +463,7 @@ void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, ve
 void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 	vec3 diffuse = vec3(0.0);
 	float specular = 0.0;
-	const float ambient = 0.01;
+	const float ambient = 0.5;
 
 	{
 		vec3 dp = distort(pos);
@@ -539,7 +551,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 
 				if (m == MAT_MIRROR) {
 					c = vec3(0.0);
-				} else if (m == MAT_CORRIDOR) {
+				} else if (floor(m) == MAT_CORRIDOR) {
 					vec3 dp = distort(p);
 					float pattern = BrickPattern(dp.zy * 2.1 + vec2(0.0, 0.0));
 					float n = noiseOctave(vec2(dp.z, dp.y) * 5.0, 10, 0.7);
@@ -547,11 +559,11 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					vec3 mortar = vec3(1.0);
 					c = mix(brick, mortar, pattern);
 					//c = vec3(n);
-				} else if (m == MAT_ROOF) {
+				} else if (floor(m) == MAT_ROOF) {
 					vec3 dp = distort(p);
 					float pattern = roofPattern(dp.xz);
 					c = mix(vec3(0.5), vec3(0.85, 0.75, 0.45), pattern);
-				} else if (m == MAT_FLOOR) {
+				} else if (floor(m) == MAT_FLOOR) {
 					vec3 dp = distort(p);
 					float n = corrNoise(dp*4.0);
 					float pattern = floorPattern(dp.xz);
@@ -587,6 +599,8 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				} else {
 					c = vec3(0, 0, 1);
 				}
+
+				c = mix(c, vec3(1.0, 0.0, 0.0), mod(m, 1.0));
 
 				c *= occlusion(p, normal, rd);
 				addLightning(c, normal, eye, p);
