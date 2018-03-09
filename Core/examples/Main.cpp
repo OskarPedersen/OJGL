@@ -211,10 +211,15 @@ int main()
             if (key == Window::KEY_F1) {
                 debugRereadShaderFiles();
                 buildSceneGraph(glState);
+                glState.render();
             }
 
             if (!glState.isPaused() && timeChanged) {
                 music.setTime(glState.elapsedTime());
+            }
+
+            if (timeChanged) {
+              glState.render();
             }
 #endif
         }
@@ -240,8 +245,10 @@ int main()
             /*glState[2]["tunnelScene"] << Uniform1fv("CHANNEL_" + std::to_string(sc.channel) + "_TIME_SINCE", valuesSince)
                                       << Uniform1fv("CHANNEL_" + std::to_string(sc.channel) + "_TIME_TO", valuesTo);*/
         }
-
-        glState.render();
+        if (!glState.isPaused()) {
+          glState.render();
+        }
+        
         if (!glState.isPaused()) {
             music.updateSync();
         }

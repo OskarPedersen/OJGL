@@ -390,7 +390,8 @@ vec4 lightA(vec3 p, vec3 realp)
 		if (iGlobalTime > PART_TWIST) {
 			col = vec3(1.0, 0.3, 0.3);
 		} else {
-			col = vec3(0.0, 1.0, 0.0);
+			col = vec3(0.0, 1.0, 0.2);
+			strength = smoothstep(PART_CURVE + 1, PART_CURVE + 2 + 1, iGlobalTime);
 		}
 		
 	}
@@ -461,8 +462,8 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 		//p.z = mod(p.z, s) - s * 0.5;
 		//return p - vec3(0.0, 0.8, 0.0);
 		int q = int(round(dp.z / s));
-		vec3 lightPos = vec3(0.0, 0.8, q*s); // TODO
-		addLight(diffuse, specular, normal, eye, lightPos, lightA(posLightOrigo, pos).rgb, 1.0, dp);
+		vec3 lightPos = distort(vec3(0.0, 0.8, q*s)); // TODO
+		addLight(diffuse, specular, normal, eye, lightPos, lightA(posLightOrigo, pos).rgb, 1.0, pos);
 	}
 	color = color * (ambient + diffuse) + specular;
 }
