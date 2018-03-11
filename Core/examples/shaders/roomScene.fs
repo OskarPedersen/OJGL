@@ -243,9 +243,10 @@ float SquareHolePattern(in vec2 uv)
 
 float cubePattern(in vec3 p, in vec3 n, in float k )
 {
-	float x = QCirclePattern(p.yz);
-	float y = QCirclePattern(p.zx);
-	float z = QCirclePattern(p.xy);
+	p *= 100.0;
+	float x = StarPattern(p.yz);
+	float y = StarPattern(p.zx);
+	float z = StarPattern(p.xy);
     vec3 w = pow( abs(n), vec3(k) );
 	return (x*w.x + y*w.y + z*w.z) / (w.x+w.y+w.z);
 }
@@ -271,7 +272,8 @@ vec3 distort(vec3 p) {
 	if (iGlobalTime > PART_TWIST) {
 		float a = atan(p.y, p.x);
 		float l = length(p.xy);
-		a += (p.z - PART_TWIST)*0.2*smoothstep(PART_TWIST, PART_TWIST + 5, iGlobalTime);
+		a += (p.z - PART_TWIST)*0.2*smoothstep(PART_TWIST + 5, PART_TWIST + 10, iGlobalTime);
+		a -= (p.z - PART_TWIST)*0.2*smoothstep(PART_TWIST + 10, PART_TWIST + 15, iGlobalTime);
 		return vec3(cos(a) * l, sin(a) * l, p.z);
 	}
 
@@ -304,8 +306,8 @@ vec2 map(vec3 p, vec3 rd)
 	
 	float pattern = BrickPattern(p.zy * 2.1 + vec2(0.0, 0.0));
 	float n = corrNoise(p);
-	float dc = -sdBox(p - vec3(sign(p.x)*pattern * 0.02-n*0.05*sign(p.x), 0.0, 0.0), vec3(0.8, 10.0, 5000.0));
-	float dc2 = sdBox(p - vec3(sign(p.x)*pattern * 0.02-n*0.05*sign(p.x), 0.0, 0.0), vec3(0.8, 10.0, 5000.0));
+	float dc = -sdBox(p - vec3(sign(p.x)*pattern * 0.02-n*0.05*sign(p.x), 0.0, 0.0), vec3(1.4, 10.0, 5000.0));
+	float dc2 = sdBox(p - vec3(sign(p.x)*pattern * 0.02-n*0.05*sign(p.x), 0.0, 0.0), vec3(1.4, 10.0, 5000.0));
 	vec2 res = vec2(dc, MAT_CORRIDOR);
 	
 	
@@ -328,13 +330,25 @@ vec2 map(vec3 p, vec3 rd)
 
 	if (iGlobalTime > PART_TWIST) {
 		vec3 sp = p;
-		float s = 3.0;
+		float s = 5.0;
 		sp.z = mod(p.z + s*0.5, s) - s*0.5;
-		float d = sdCylinder(sp.yxz -vec3(0.5, 0.0, 0.0), 0.1 + 0.05 * sin(p.x*5.0 + 5.0*sin(iGlobalTime*3.0)));
+		//float d = sdCylinder(sp.yxz -vec3(0.5, 0.0, 0.0), 0.1 + 0.05 * sin(p.x*5.0 + 5.0*sin(iGlobalTime*3.0)));
+		
+		float rr = p.z;
+		vec2 rs = vec2(cos(rr)*p.x + sin(rr)*p.y ,sp.z);
+		float r = 0.1 + 0.3*(1.0 - smoothstep(0.0, 0.6, length(p.xy))) * (0.5 + 0.5 * sin(iGlobalTime* 5.0));
+		float d = length(rs - vec2(0, 1.5)) - r;
+		
+
+		//float r = 0.2;
+		//float d = length(p.xy - 0.4*vec2(sin(p.z)*2.0, 0.0)) - r;
+
+
+
 		float h = -1;
 		d = smink(d, res.x, 0.5, h);
 		res.x = d;
-		res.y += h;
+		res.y += h*0.5;
 		//res = un(res, vec2(d, h > 0.5 ? MAT_PIPE : res.y));	
 	}
 	
@@ -463,19 +477,21 @@ void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, ve
 void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 	vec3 diffuse = vec3(0.0);
 	float specular = 0.0;
-	const float ambient = 0.5;
+	const float ambient = 0.0;
 
 	{
 		vec3 dp = distort(pos);
 		// Lights without shadow
 		vec3 posLightOrigo = lightAModifyPos(dp);
-		//float shadow = shadowFunction(pos, normalize(-posLightOrigo), 0.1, length(posLightOrigo));
+		
 		float s = 5.0;
 		//p.z = mod(p.z, s) - s * 0.5;
 		//return p - vec3(0.0, 0.8, 0.0);
 		int q = int(round(dp.z / s));
-		vec3 lightPos = distort(vec3(0.0, 0.8, q*s)); // TODO
-		addLight(diffuse, specular, normal, eye, lightPos, lightA(posLightOrigo, pos).rgb, 1.0, pos);
+		vec3 lightPos = distort(vec3(0.0, 0.8, q*s)); 
+		vec3 dir = lightPos - pos;
+		float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
+		addLight(diffuse, specular, normal, eye, lightPos, lightA(posLightOrigo, pos).rgb, shadow, pos);
 	}
 	color = color * (ambient + diffuse) + specular;
 }
@@ -500,9 +516,9 @@ float occlusion(vec3 p, vec3 normal, vec3 rd)
 
 vec3 raymarch(vec3 ro, vec3 rd, vec3 eye) 
 {
-	const int maxIter = 200;
+	const int maxIter = 300;
 	const float maxDis = 200.0;
-	const int jumps = 1;
+	const int jumps = 2;
 
 	vec3 col = vec3(0);	
 	float ref = 1.0;
@@ -600,7 +616,12 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					c = vec3(0, 0, 1);
 				}
 
-				c = mix(c, vec3(1.0, 0.0, 0.0), mod(m, 1.0));
+				float ms = mod(m, 1.0) * 2.0;
+				float pat = cubePattern(distort(p)*10.0, normal, 0.1);
+				vec3 dp = distort(p);
+				vec3 pc = vec3(1.0, 0.0, 0.0);
+				c = mix(c, pc, ms);
+				//c = vec3(ms);
 
 				c *= occlusion(p, normal, rd);
 				addLightning(c, normal, eye, p);
@@ -610,11 +631,11 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				}
 				col = mix(col, transmittance * c + scatteredLight, ref);
 				
-				if (m == MAT_ROOM ) {
+				if (ms > 0.05 ) {
 					//if (abs(p.y) <= 1.99) {
 					
 					//}else{
-						return col;
+						ref *= ms * 0.2;
 					//}				
 					
 				} else if (m == MAT_MIRROR) {
@@ -652,6 +673,7 @@ void main()
 {
     float u = fragCoord.x * 2.0 - 1.0;
 	float v = fragCoord.y * 2.0 - 1.0;
+	u *= 16.0 / 9.0;
 
     vec3 eye = vec3( -0.0*sin(iGlobalTime*0.5), 0.0, iGlobalTime); //vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
 	vec3 ed = distort(eye);
