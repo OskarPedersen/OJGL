@@ -25,15 +25,12 @@ uniform float CHANNEL_13_TOTAL;
 
 //////////////////////////////////////////////////////
 
-#define PART_CURVE 10.0
-#define PART_TWIST 25.0
+
+#define PART_TWIST 15.0
 
 #define PI 3.141592
 
-float udRoundBox( vec3 p, vec3 b, float r )
-{
-  return length(max(abs(p)-b,0.0))-r;
-}
+
 
 vec2 un(vec2 a, vec2 b)
 {
@@ -57,7 +54,6 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 
 
 #define REFLECTION
-//#define REFRACTION // TODO: I don't think this works perfectly.
 
 #define VOLUMETRIC_LIGHTNING
 
@@ -65,14 +61,11 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 
 #define TONE_MAPPING
 
-#define MAT_MIRROR 1.0
-#define MAT_BOX 2.0
-#define MAT_ROOM 3.0
 
-#define MAT_FLOOR 5.0
-#define MAT_ROOF 6.0
-#define MAT_CORRIDOR 7.0
-#define MAT_PIPE 8.0
+
+#define MAT_FLOOR 1.0
+#define MAT_ROOF 2.0
+#define MAT_CORRIDOR 3.0
 
 
 float sdBox( vec3 p, vec3 b )
@@ -85,9 +78,6 @@ float sdCylinder( vec3 p, float r )
 {
   return length(p.xz)-r;
 }
-
-
-
 
 
 
@@ -123,79 +113,8 @@ float noiseOctave(in vec2 p, int octaves, float persistence)
 	return n / maxValue; 
 }
 
-#define S2(x,y) abs(fract(x))<0.8 ? 0.65 +0.35* sin(1.5707*(y-ceil(x))) : 0.0
-#define S1(x,y) abs(fract(x))<0.8 ? 0.65 +0.35* sin(3.1415*(y-ceil(x))) : 0.0
 
-float Basketwork1Pattern(in vec2 uv)
-{
-  vec2 p = uv * 4.0;
-  return max (S1(p.x, p.y), S1(p.y+1.0, p.x)); 
-}
-float Basketwork2Pattern(in vec2 uv)
-{
-  vec2 p = uv * 4.0;
-  return max (S2( p.x, p.y), S2(p.y, p.x+1.) ); 
-}
 
-float CheckerPattern(in vec2 uv)   // no AA
-{
-  uv = 0.5 - fract(uv);
-  return 0.5 + 0.5*sign(uv.x*uv.y);
-}
-#define RandomSign sign(cos(1234.*cos(h.x+9.*h.y))); 
-float HexagonalTruchetPattern(vec2 p) 
-{
-  vec2 h = p + vec2(0.58, 0.15)*p.y;
-  vec2 f = fract(h);  
-  h -= f;
-  float v = fract((h.x + h.y) / 3.0);
-  //(v < 0.6) ?   (v < 0.3) ?  h : h++ : h += step(f.yx,f) ; 
-  if (v < 0.6) {
-	if (v >= 0.3) {
-		h++;
-	} 	
-  } else {
-	h += step(f.yx,f);
-  }
-  p += vec2(0.5, 0.13)*h.y - h;          // -1/2, sqrt(3)/2
-  v = RandomSign;
-  return 0.1 / abs(0.5 -  min(min
-    (length(p - v*vec2(-1., 0.00)  ),    // closest neighbor (even or odd set, dep. s)
-     length(p - v*vec2(0.5, 0.87)) ),    // 1/2, sqrt(3)/2
-     length(p - v*vec2(0.5,-0.87))));    
-}
-
-float StarPattern( vec2 g )
-{
-  g = abs(fract(g / 100.)-0.5);
-  return max(max(g.x, g.y), min(g.x, g.y)*2.);
-}
-
-float HexagonalPattern(in vec2 p)   // no AA
-{
-  p.y = p.y * 0.866 + p.x*0.5;
-  p = mod(p, vec2(3.0));
-  return length(p);
-  /*if(p.y < p.x+1.0 && p.y > 0.0 && p.x > 0.0
-  && p.y > p.x-1.0 && p.x < 2.0 && p.y < 2.0)
-    return 0.0;
-  else if(p.y > 1.0 && (p.y < p.x || p.x < 1.0))
-    return 0.5;
-  return 1.0;*/
-
-}
-
-float lengthN(vec2 v, float n)
-{
-  return pow(pow(abs(v.x), n)+pow(abs(v.y), n), 0.89/n);
-}
-//---------------------------------------------------------
-float QCirclePattern(vec2 p)
-{
-	p*= 0.25;
-  vec2 p2 = mod(p*8.0, 4.0)-2.0;
-  return sin(lengthN(p2, 4.0)*16.0);
-}
 
 float BrickPattern(in vec2 p) 
 {
@@ -207,24 +126,9 @@ float BrickPattern(in vec2 p)
   return 1. - 0.9 * p.x * p.y;
 }
 
-float HexagonalGrid (in vec2 position         
-	                ,in float gridSize
-	                ,in float gridThickness) 
-{
-  vec2 pos = position / gridSize; 
-  pos.x *= 0.57735 * 2.0;
-  pos.y += 0.5 * mod(floor(pos.x), 2.0);
-  pos = abs(fract(pos) - 0.5);
-  float d = abs(max(pos.x*1.5 + pos.y, pos.y*2.0) - 1.0);
-  return smoothstep(0.0, gridThickness, d);
-}
 
 
-float KaroPattern(in vec2 uv)
-{
-  return 0.5*clamp(10.*sin(PI*uv.x), 0.0, 1.0)
-       + 0.5*clamp(10.*sin(PI*uv.y), 0.0, 1.0);
-}
+
 
 float GridPattern(in vec2 uv)
 {
@@ -239,36 +143,23 @@ float SquareHolePattern(in vec2 uv)
   return smoothstep(0.1, 0.0, t*t);
 }
 
- )"" R""( 
 
-float cubePattern(in vec3 p, in vec3 n, in float k )
-{
-	p *= 100.0;
-	float x = StarPattern(p.yz);
-	float y = StarPattern(p.zx);
-	float z = StarPattern(p.xy);
-    vec3 w = pow( abs(n), vec3(k) );
-	return (x*w.x + y*w.y + z*w.z) / (w.x+w.y+w.z);
-}
 
 float floorPattern(vec2 p) {
-	 //return HexagonalGrid(p, 0.15, 0.15);
 	 return SquareHolePattern(p*7.2 - vec2(0.0, 0.0));
 }
 
 float roofPattern(vec2 p) {
-	//return Basketwork2Pattern(p*2.5);
 	return GridPattern(p*5.0);
 }
 
 float corrNoise(vec3 p){
-	return noiseOctave(vec2(p.z, abs(p.y) > 0.9 ? p.x : p.y) * 5.0, 10, 0.7); // Use same noise for walls and floor
+	return 0.4*noiseOctave(vec2(p.z, abs(p.y) > 0.95 ? p.x : p.y) * 25.0, 3, 1.0); // Use same noise for walls and floor
+	//return noiseOctave(vec2(p.z, abs(p.y) > 0.95 ? p.x : p.y) * 5.0, 10, 0.7); // Use same noise for walls and floor
 }
 
 vec3 distort(vec3 p) {
-	if (iGlobalTime < PART_CURVE) {
-		p.x += sin(p.z*0.5);
-	} 
+
 	if (iGlobalTime > PART_TWIST) {
 		float a = atan(p.y, p.x);
 		float l = length(p.xy);
@@ -312,36 +203,26 @@ vec2 map(vec3 p, vec3 rd)
 	
 	
 	
-	 //n = noiseOctave(vec2(p.x, p.z) * 5.0, 10, 0.7);
-	float fPattern = floorPattern(p.xz);//HexagonalGrid(p.xz, 0.15, 0.2);
+
+	float fPattern = floorPattern(p.xz);
 	res = un(res, vec2(p.y + 1.0 + fPattern*0.01  - n*0.03, MAT_FLOOR));
 	
 	
 	
-	float rPattern = roofPattern(p.xz);//Basketwork2Pattern(p.xz*2.5);
+	float rPattern = roofPattern(p.xz);
 	res = un(res, vec2(-p.y + 1.0 -rPattern * 0.03 - n*0.01, MAT_ROOF));
 
-	/*float d = sdCappedCylinder(p.yxz - vec3(0.0, 0, 1).yxz, vec2(0.1, 4.5));
-	float h = -1.0;
-	float sd = smink(dc, d , 0.5, h);
-	if (sd < res.x) {
-		res = vec2(sd, mix(MAT_PIPE, MAT_CORRIDOR, h));
-	}*/
 
 	if (iGlobalTime > PART_TWIST) {
 		vec3 sp = p;
 		float s = 5.0;
 		sp.z = mod(p.z + s*0.5, s) - s*0.5;
-		//float d = sdCylinder(sp.yxz -vec3(0.5, 0.0, 0.0), 0.1 + 0.05 * sin(p.x*5.0 + 5.0*sin(iGlobalTime*3.0)));
 		
 		float rr = p.z;
 		vec2 rs = vec2(cos(rr)*p.x + sin(rr)*p.y ,sp.z);
 		float r = 0.1 + 0.3*(1.0 - smoothstep(0.0, 0.6, length(p.xy))) * (0.5 + 0.5 * sin(iGlobalTime* 5.0));
 		float d = length(rs - vec2(0, 1.5)) - r;
-		
 
-		//float r = 0.2;
-		//float d = length(p.xy - 0.4*vec2(sin(p.z)*2.0, 0.0)) - r;
 
 
 
@@ -349,52 +230,8 @@ vec2 map(vec3 p, vec3 rd)
 		d = smink(d, res.x, 0.5, h);
 		res.x = d;
 		res.y += h*0.5;
-		//res = un(res, vec2(d, h > 0.5 ? MAT_PIPE : res.y));	
 	}
 	
-
-	//float s = 5.0;
-		//p.z = mod(p.z, s) - s * 0.5;
-		//return p - vec3(0.0, 0.8, 0.0);
-		//int q = int(round(p.z / s));
-		//vec3 lightPos = vec3(0.0, 0.8, q*s );
-	//res = un(res, vec2(length(p-lightPos) - 0.1,MAT_FLOOR));
-
-
-	/*vec3 po = p;
-	vec3 normal;
-    vec3 ep = vec3(0.01, 0, 0);
-    normal.x = udRoundBox(p + ep.xyz, vec3(5.0, 2.0, 5.0), 2.0) - udRoundBox(p - ep.xyz, vec3(5.0, 2.0, 5.0), 2.0);
-    normal.y = udRoundBox(p + ep.yxz, vec3(5.0, 2.0, 5.0), 2.0) - udRoundBox(p - ep.yxz, vec3(5.0, 2.0, 5.0), 2.0);
-    normal.z = udRoundBox(p + ep.yzx, vec3(5.0, 2.0, 5.0), 2.0) - udRoundBox(p - ep.yzx, vec3(5.0, 2.0, 5.0), 2.0);
-	normal = normalize(normal);
-	float pattern = cubePattern(p, normal, 1.0);	
-	vec2 res = vec2(-udRoundBox(po - normal * pattern * 0.01, vec3(5.0, 2.0, 5.0), 2.0), MAT_ROOM);*/
-	//if (abs(p.y) >= 1.9) {
-		//p *= 0.2;
-	
-		//float n = noiseOctave(vec2(p.x, p.z) * 4., 10, 0.7);
-		//float gs = 0.5 + 0.5 * sin(p.x * 50.0 + n * 60.0);
-		//float n2 = noiseOctave(vec2(p.x, p.z) * 100., 10, 0.7);
-
-		//res = vec2(-sdBox(po - vec3(0.0, sign(p.y)*gs*0.0075, 0.0), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
-		//vec2 res = vec2(-sdBox(po - vec3(0.0, 0.0, 0.0), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
-		//return res;
-	//} else {
-		//float basket =  QCirclePattern(vec2(p.x + p.z + iGlobalTime, p.y));
-		//res = vec2(-sdBox(po - vec3(basket*0.0075, 0.0, basket*0.0075), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
-		//return res;
-
-		//p *= 0.2;
-	
-		//float n = noiseOctave(vec2(p.x + p.z, p.y) * 4., 10, 0.7);
-		//float gs = 0.5 + 0.5 * sin(p.x * 50.0 + n * 60.0);
-		//float n2 = noiseOctave(vec2(p.x + p.z, p.y) * 100., 10, 0.7);
-
-	//	vec2 res = vec2(-sdBox(po - vec3(gs*0.0075, 0.0, gs*0.0075), vec3(5.0, 2.0, 5.0)), MAT_ROOM);
-	//	return res;
-	//}
-	//res = un(res, vec2(udRoundBox(p - vec3(1, 0, 0), vec3(0.4), 0.1), MAT_MIRROR));
 	return res;
 }
 
@@ -407,18 +244,15 @@ vec3 lightAModifyPos(vec3 p)
 
 vec4 lightA(vec3 p, vec3 realp)
 {
-	float dis = sdCappedCylinder(p.zxy, vec2(0.0, 0.3));//length(p);
+	float dis = sdCappedCylinder(p.zxy, vec2(0.0, 0.3));
 	vec3 col = vec3(1.0, 0.6, 0.6);
 	float strength = 1.0;
 	int q = int((realp.z + 2.5) / 5.0);
-	if (iGlobalTime*4.0 +  q *5.0 > 100) {
-		if (iGlobalTime > PART_TWIST) {
-			//col = mix(vec3(1.0, 0.4, 0.4), vec3(0.0, .2, 1.0), 0.5 + 0.5 * sin(iGlobalTime*10.0));
-			//strength = 1.0 + 0.5*sin(iGlobalTime*10.0);
-		} else {
+	if (iGlobalTime*4.0 +  q *5.0 > 60 && iGlobalTime <= PART_TWIST) {
+
 			col = vec3(0.0, 1.0, 0.2);
-			strength = smoothstep(PART_CURVE + 1, PART_CURVE + 2 + 1, iGlobalTime);
-		}
+			strength = smoothstep(0 + 1, 0 + 2 + 1, iGlobalTime);
+
 		
 	}
 	vec3 res = col * strength / (dis * dis * dis);
@@ -466,7 +300,7 @@ void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, ve
 	vec3 invLight = normalize(lightPos - pos);
 	float diffuse = max(0.0, dot(invLight, normal));
 	float spec = specular(normal, -invLight, normalize(eye - pos), 100.0);
-	float dis = length(lightPos - pos);//length(lightPos);
+	float dis = length(lightPos - pos);
 	float str = 1.0/(0.5 + 0.01*dis + 0.1*dis*dis);
 	float specStr = 1.0/(0.0 + 0.00*dis + dis*dis*dis);
 	diffRes += diffuse * lightCol * shadow;
@@ -481,12 +315,9 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 
 	{
 		vec3 dp = distort(pos);
-		// Lights without shadow
 		vec3 posLightOrigo = lightAModifyPos(dp);
 		
 		float s = 5.0;
-		//p.z = mod(p.z, s) - s * 0.5;
-		//return p - vec3(0.0, 0.8, 0.0);
 		int q = int(round(dp.z / s));
 		vec3 lightPos = distort(vec3(0.0, 0.8, q*s)); 
 		vec3 dir = lightPos - pos;
@@ -538,17 +369,10 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 
 			int q = int((p.z + 2.5) / 5.0);
 	if (iGlobalTime < PART_TWIST) {
-		fogAmount = mix(fogAmount, 0.5, smoothstep(120, 130, iGlobalTime*4.0 +  p.z));
+		fogAmount = mix(fogAmount, 0.5, smoothstep(70, 80, iGlobalTime*4.0 +  p.z));
 	}
 			
-				/*vec3 fp = p;
-				float s = 3.0;
-				fp.z = mod(fp.z + s*0.5, s) - s*0.5;
-				fp.y += 0.5;
-				fp.x += 0.4;
-				float fd = length(fp);
-				fogAmount += fd < 0.5 ? 1.0 : 0.0;//max(0.0, 1.0 - d); */
-				//fogAmount += max(0.0, p.y - 0.3);
+
 			
 
 			vec4 lightColDis = evaluateLight(p);
@@ -565,9 +389,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				vec3 c = vec3(1, 0, 1);
 				vec3 normal = getNormal(p, rd);
 
-				if (m == MAT_MIRROR) {
-					c = vec3(0.0);
-				} else if (floor(m) == MAT_CORRIDOR) {
+				if (floor(m) == MAT_CORRIDOR) {
 					vec3 dp = distort(p);
 					float pattern = BrickPattern(dp.zy * 2.1 + vec2(0.0, 0.0));
 					float n = noiseOctave(vec2(dp.z, dp.y) * 5.0, 10, 0.7);
@@ -592,32 +414,10 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					c = mix(tile,mortar, pattern);
 					//c = tile;
 					//c = vec3(n);
-				} else if (m == MAT_BOX) {
-					c = vec3(1.0, 0.0, 0.0);
-				} else if (m == MAT_ROOM) {
-					vec3 po = p;
-					float pattern = cubePattern(p, normal, 3.0);
-					c = vec3( 0.5, 0.0, pattern);
-					p = po;
-				} else if (m == MAT_PIPE) {
-					c = vec3(1.0, 0.0, 0.0);
-				} else if (m > MAT_CORRIDOR && m < MAT_PIPE) {
-					vec3 dp = distort(p);
-					float pattern = BrickPattern(dp.zy * 2.1 + vec2(0.0, 0.0));
-					float n = noiseOctave(vec2(dp.z, dp.y) * 5.0, 10, 0.7);
-					vec3 brick = vec3(1.0, 0.6, 0.35)*(0.1 + 0.9 * n);
-					vec3 mortar = vec3(1.0);
-					vec3 a = mix(brick, mortar, pattern);
-
-					vec3 b = vec3(1.0, 0.0, 0.0);
-
-					c = mix(b, a, MAT_PIPE - m);
-				} else {
-					c = vec3(0, 0, 1);
 				}
 
 				float ms = mod(m, 1.0) * 2.0;
-				float pat = cubePattern(distort(p)*10.0, normal, 0.1);
+
 				vec3 dp = distort(p);
 				vec3 pc = vec3(1.0, 0.0, 0.0);
 				c = mix(c, pc, ms);
@@ -632,24 +432,8 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				col = mix(col, transmittance * c + scatteredLight, ref);
 				
 				if (ms > 0.05 ) {
-					//if (abs(p.y) <= 1.99) {
-					
-					//}else{
 						ref *= ms * 0.2;
-					//}				
-					
-				} else if (m == MAT_MIRROR) {
-					ref *= 0.9;
-				} else if (m == MAT_BOX) {
-					ref *= 0.5;
-				}  else if (m == MAT_CORRIDOR) {
-					return col;
-				} else if (m == MAT_ROOF) {
-					return col;
-				} else if (m == MAT_FLOOR) {
-					return col;
-				} else if (m == MAT_PIPE) {
-					return col;
+			
 				} else {
 					return col;
 				}
@@ -675,12 +459,22 @@ void main()
 	float v = fragCoord.y * 2.0 - 1.0;
 	u *= 16.0 / 9.0;
 
-    vec3 eye = vec3( -0.0*sin(iGlobalTime*0.5), 0.0, iGlobalTime); //vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
+    vec3 eye = vec3( 0.0, 0.0, iGlobalTime); 
+	if (iGlobalTime > PART_TWIST) {
+		//vec3 sp = p;
+		//float s = 5.0;
+		//sp.z = mod(p.z + s*0.5, s) - s*0.5;	
+		//float rr = p.z;
+		//vec2 rs = vec2(cos(rr)*p.x + sin(rr)*p.y ,sp.z);
+
+		float o = 3.0;
+		eye.x = cos(eye.z * 0.2 + o) * 0.7;
+		eye.y = sin(eye.z * 0.2 + o) * 0.5;
+	}
 	vec3 ed = distort(eye);
 	vec3 td = distort(eye + vec3(0, 0, 1));
 	td.x = -td.x;
 	eye.x = -ed.x;
-	//vec3 tar = vec3(-0.0*sin((iGlobalTime+1.0)*0.5), 0.0, iGlobalTime + 1.0);//eye + vec3(0.0, 0.0, 1.0); 
 	
 	vec3 tar = td;
 
@@ -692,15 +486,15 @@ void main()
 	vec3 rd = normalize(dir + right*u*1.0 + up*v*1.0);
 	
 	vec3 color = raymarch(ro, rd, eye);
-	//color = pow(color, vec3(1.0/2.2)); // simple linear to gamma, exposure of 1.0
+	
 #ifdef TONE_MAPPING
 	color /= (color + vec3(1.0));
 #endif
 	float t = 0.5;
-	float a = abs(iGlobalTime - PART_CURVE);
-	//if (a < t) {
+	float a = abs(iGlobalTime - 0.0);
+
 		color = mix(color, vec3(0), clamp(1.0 - a / t + length(vec2(u,v)), 0, 1));
-	//}
+
 	float b = abs(iGlobalTime - PART_TWIST);
 	color = mix(color, vec3(0), clamp(1.0 - b / t + length(vec2(u,v)), 0, 1));
     fragColor = vec4(color, 1.0);

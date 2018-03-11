@@ -17,18 +17,19 @@ void main()
     	fragColor = texture(inTexture0, uv);
     }*/
 	fragColor = texture(inTexture0, uv);
-	if (iGlobalTime > 25) {
+	//if (iGlobalTime > 15) {
 		float a = 0.5 + 0.5 * sin(iGlobalTime* 5.0);
 		a = a * a * a;
+		a = 1.0;
 		vec2 dir = normalize(uv - vec2(0.5));
 		float l = length(vec2(0.5) - uv);
 		//l = 0.5;
 		//a = 1.0;
-		fragColor.g = texture(inTexture0, uv + dir * a * 0.05*l).g;
-		fragColor.b = texture(inTexture0,  uv + dir * a * 0.1*l).b;
+		fragColor.g = texture(inTexture0, uv + dir * a * 0.01*l).g;
+		fragColor.b = texture(inTexture0,  uv + dir * a * 0.02*l).b;
 
 		//fragColor.rgb = vec3(dir.y);
-	} 
+	//} 
     
     //fragColor = texture(inTexture0, uv);
 

@@ -253,9 +253,9 @@ int main()
             /*glState[2]["tunnelScene"] << Uniform1fv("CHANNEL_" + std::to_string(sc.channel) + "_TIME_SINCE", valuesSince)
                                       << Uniform1fv("CHANNEL_" + std::to_string(sc.channel) + "_TIME_TO", valuesTo);*/
         }
-        if (!glState.isPaused()) {
-            glState.render();
-        }
+        //if (!glState.isPaused()) {
+        glState.render();
+        //}
 
         if (!glState.isPaused()) {
             music.updateSync();
@@ -263,9 +263,9 @@ int main()
         t.end();
         auto durationMs = t.time<timer::ms_t>();
         static int dbg = 0;
-        if (dbg++ % 100 == 0) {
-            LOG_INFO("ms: " << durationMs.count());
-        }
+        //if (dbg++ % 100 == 0) {
+        LOG_INFO("ms: " << durationMs.count());
+        //}
         if (durationMs < desiredFrameTime) {
             std::this_thread::sleep_for(desiredFrameTime - durationMs);
         }
