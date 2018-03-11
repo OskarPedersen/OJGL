@@ -15,6 +15,7 @@
     <None Include="examples\shaderlibs\distanceFunctions.fs" />
     <None Include="examples\shaderlibs\misc.fs" />
     <None Include="examples\shaders\roomScene.fs" />
+    <None Include="examples\shaders\roomScenePost.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="examples\Main.cpp" />

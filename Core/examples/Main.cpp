@@ -70,6 +70,11 @@ std::string fragmentRoomScene{
 #include SHADER_FRAGMENT_ROOM_SCENE
 };
 
+#define SHADER_FRAGMENT_ROOM_SCENE_POST "shaders/roomScenePost.fs"
+std::string fragmentRoomScenePost{
+#include SHADER_FRAGMENT_ROOM_SCENE_POST
+};
+
 using namespace ojgl;
 
 #ifdef _DEBUG
@@ -89,6 +94,7 @@ void debugRereadShaderFiles()
     shaders[&fragmentBaseScene] = "examples/" SHADER_FRAGMENT_BASE_SCENE;
 
     shaders[&fragmentRoomScene] = "examples/" SHADER_FRAGMENT_ROOM_SCENE;
+    shaders[&fragmentRoomScenePost] = "examples/" SHADER_FRAGMENT_ROOM_SCENE_POST;
 
     for (auto[stringptr, path] : shaders) {
         std::ifstream shaderFile(path);
@@ -133,8 +139,9 @@ void buildSceneGraph(GLState& glState)
     auto baseScene = Buffer::construct(1024, 768, "baseScene", vertexShader, fragmentBaseScene);
 
     auto roomScene = Buffer::construct(1920, 1080, "roomScene", vertexShader, fragmentRoomScene);
+    auto roomScenePost = Buffer::construct(1920, 1080, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
 
-    glState.addScene(Scene{ roomScene, timer::ms_t(3000000) });
+    glState.addScene(Scene{ roomScenePost, timer::ms_t(3000000) });
     glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ DOFFinal, timer::ms_t(30000) });
     glState.addScene(Scene{ tunnelScene, timer::ms_t(30000) });
@@ -227,6 +234,7 @@ int main()
         auto iGlobalTime = glState.relativeSceneTime();
 
         glState[0]["roomScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[0]["roomScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         glState[1]["baseScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         /*glState[2]["tunnel"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f)
                              << Uniform1f("CHANNEL_12_TOTAL", static_cast<GLfloat>(music.syncChannels[12].getTotalHitsPerNote(0)))
