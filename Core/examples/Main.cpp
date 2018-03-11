@@ -138,8 +138,8 @@ void buildSceneGraph(GLState& glState)
 
     auto baseScene = Buffer::construct(1024, 768, "baseScene", vertexShader, fragmentBaseScene);
 
-    auto roomScene = Buffer::construct(1920, 1080, "roomScene", vertexShader, fragmentRoomScene);
-    auto roomScenePost = Buffer::construct(1920, 1080, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
+    auto roomScene = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "roomScene", vertexShader, fragmentRoomScene);
+    auto roomScenePost = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
 
     glState.addScene(Scene{ roomScenePost, timer::ms_t(3000000) });
     glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
@@ -160,7 +160,7 @@ int main()
 {
     const timer::ms_t desiredFrameTime(17);
 
-    Window window(1920, 1080, false);
+    Window window(1920 * 3 / 4, 1080 * 3 / 4, false);
     GLState glState;
 
     Music music(song);
@@ -263,9 +263,9 @@ int main()
         t.end();
         auto durationMs = t.time<timer::ms_t>();
         static int dbg = 0;
-        //if (dbg++ % 100 == 0) {
-        LOG_INFO("ms: " << durationMs.count());
-        //}
+        if (dbg++ % 100 == 0) {
+            LOG_INFO("ms: " << durationMs.count());
+        }
         if (durationMs < desiredFrameTime) {
             std::this_thread::sleep_for(desiredFrameTime - durationMs);
         }
