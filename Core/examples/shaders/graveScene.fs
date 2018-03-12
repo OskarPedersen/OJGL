@@ -82,8 +82,9 @@ vec2 map(vec3 p, vec3 rd)
 		float s = 4.0;
 		vec3 q = mod(p + s*0.5, s) - s * 0.5;
 		q.y = p.y;
-		float d = sdBox(q, vec3(0.5));
-		res = vec2(d, MAT_GRAVE);
+		float d = sdBox(q - vec3(0, 0.5, 0), vec3(0.1, 0.5, 0.05));
+		float d2 = sdBox(q - vec3(0, 0.7, 0), vec3(0.4, 0.1, 0.05));
+		res = vec2(min(d, d2), MAT_GRAVE);
 	}
 
 	{
@@ -95,17 +96,17 @@ vec2 map(vec3 p, vec3 rd)
 
 vec3 lightAModifyPos(vec3 p)
 {
-	float size = 4.0;
-	p.x = mod(p.x + size * 0.5, size) - size * 0.5;
-	p.z = mod(p.z + size * 0.5, size) - size * 0.5;
-	return p - vec3(2.0 + 3.0 * sin(iGlobalTime), 2.0, 0);
+	float size = 3.0;
+	//p.x = mod(p.x + size * 0.5, size) - size * 0.5;
+	//p.z = mod(p.z + size * 0.5, size) - size * 0.5;
+	return p - vec3(2.0, 2.0, 2.0);
 }
 
 vec4 lightA(vec3 p)
 {
 	float dis = length(p);
 	vec3 col = vec3(1.0);
-	const float strength = 3.0;
+	const float strength = 50.0;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
 }
@@ -163,7 +164,7 @@ void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, ve
 void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 	vec3 diffuse = vec3(0.0);
 	float specular = 0.0;
-	const float ambient = 0.3;
+	const float ambient = 0.0;
 
 	{
 		// Lights without shadow
@@ -263,6 +264,7 @@ void main()
 {
     float u = fragCoord.x * 2.0 - 1.0;
 	float v = fragCoord.y * 2.0 - 1.0;
+	u *= 16.0 / 9.0;
 
     vec3 eye = vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
 	vec3 tar = vec3(0 ,0, 0); 
