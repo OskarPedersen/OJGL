@@ -75,6 +75,11 @@ std::string fragmentRoomScenePost{
 #include SHADER_FRAGMENT_ROOM_SCENE_POST
 };
 
+#define SHADER_FRAGMENT_GRAVE_SCENE "shaders/graveScene.fs"
+std::string fragmentGraveScene{
+#include SHADER_FRAGMENT_GRAVE_SCENE
+};
+
 using namespace ojgl;
 
 #ifdef _DEBUG
@@ -95,6 +100,8 @@ void debugRereadShaderFiles()
 
     shaders[&fragmentRoomScene] = "examples/" SHADER_FRAGMENT_ROOM_SCENE;
     shaders[&fragmentRoomScenePost] = "examples/" SHADER_FRAGMENT_ROOM_SCENE_POST;
+
+    shaders[&fragmentGraveScene] = "examples/" SHADER_FRAGMENT_GRAVE_SCENE;
 
     for (auto[stringptr, path] : shaders) {
         std::ifstream shaderFile(path);
@@ -141,6 +148,9 @@ void buildSceneGraph(GLState& glState)
     auto roomScene = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "roomScene", vertexShader, fragmentRoomScene);
     auto roomScenePost = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
 
+    auto graveScene = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "graveScene", vertexShader, fragmentGraveScene);
+
+    glState.addScene(Scene{ graveScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ roomScenePost, timer::ms_t(3000000) });
     glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ DOFFinal, timer::ms_t(30000) });
@@ -233,9 +243,10 @@ int main()
 
         auto iGlobalTime = glState.relativeSceneTime();
 
-        glState[0]["roomScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
-        glState[0]["roomScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
-        glState[1]["baseScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[0]["graveScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[1]["roomScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[1]["roomScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[2]["baseScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         /*glState[2]["tunnel"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f)
                              << Uniform1f("CHANNEL_12_TOTAL", static_cast<GLfloat>(music.syncChannels[12].getTotalHitsPerNote(0)))
                              << Uniform1f("CHANNEL_13_TOTAL", static_cast<GLfloat>(music.syncChannels[13].getTotalHitsPerNote(0)));*/
@@ -253,9 +264,9 @@ int main()
             /*glState[2]["tunnelScene"] << Uniform1fv("CHANNEL_" + std::to_string(sc.channel) + "_TIME_SINCE", valuesSince)
                                       << Uniform1fv("CHANNEL_" + std::to_string(sc.channel) + "_TIME_TO", valuesTo);*/
         }
-        //if (!glState.isPaused()) {
-        glState.render();
-        //}
+        if (!glState.isPaused()) {
+          glState.render();
+        }
 
         if (!glState.isPaused()) {
             music.updateSync();

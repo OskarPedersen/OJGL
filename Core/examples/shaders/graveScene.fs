@@ -35,9 +35,10 @@ uniform float CHANNEL_13_TOTAL;
 
 #define TONE_MAPPING
 
-#define MAT_MIRROR 1.0
-#define MAT_BOX 2.0
-#define MAT_ROOM 3.0
+
+
+#define MAT_GRAVE 1.0
+#define MAT_GROUND 2.0
 
 vec2 un(vec2 a, vec2 b)
 {
@@ -76,42 +77,40 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 
 vec2 map(vec3 p, vec3 rd) 
 {
-	vec2 res = vec2(-sdBox(p - vec3(0, 3.0, 0), vec3(5.0, 5.0, 10.0)), MAT_ROOM);
-	res = un(res, vec2(sdBox(p - vec3(0, 0, 3.0), vec3(1.0, 2.0, 0.1)), MAT_MIRROR));
-	res = un(res, vec2(udRoundBox(p - vec3(0,-0.5, 0), vec3(0.4), 0.1), MAT_BOX));
-	res = un(res, vec2(udRoundBox(p - vec3(0, 1.0, 0), vec3(0.25), 0.05), MAT_BOX));
+	vec2 res;
+	{
+		float s = 4.0;
+		vec3 q = mod(p + s*0.5, s) - s * 0.5;
+		q.y = p.y;
+		float d = sdBox(q, vec3(0.5));
+		res = vec2(d, MAT_GRAVE);
+	}
+
+	{
+		float d = p.y;
+		res = un(res, vec2(d, MAT_GROUND));
+	}
 	return res;
 }
 
 vec3 lightAModifyPos(vec3 p)
 {
 	float size = 4.0;
-	p.z = mod(p.z, size) - size * 0.5;
-	return p - vec3(2.0 + 3.0 * sin(iGlobalTime), 0, 0);
+	p.x = mod(p.x + size * 0.5, size) - size * 0.5;
+	p.z = mod(p.z + size * 0.5, size) - size * 0.5;
+	return p - vec3(2.0 + 3.0 * sin(iGlobalTime), 2.0, 0);
 }
 
 vec4 lightA(vec3 p)
 {
 	float dis = length(p);
-	vec3 col = vec3(1.0, 0.0, 0.0);
+	vec3 col = vec3(1.0);
 	const float strength = 3.0;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
 }
 
-vec3 lightBModifyPos(vec3 p)
-{
-	return p - vec3(-1.0, 1.0 + 2.0 * sin(iGlobalTime), 0.0);
-}
 
-vec4 lightB(vec3 p)
-{
-	float dis = length(p);
-	vec3 col = vec3(0.0, 0.0, 1.0);
-	const float strength = 10.0;
-	vec3 res = col * strength / (dis * dis * dis);
-	return vec4(res, dis);
-}
 
 vec4 lightUnion(vec4 a, vec4 b)
 {
@@ -121,7 +120,7 @@ vec4 lightUnion(vec4 a, vec4 b)
 vec4 evaluateLight(vec3 pos)
 {
 	vec4 res = lightA(lightAModifyPos(pos));
-	res = lightUnion(res, lightB(lightBModifyPos(pos)));
+	//res = lightUnion(res, lightB(lightBModifyPos(pos)));
 	return res;
 }
 
@@ -170,13 +169,6 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 		// Lights without shadow
 		vec3 posLightOrigo = lightAModifyPos(pos);
 		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos);
-	}
-	{	
-		// Light with shadow
-		vec3 posLightOrigo = lightBModifyPos(pos);
-		float shadow = shadowFunction(pos, normalize(-posLightOrigo), 0.1, length(posLightOrigo));
-		//if (shadow != 0.0) // TODO: Test if this gives better performance
-		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightB(posLightOrigo).rgb, shadow, pos);
 	}
 	color = color * (ambient + diffuse) + specular;
 }
@@ -232,12 +224,10 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				vec3 c = vec3(1, 0, 1);
 				vec3 normal = getNormal(p, rd);
 
-				if (m == MAT_MIRROR) {
-					c = vec3(0.0);
-				} else if (m == MAT_BOX) {
+				if (m == MAT_GRAVE) {
 					c = vec3(1.0, 0.0, 0.0);
-				} else if (m == MAT_ROOM) {
-					c = vec3(0.5);
+				} else if (m == MAT_GROUND) {
+					c = vec3(0, 1, 0);
 				}
 
 				c *= occlusion(p, normal, rd);
@@ -248,12 +238,10 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				}
 				col = mix(col, transmittance * c + scatteredLight, ref);
 
-				if (m == MAT_ROOM) {
-					return col;
-				} else if (m == MAT_MIRROR) {
-					ref *= 0.9;
-				} else if (m == MAT_BOX) {
+				if (m == -1) {
 					ref *= 0.5;
+				} else {
+					return col;
 				}
 
 #ifdef REFLECTION
