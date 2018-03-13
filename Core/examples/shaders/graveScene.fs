@@ -39,6 +39,7 @@ uniform float CHANNEL_13_TOTAL;
 
 #define MAT_GRAVE 1.0
 #define MAT_GROUND 2.0
+#define MAT_PATH 3.0
 
 vec2 un(vec2 a, vec2 b)
 {
@@ -68,6 +69,55 @@ float sdCappedCylinder( vec3 p, vec2 h )
 }
 
 
+float hash( in vec2 p ) {
+	float h = dot(p,vec2(127.1,311.7));	
+    return fract(sin(h)*43758.5453123);
+}
+
+float noise( in vec2 p ) {
+    vec2 i = floor( p );
+    vec2 f = fract( p );	
+	vec2 u = f*f*(3.0-2.0*f);
+    return mix( mix( hash( i + vec2(0.0,0.0) ), 
+                     hash( i + vec2(1.0,0.0) ), u.x),
+                mix( hash( i + vec2(0.0,1.0) ), 
+                     hash( i + vec2(1.0,1.0) ), u.x), u.y);
+}
+
+float noiseOctave(in vec2 p, int octaves, float persistence)
+{
+	float n = 0.;
+	float amplitude = 1.;
+	float frequency = 1.;
+	float maxValue = 0.;
+
+	for(int i = 0; i < octaves; i++)
+	{
+		n += noise((p+float(i)) * frequency) * amplitude;
+		maxValue += amplitude;
+		amplitude *= persistence;
+		frequency *= 2.0;
+	}
+	return n / maxValue; 
+}
+
+float HexagonalGrid (in vec2 position         
+	                ,in float gridSize
+	                ,in float gridThickness) 
+{
+  vec2 pos = position / gridSize; 
+  pos.x *= 0.57735 * 2.0;
+  pos.y += 0.5 * mod(floor(pos.x), 2.0);
+  pos = abs(fract(pos) - 0.5);
+  float d = abs(max(pos.x*1.5 + pos.y, pos.y*2.0) - 1.0);
+  return smoothstep(0.0, gridThickness, d);
+}
+
+float pathPattern(in vec2 p) {
+	return HexagonalGrid(p, 0.3, 0.1);
+}
+
+
 float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 {
 	float nrm = (s + 8.0) / (3.1415 * 8.0);
@@ -77,9 +127,10 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 
 vec2 map(vec3 p, vec3 rd) 
 {
-	vec2 res;
-	{
-		float s = 4.0;
+	const float pathWidth = 1.5;
+	vec2 res = vec2(99999999, 0);
+	if (abs(p.z) > pathWidth) {
+		float s = 2.0;
 		vec3 q = mod(p + s*0.5, s) - s * 0.5;
 		q.y = p.y;
 		float d = sdBox(q - vec3(0, 0.5, 0), vec3(0.1, 0.5, 0.05));
@@ -89,7 +140,14 @@ vec2 map(vec3 p, vec3 rd)
 
 	{
 		float d = p.y;
-		res = un(res, vec2(d, MAT_GROUND));
+		if (abs(p.z) > pathWidth) {
+			 d -= 0.1*noiseOctave(p.xz*10.0, 3, 0.7);
+			 res = un(res, vec2(d, MAT_GROUND));
+		} else {
+			d -= 0.02*pathPattern(p.xz);
+			res = un(res, vec2(d, MAT_PATH));
+		}
+		
 	}
 	return res;
 }
@@ -145,7 +203,7 @@ float shadowFunction(in vec3 ro, in vec3 rd, float mint, float maxt)
 #define shadowFunction(ro, rd, mint, maxt) 1.0
 #endif
 
-void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, vec3 lightPos, vec3 lightCol, float shadow, vec3 pos)
+void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, vec3 lightPos, vec3 lightCol, float shadow, vec3 pos, float matSpec)
 {
 	vec3 col = vec3(0.0);
 	vec3 invLight = normalize(lightPos - pos);
@@ -161,7 +219,7 @@ void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, ve
 	specRes += spec  *  shadow  * 1.0 * length(lightCol);
 }
 
-void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
+void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) {
 	vec3 diffuse = vec3(0.0);
 	float specular = 0.0;
 	const float ambient = 0.0;
@@ -226,9 +284,17 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				vec3 normal = getNormal(p, rd);
 
 				if (m == MAT_GRAVE) {
-					c = vec3(1.0, 0.0, 0.0);
+					c = vec3(1.0);
 				} else if (m == MAT_GROUND) {
-					c = vec3(0, 1, 0);
+					
+					c = vec3(0, abs(p.y), 0);
+				} else if (m == MAT_PATH) {
+					float n = noiseOctave(p.xz, 10, 0.8);
+					float p = pathPattern(p.xz);
+					vec3 brick = vec3(0.05, 0.1, 0.3);
+					vec3 mortar = vec3(0.5);
+					c = mix(mortar, brick, p);
+					c *= n;
 				}
 
 				c *= occlusion(p, normal, rd);
