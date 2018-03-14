@@ -40,6 +40,7 @@ uniform float CHANNEL_13_TOTAL;
 #define MAT_GRAVE 1.0
 #define MAT_GROUND 2.0
 #define MAT_PATH 3.0
+#define MAT_POLE 4.0
 
 vec2 un(vec2 a, vec2 b)
 {
@@ -125,6 +126,10 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
     return  pow(k, s);
 }
 
+#define LIGHT_WIDTH 1.5
+#define LIGHT_SPACING 3.0
+#define LIGHT_HEIGHT 2.0
+
 vec2 map(vec3 p, vec3 rd) 
 {
 	const float pathWidth = 1.5;
@@ -149,6 +154,16 @@ vec2 map(vec3 p, vec3 rd)
 		}
 		
 	}
+
+	{
+		vec3 q = p;
+		q.z = abs(p.z) - LIGHT_WIDTH;
+		float s = LIGHT_SPACING;
+		q.x = mod(p.x + s * 0.5, s) - s * 0.5;
+		float d = sdCappedCylinder(q, vec2(0.1, LIGHT_HEIGHT));
+		res = un(res, vec2(d, MAT_POLE));
+	
+	}
 	return res;
 }
 
@@ -170,6 +185,20 @@ vec4 lightA(vec3 p)
 }
 
 
+vec3 lightPolesModifyPos(vec3 p) {
+	p.z = abs(p.z) - LIGHT_WIDTH;
+	p.y -= LIGHT_HEIGHT + 0.2;
+	p.x = mod(p.x + LIGHT_SPACING * 0.5, LIGHT_SPACING) - LIGHT_SPACING * 0.5;
+	return p;
+}
+
+vec4 lightPoles(vec3 p) {
+	float dis = length(p);
+	vec3 col = vec3(1.0, 0, 1.0);
+	const float strength = 10.0;
+	vec3 res = col * strength / (dis * dis * dis);
+	return vec4(res, dis);
+}
 
 vec4 lightUnion(vec4 a, vec4 b)
 {
@@ -180,6 +209,7 @@ vec4 evaluateLight(vec3 pos)
 {
 	vec4 res = lightA(lightAModifyPos(pos));
 	//res = lightUnion(res, lightB(lightBModifyPos(pos)));
+	res = lightUnion(res, lightPoles(lightPolesModifyPos(pos)));
 	return res;
 }
 
@@ -216,18 +246,25 @@ void addLight(inout vec3 diffRes, inout float specRes, vec3 normal, vec3 eye, ve
 	//specRes += spec * str * shadow;
 
 	diffRes += diffuse * lightCol * shadow;
-	specRes += spec  *  shadow  * 1.0 * length(lightCol);
+	specRes += spec  *  shadow  * 1.0 * length(lightCol) * matSpec;
 }
 
 void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) {
 	vec3 diffuse = vec3(0.0);
 	float specular = 0.0;
 	const float ambient = 0.0;
+	float matSpec = 1.0;
+	if (mat == MAT_GROUND) {
+		matSpec = 0.0;
+	}
 
 	{
-		// Lights without shadow
 		vec3 posLightOrigo = lightAModifyPos(pos);
-		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos);
+		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos, matSpec);
+	}
+	{
+		vec3 posLightOrigo = lightPolesModifyPos(pos);
+		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightPoles(posLightOrigo).rgb, 1.0, pos, matSpec);
 	}
 	color = color * (ambient + diffuse) + specular;
 }
@@ -295,10 +332,12 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					vec3 mortar = vec3(0.5);
 					c = mix(mortar, brick, p);
 					c *= n;
+				} else if (m == MAT_POLE) {
+					c = vec3(1,0,0);
 				}
 
 				c *= occlusion(p, normal, rd);
-				addLightning(c, normal, eye, p);
+				addLightning(c, normal, eye, p, m);
 				
 				if (end) {
 					transmittance = 0;
@@ -332,8 +371,8 @@ void main()
 	float v = fragCoord.y * 2.0 - 1.0;
 	u *= 16.0 / 9.0;
 
-    vec3 eye = vec3(2 * sin(iGlobalTime), 1, 2 * cos(iGlobalTime));
-	vec3 tar = vec3(0 ,0, 0); 
+    vec3 eye = vec3(3 * sin(iGlobalTime), 2, 3 * cos(iGlobalTime));
+	vec3 tar = vec3(0 ,1, 0); 
 
 	vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
