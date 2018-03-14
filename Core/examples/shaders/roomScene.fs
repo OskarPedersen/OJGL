@@ -433,7 +433,8 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				
 				if (ms > 0.05 ) {
 						ref *= ms * 0.2;
-			
+				} else if(floor(m) == MAT_ROOF) {
+					ref *= 0.3;
 				} else {
 					return col;
 				}

@@ -42,9 +42,27 @@ uniform float CHANNEL_13_TOTAL;
 #define MAT_PATH 3.0
 #define MAT_POLE 4.0
 
+// Smooth min. k determines smoothness
+float smink( float a, float b, float k )
+{
+    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
+    return mix( b, a, h ) - k*h*(1.0-h);
+}
+
+
 vec2 un(vec2 a, vec2 b)
 {
 	return a.x < b.x ? a : b;
+}
+
+// Union with smink
+vec2 sunk(vec2 a, vec2 b, float k)
+{
+	float sm = smink(a.x,b.x, k);
+	float m = min(a.x, b.x);
+	float ca = abs(sm -a.x);
+	float cb = abs(sm -b.x);
+	return ca < cb ? vec2(sm, a.y) : vec2(sm, b.y);
 }
 
 float sdBox( vec3 p, vec3 b )
@@ -134,34 +152,38 @@ vec2 map(vec3 p, vec3 rd)
 {
 	const float pathWidth = 1.5;
 	vec2 res = vec2(99999999, 0);
+
+	{
+		float d = p.y;
+		//if (abs(p.z) > pathWidth) {
+			 d -= 0.1*noiseOctave(p.xz*10.0, 3, 0.7);
+			 res = un(res, vec2(d, MAT_GROUND));
+		//} else {
+		//	d -= 0.02*pathPattern(p.xz);
+		//	res = un(res, vec2(d, MAT_PATH));
+		//}
+		
+	}
+
 	if (abs(p.z) > pathWidth) {
 		float s = 2.0;
 		vec3 q = mod(p + s*0.5, s) - s * 0.5;
 		q.y = p.y;
-		float d = sdBox(q - vec3(0, 0.5, 0), vec3(0.1, 0.5, 0.05));
-		float d2 = sdBox(q - vec3(0, 0.7, 0), vec3(0.4, 0.1, 0.05));
-		res = vec2(min(d, d2), MAT_GRAVE);
+		float d = sdBox(q - vec3(0, 0.5, 0), vec3(0.1, 0.5, 0.02));
+		float d2 = sdBox(q - vec3(0, 0.7, 0), vec3(0.4, 0.1, 0.02));
+		res = sunk(vec2(min(d, d2), MAT_GRAVE), res, 0.5);
 	}
 
-	{
-		float d = p.y;
-		if (abs(p.z) > pathWidth) {
-			 d -= 0.1*noiseOctave(p.xz*10.0, 3, 0.7);
-			 res = un(res, vec2(d, MAT_GROUND));
-		} else {
-			d -= 0.02*pathPattern(p.xz);
-			res = un(res, vec2(d, MAT_PATH));
-		}
-		
-	}
+	
 
 	{
 		vec3 q = p;
 		q.z = abs(p.z) - LIGHT_WIDTH;
 		float s = LIGHT_SPACING;
 		q.x = mod(p.x + s * 0.5, s) - s * 0.5;
-		float d = sdCappedCylinder(q, vec2(0.1, LIGHT_HEIGHT));
-		res = un(res, vec2(d, MAT_POLE));
+		float w = 0.03 + max(0.0, -p.y*0.2 + 0.1);
+		float d = sdCappedCylinder(q, vec2(w, LIGHT_HEIGHT));
+		res = sunk(vec2(d, MAT_POLE), res, 0.5);
 	
 	}
 	return res;
@@ -187,14 +209,14 @@ vec4 lightA(vec3 p)
 
 vec3 lightPolesModifyPos(vec3 p) {
 	p.z = abs(p.z) - LIGHT_WIDTH;
-	p.y -= LIGHT_HEIGHT + 0.2;
+	p.y -= LIGHT_HEIGHT + 0.1;
 	p.x = mod(p.x + LIGHT_SPACING * 0.5, LIGHT_SPACING) - LIGHT_SPACING * 0.5;
 	return p;
 }
 
 vec4 lightPoles(vec3 p) {
 	float dis = length(p);
-	vec3 col = vec3(1.0, 0, 1.0);
+	vec3 col = vec3(1.0, 0.6, 0.2);
 	const float strength = 10.0;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
@@ -324,7 +346,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					c = vec3(1.0);
 				} else if (m == MAT_GROUND) {
 					
-					c = vec3(0, abs(p.y), 0);
+					c = vec3(1.0);
 				} else if (m == MAT_PATH) {
 					float n = noiseOctave(p.xz, 10, 0.8);
 					float p = pathPattern(p.xz);
@@ -333,7 +355,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					c = mix(mortar, brick, p);
 					c *= n;
 				} else if (m == MAT_POLE) {
-					c = vec3(1,0,0);
+					c = vec3(1.0);
 				}
 
 				c *= occlusion(p, normal, rd);
