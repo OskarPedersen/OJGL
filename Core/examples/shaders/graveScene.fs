@@ -156,11 +156,13 @@ vec2 map(vec3 p, vec3 rd)
 	{
 		float d = p.y;
 		//if (abs(p.z) > pathWidth) {
+
+		float d2 = udRoundBox(p, vec3(0.5), 0.1);
 			 d -= 0.1*noiseOctave(p.xz*10.0, 3, 0.7);
-			 res = un(res, vec2(d, MAT_GROUND));
+			 res = un(res, vec2(max(d, -d2), MAT_GROUND));
 		//} else {
 		//	d -= 0.02*pathPattern(p.xz);
-		//	res = un(res, vec2(d, MAT_PATH));
+		//	res = un(res, vec2(d, MAT_PATH));-
 		//}
 		
 	}
@@ -216,7 +218,7 @@ vec3 lightPolesModifyPos(vec3 p) {
 
 vec4 lightPoles(vec3 p) {
 	float dis = length(p);
-	vec3 col = vec3(1.0, 0.6, 0.2);
+	vec3 col = vec3(1.0, 0.8, 0.4);
 	const float strength = 10.0;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
@@ -229,9 +231,10 @@ vec4 lightUnion(vec4 a, vec4 b)
 
 vec4 evaluateLight(vec3 pos)
 {
-	vec4 res = lightA(lightAModifyPos(pos));
+	//vec4 res = lightA(lightAModifyPos(pos));
 	//res = lightUnion(res, lightB(lightBModifyPos(pos)));
-	res = lightUnion(res, lightPoles(lightPolesModifyPos(pos)));
+	//res = lightUnion(res, lightPoles(lightPolesModifyPos(pos)));
+	vec4 res = lightPoles(lightPolesModifyPos(pos));
 	return res;
 }
 
@@ -277,16 +280,25 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) 
 	const float ambient = 0.0;
 	float matSpec = 1.0;
 	if (mat == MAT_GROUND) {
-		matSpec = 0.0;
+		//matSpec = 0.0;
 	}
 
 	{
-		vec3 posLightOrigo = lightAModifyPos(pos);
-		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos, matSpec);
+		//vec3 posLightOrigo = lightAModifyPos(pos);
+		//addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos, matSpec);
 	}
 	{
+		//p.z = abs(p.z) - LIGHT_WIDTH;
+		//p.y -= LIGHT_HEIGHT + 0.1;
+		//p.x = mod(p.x + LIGHT_SPACING * 0.5, LIGHT_SPACING) - LIGHT_SPACING * 0.5;
+
+		int qx = int(round(pos.x / LIGHT_SPACING));
+		vec3 lightPos = vec3(qx*LIGHT_SPACING, LIGHT_HEIGHT + 0.1, sign(pos.z)*LIGHT_WIDTH*0.9); 
+		vec3 dir = lightPos - pos;
+		float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
+
 		vec3 posLightOrigo = lightPolesModifyPos(pos);
-		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightPoles(posLightOrigo).rgb, 1.0, pos, matSpec);
+		addLight(diffuse, specular, normal, eye, lightPos, lightPoles(posLightOrigo).rgb, shadow*0.5 + 0.5, pos, matSpec);
 	}
 	color = color * (ambient + diffuse) + specular;
 }
