@@ -17,6 +17,7 @@
     <None Include="examples\shaders\roomScene.fs" />
     <None Include="examples\shaders\roomScenePost.fs" />
     <None Include="examples\shaders\graveScene.fs" />
+    <None Include="examples\shaders\graveScenePost.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="examples\Main.cpp" />

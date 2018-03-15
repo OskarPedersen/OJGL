@@ -79,6 +79,10 @@ std::string fragmentRoomScenePost{
 std::string fragmentGraveScene{
 #include SHADER_FRAGMENT_GRAVE_SCENE
 };
+#define SHADER_FRAGMENT_GRAVE_SCENE_POST "shaders/graveScenePost.fs"
+std::string fragmentGraveScenePost{
+#include SHADER_FRAGMENT_GRAVE_SCENE_POST
+};
 
 using namespace ojgl;
 
@@ -102,6 +106,7 @@ void debugRereadShaderFiles()
     shaders[&fragmentRoomScenePost] = "examples/" SHADER_FRAGMENT_ROOM_SCENE_POST;
 
     shaders[&fragmentGraveScene] = "examples/" SHADER_FRAGMENT_GRAVE_SCENE;
+    shaders[&fragmentGraveScenePost] = "examples/" SHADER_FRAGMENT_GRAVE_SCENE_POST;
 
     for (auto[stringptr, path] : shaders) {
         std::ifstream shaderFile(path);
@@ -149,8 +154,9 @@ void buildSceneGraph(GLState& glState)
     auto roomScenePost = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
 
     auto graveScene = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "graveScene", vertexShader, fragmentGraveScene);
+    auto graveScenePost = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "graveScenePost", vertexShader, fragmentGraveScenePost, { graveScene });
 
-    glState.addScene(Scene{ graveScene, timer::ms_t(3000000) });
+    glState.addScene(Scene{ graveScenePost, timer::ms_t(3000000) });
     glState.addScene(Scene{ roomScenePost, timer::ms_t(3000000) });
     glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ DOFFinal, timer::ms_t(30000) });
@@ -244,6 +250,7 @@ int main()
         auto iGlobalTime = glState.relativeSceneTime();
 
         glState[0]["graveScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[0]["graveScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         glState[1]["roomScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         glState[1]["roomScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         glState[2]["baseScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
@@ -265,7 +272,7 @@ int main()
                                       << Uniform1fv("CHANNEL_" + std::to_string(sc.channel) + "_TIME_TO", valuesTo);*/
         }
         if (!glState.isPaused()) {
-          glState.render();
+            glState.render();
         }
 
         if (!glState.isPaused()) {

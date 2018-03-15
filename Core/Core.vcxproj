@@ -27,6 +27,7 @@
     <None Include="examples\shaders\demo.fs" />
     <None Include="examples\shaders\demo.vs" />
     <None Include="examples\shaders\dofFinal.fs" />
+    <None Include="examples\shaders\graveScenePost.fs" />
     <None Include="examples\shaders\graveScene.fs" />
     <None Include="examples\shaders\post.fs" />
     <None Include="examples\shaders\post.vs" />

@@ -157,9 +157,12 @@ vec2 map(vec3 p, vec3 rd)
 		float d = p.y;
 		//if (abs(p.z) > pathWidth) {
 
-		float d2 = udRoundBox(p, vec3(0.5), 0.1);
-			 d -= 0.1*noiseOctave(p.xz*10.0, 3, 0.7);
-			 res = un(res, vec2(max(d, -d2), MAT_GROUND));
+		float w = 0.4 + 0.1*abs(sin(p.x));
+		float d2 = sdBox(p, vec3(1.0, 0.5, w));
+
+		d -= 0.08*noiseOctave(p.xz*10.0, 3, 0.7);
+		//d += sdCylinder(p.xzy, 0.1);
+		res = un(res, vec2(d, MAT_GROUND)); //max(d, -d2)
 		//} else {
 		//	d -= 0.02*pathPattern(p.xz);
 		//	res = un(res, vec2(d, MAT_PATH));-
@@ -167,14 +170,16 @@ vec2 map(vec3 p, vec3 rd)
 		
 	}
 
-	if (abs(p.z) > pathWidth) {
+	//if (abs(p.z) > pathWidth) {
+	{	
 		float s = 2.0;
-		vec3 q = mod(p + s*0.5, s) - s * 0.5;
+		vec3 q = mod(vec3(p.x, p.y, p.z) + s*0.5, s) - s * 0.5;
 		q.y = p.y;
-		float d = sdBox(q - vec3(0, 0.5, 0), vec3(0.1, 0.5, 0.02));
-		float d2 = sdBox(q - vec3(0, 0.7, 0), vec3(0.4, 0.1, 0.02));
-		res = sunk(vec2(min(d, d2), MAT_GRAVE), res, 0.5);
+		float d = sdBox(q - vec3(0, 0.7, 0), vec3(0.1, 0.5, 0.02));
+		float d2 = sdBox(q - vec3(0, 0.85, 0), vec3(0.4, 0.1, 0.02));
+		res = sunk(vec2(min(d, d2) + max(0.0, 1.0 - abs(p.z)), MAT_GRAVE), res, 0.5);
 	}
+	//}
 
 	
 
@@ -183,7 +188,7 @@ vec2 map(vec3 p, vec3 rd)
 		q.z = abs(p.z) - LIGHT_WIDTH;
 		float s = LIGHT_SPACING;
 		q.x = mod(p.x + s * 0.5, s) - s * 0.5;
-		float w = 0.03 + max(0.0, -p.y*0.2 + 0.1);
+		float w = 0.02;// + max(0.0, -p.y*0.2 + 0.1);
 		float d = sdCappedCylinder(q, vec2(w, LIGHT_HEIGHT));
 		res = sunk(vec2(d, MAT_POLE), res, 0.5);
 	
@@ -218,7 +223,7 @@ vec3 lightPolesModifyPos(vec3 p) {
 
 vec4 lightPoles(vec3 p) {
 	float dis = length(p);
-	vec3 col = vec3(1.0, 0.8, 0.4);
+	vec3 col = vec3(1.0, 0.9, 0.6);
 	const float strength = 10.0;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
@@ -280,7 +285,7 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) 
 	const float ambient = 0.0;
 	float matSpec = 1.0;
 	if (mat == MAT_GROUND) {
-		//matSpec = 0.0;
+		matSpec = 0.5;
 	}
 
 	{
@@ -403,8 +408,15 @@ void main()
 {
     float u = fragCoord.x * 2.0 - 1.0;
 	float v = fragCoord.y * 2.0 - 1.0;
-	u *= 16.0 / 9.0;
+	//
 
+	float r = length(vec2(u,v));
+ float k1 = 0;
+ float k2 = 0.5;
+ float k3 = 0.1;
+ u = u * (1 + 0.001 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r);
+ v = v * (1 + 0.001 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r); 
+ u *= 16.0 / 9.0;
     vec3 eye = vec3(3 * sin(iGlobalTime), 2, 3 * cos(iGlobalTime));
 	vec3 tar = vec3(0 ,1, 0); 
 
@@ -420,6 +432,7 @@ void main()
 	color /= (color + vec3(1.0));
 #endif
     fragColor = vec4(color, 1.0);
+	
 } 
 
 )""  
