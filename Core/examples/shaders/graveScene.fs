@@ -41,6 +41,7 @@ uniform float CHANNEL_13_TOTAL;
 #define MAT_GROUND 2.0
 #define MAT_PATH 3.0
 #define MAT_POLE 4.0
+#define MAT_WATER 5.0
 
 // Smooth min. k determines smoothness
 float smink( float a, float b, float k )
@@ -146,7 +147,7 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 
 #define LIGHT_WIDTH 1.5
 #define LIGHT_SPACING 3.0
-#define LIGHT_HEIGHT 2.0
+#define LIGHT_HEIGHT 1.8
 
 vec2 map(vec3 p, vec3 rd) 
 {
@@ -161,6 +162,7 @@ vec2 map(vec3 p, vec3 rd)
 		float d2 = sdBox(p, vec3(1.0, 0.5, w));
 
 		d -= 0.08*noiseOctave(p.xz*10.0, 3, 0.7);
+		d -= clamp(p.x*0.5, -1.0, 0.0)*clamp(abs(p.z*1.0)-(1.8 + 0.5*sin(p.x)),0.0, 1.0);
 		//d += sdCylinder(p.xzy, 0.1);
 		res = un(res, vec2(d, MAT_GROUND)); //max(d, -d2)
 		//} else {
@@ -169,9 +171,14 @@ vec2 map(vec3 p, vec3 rd)
 		//}
 		
 	}
+	{
+		float d = p.y;
+		d += 0.5;
+		res = un(res, vec2(d, MAT_WATER));
+	}
 
 	//if (abs(p.z) > pathWidth) {
-	{	
+	if (p.x > 0.5){	
 		float s = 2.0;
 		vec3 q = mod(vec3(p.x, p.y, p.z) + s*0.5, s) - s * 0.5;
 		q.y = p.y;
@@ -224,7 +231,7 @@ vec3 lightPolesModifyPos(vec3 p) {
 vec4 lightPoles(vec3 p) {
 	float dis = length(p);
 	vec3 col = vec3(1.0, 0.9, 0.6);
-	const float strength = 10.0;
+	const float strength = 5.0;
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
 }
@@ -373,6 +380,8 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					c *= n;
 				} else if (m == MAT_POLE) {
 					c = vec3(1.0);
+				} else if (m == MAT_WATER) {
+					c = vec3(0);
 				}
 
 				c *= occlusion(p, normal, rd);
@@ -383,8 +392,8 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				}
 				col = mix(col, transmittance * c + scatteredLight, ref);
 
-				if (m == -1) {
-					ref *= 0.5;
+				if (m == MAT_WATER) {
+					ref *= 0.9;
 				} else {
 					return col;
 				}
@@ -417,7 +426,7 @@ void main()
  u = u * (1 + 0.001 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r);
  v = v * (1 + 0.001 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r); 
  u *= 16.0 / 9.0;
-    vec3 eye = vec3(3 * sin(iGlobalTime), 2, 3 * cos(iGlobalTime));
+    vec3 eye = vec3(6 * sin(iGlobalTime), 3, 6 * cos(iGlobalTime));
 	vec3 tar = vec3(0 ,1, 0); 
 
 	vec3 dir = normalize(tar - eye);
