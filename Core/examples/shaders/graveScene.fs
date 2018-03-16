@@ -145,6 +145,29 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
     return  pow(k, s);
 }
 
+vec2 water(vec3 p, vec3 rd)
+{
+	if (rd.y > 0) {
+		return vec2(99999, MAT_WATER);
+	}
+	//p -= - 3.5;
+	p.y += 0.5;
+	float t = iGlobalTime * 1.5;
+
+	float d = (sin(p.x + t*0.5) + sin(p.z  + t*0.5)) * 0.1 +
+		noiseOctave(p.xz*10.0 + vec2(0, t*0.1), 3, 0.7)*0.1 +
+		noiseOctave(p.xz*10.0 + vec2(t*0.13, 0), 3, 0.7)*0.1;
+			//length(texture(inTexture0, p.xz*0.8 + vec2(0, t*0.1)))*0.1 +
+			//length(texture(inTexture0, p.xz*0.8 + vec2(t*0.13, 0)))*0.1;
+	d *= 0.5;
+
+	float h = p.y - d * 0.1;
+
+	float dis = (0.1 -p.y)/rd.y;
+
+	return vec2(max(h, dis), MAT_WATER);
+}
+
 #define LIGHT_WIDTH 1.5
 #define LIGHT_SPACING 3.0
 #define LIGHT_HEIGHT 1.8
@@ -162,8 +185,14 @@ vec2 map(vec3 p, vec3 rd)
 		float d2 = sdBox(p, vec3(1.0, 0.5, w));
 
 		d -= 0.08*noiseOctave(p.xz*10.0, 3, 0.7);
-		d -= clamp(p.x*0.5, -1.0, 0.0)*clamp(abs(p.z*1.0)-(1.8 + 0.5*sin(p.x)),0.0, 1.0);
+		//d -= clamp(p.x*0.5, -1.0, 0.0)*clamp(abs(p.z*1.0)-(1.8 + 0.5*sin(p.x)),0.0, 1.0);
 		//d += sdCylinder(p.xzy, 0.1);
+		float a=  2.0*smoothstep(0.0, 1.0, -0.5*p.x - .5);
+		//if (p.x < 0.0) {
+			float b = 2.0*smoothstep(0.0, 1.0, abs(p.z*0.5) - 0.8 - 0.5*max(0.0, 4.0 - abs(p.x + 20 )));
+		//}
+		d += min(a, b);
+		
 		res = un(res, vec2(d, MAT_GROUND)); //max(d, -d2)
 		//} else {
 		//	d -= 0.02*pathPattern(p.xz);
@@ -172,9 +201,10 @@ vec2 map(vec3 p, vec3 rd)
 		
 	}
 	{
-		float d = p.y;
-		d += 0.5;
-		res = un(res, vec2(d, MAT_WATER));
+		//float d = p.y;
+		//d += 0.5;
+		//res = un(res, vec2(d, MAT_WATER));
+		res = un(res, water(p, rd));
 	}
 
 	//if (abs(p.z) > pathWidth) {
@@ -426,8 +456,8 @@ void main()
  u = u * (1 + 0.001 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r);
  v = v * (1 + 0.001 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r); 
  u *= 16.0 / 9.0;
-    vec3 eye = vec3(6 * sin(iGlobalTime), 3, 6 * cos(iGlobalTime));
-	vec3 tar = vec3(0 ,1, 0); 
+    vec3 eye = vec3(6 * sin(iGlobalTime) - 20.0, 3, 6 * cos(iGlobalTime));
+	vec3 tar = vec3(-20 ,1, 0); 
 
 	vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
