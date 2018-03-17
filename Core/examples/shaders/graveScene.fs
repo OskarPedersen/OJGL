@@ -168,7 +168,7 @@ vec2 water(vec3 p, vec3 rd)
 	return vec2(max(h, dis), MAT_WATER);
 }
 
-#define LIGHT_WIDTH 1.5
+#define LIGHT_WIDTH(p) (1.5) 
 #define LIGHT_SPACING 3.0
 #define LIGHT_HEIGHT 1.8
 
@@ -189,9 +189,17 @@ vec2 map(vec3 p, vec3 rd)
 		//d += sdCylinder(p.xzy, 0.1);
 		float a=  2.0*smoothstep(0.0, 1.0, -0.5*p.x - .5);
 		//if (p.x < 0.0) {
-			float b = 2.0*smoothstep(0.0, 1.0, abs(p.z*0.5) - 0.8 - 0.5*max(0.0, 4.0 - abs(p.x + 20 )));
+			float i = 2.0*sin(max(0.0, (1.0 - 0.2*abs(p.x + 20 ))));
+			
+
+			float b = 2.0*smoothstep(0.0, 1.0, abs(p.z*0.5) - 0.8); // - i);
 		//}
-		d += min(a, b);
+
+		float c = 2.0*smoothstep(4, 6, length(p.xz - vec2(-20, 10)));
+
+		d += min(a, min(b, c));
+
+		//d += c;
 		
 		res = un(res, vec2(d, MAT_GROUND)); //max(d, -d2)
 		//} else {
@@ -222,7 +230,7 @@ vec2 map(vec3 p, vec3 rd)
 
 	{
 		vec3 q = p;
-		q.z = abs(p.z) - LIGHT_WIDTH;
+		q.z = abs(p.z) - LIGHT_WIDTH(p);
 		float s = LIGHT_SPACING;
 		q.x = mod(p.x + s * 0.5, s) - s * 0.5;
 		float w = 0.02;// + max(0.0, -p.y*0.2 + 0.1);
@@ -235,10 +243,10 @@ vec2 map(vec3 p, vec3 rd)
 
 vec3 lightAModifyPos(vec3 p)
 {
-	float size = 3.0;
+	//float size = 3.0;
 	//p.x = mod(p.x + size * 0.5, size) - size * 0.5;
 	//p.z = mod(p.z + size * 0.5, size) - size * 0.5;
-	return p - vec3(2.0, 2.0, 2.0);
+	return p - vec3(-20.0, 4.0, 10.0);
 }
 
 vec4 lightA(vec3 p)
@@ -252,7 +260,7 @@ vec4 lightA(vec3 p)
 
 
 vec3 lightPolesModifyPos(vec3 p) {
-	p.z = abs(p.z) - LIGHT_WIDTH;
+	p.z = abs(p.z) - LIGHT_WIDTH(p);
 	p.y -= LIGHT_HEIGHT + 0.1;
 	p.x = mod(p.x + LIGHT_SPACING * 0.5, LIGHT_SPACING) - LIGHT_SPACING * 0.5;
 	return p;
@@ -273,10 +281,10 @@ vec4 lightUnion(vec4 a, vec4 b)
 
 vec4 evaluateLight(vec3 pos)
 {
-	//vec4 res = lightA(lightAModifyPos(pos));
+	vec4 res = lightA(lightAModifyPos(pos));
 	//res = lightUnion(res, lightB(lightBModifyPos(pos)));
-	//res = lightUnion(res, lightPoles(lightPolesModifyPos(pos)));
-	vec4 res = lightPoles(lightPolesModifyPos(pos));
+	res = lightUnion(res, lightPoles(lightPolesModifyPos(pos)));
+	//vec4 res = lightPoles(lightPolesModifyPos(pos));
 	return res;
 }
 
@@ -326,8 +334,8 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) 
 	}
 
 	{
-		//vec3 posLightOrigo = lightAModifyPos(pos);
-		//addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos, matSpec);
+		vec3 posLightOrigo = lightAModifyPos(pos);
+		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos, matSpec);
 	}
 	{
 		//p.z = abs(p.z) - LIGHT_WIDTH;
@@ -335,7 +343,7 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) 
 		//p.x = mod(p.x + LIGHT_SPACING * 0.5, LIGHT_SPACING) - LIGHT_SPACING * 0.5;
 
 		int qx = int(round(pos.x / LIGHT_SPACING));
-		vec3 lightPos = vec3(qx*LIGHT_SPACING, LIGHT_HEIGHT + 0.1, sign(pos.z)*LIGHT_WIDTH*0.9); 
+		vec3 lightPos = vec3(qx*LIGHT_SPACING, LIGHT_HEIGHT + 0.1, sign(pos.z)*LIGHT_WIDTH(pos)*0.9); 
 		vec3 dir = lightPos - pos;
 		float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
 
