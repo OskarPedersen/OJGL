@@ -281,11 +281,11 @@ int main()
         t.end();
         auto durationMs = t.time<timer::ms_t>();
         static int dbg = 0;
-        if (dbg++ % 100 == 0) {
-            LOG_INFO("ms: " << durationMs.count());
-        }
+        //if (dbg++ % 100 == 0) {
+        LOG_INFO("ms: " << durationMs.count());
+        //}
         if (durationMs < desiredFrameTime) {
-            std::this_thread::sleep_for(desiredFrameTime - durationMs);
+            //    std::this_thread::sleep_for(desiredFrameTime - durationMs);
         }
     }
     return 0;

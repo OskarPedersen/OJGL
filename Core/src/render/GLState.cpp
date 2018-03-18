@@ -50,6 +50,7 @@ void GLState::render()
 
     glBindVertexArray(0);
     glFlush();
+    glFinish();
 }
 
 Scene& GLState::operator[](size_t i)
