@@ -195,22 +195,19 @@ vec2 map(vec3 p, vec3 rd)
 {
 	p = distort(p);
 	
+
 	float pattern = BrickPattern(p.zy * 2.1 + vec2(0.0, 0.0));
 	float n = corrNoise(p);
 	float dc = -sdBox(p - vec3(sign(p.x)*pattern * 0.02-n*0.05*sign(p.x), 0.0, 0.0), vec3(1.4, 10.0, 5000.0));
-	float dc2 = sdBox(p - vec3(sign(p.x)*pattern * 0.02-n*0.05*sign(p.x), 0.0, 0.0), vec3(1.4, 10.0, 5000.0));
 	vec2 res = vec2(dc, MAT_CORRIDOR);
-	
-	
-	
 
 	float fPattern = floorPattern(p.xz);
 	res = un(res, vec2(p.y + 1.0 + fPattern*0.01  - n*0.03, MAT_FLOOR));
 	
-	
-	
 	float rPattern = roofPattern(p.xz);
 	res = un(res, vec2(-p.y + 1.0 -rPattern * 0.03 - n*0.01, MAT_ROOF));
+
+	
 
 
 	if (iGlobalTime > PART_TWIST) {
@@ -321,7 +318,7 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 		int q = int(round(dp.z / s));
 		vec3 lightPos = distort(vec3(0.0, 0.8, q*s)); 
 		vec3 dir = lightPos - pos;
-		float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
+		float shadow = 1.0;//shadowFunction(pos, normalize(dir), 0.1, length(dir));
 		addLight(diffuse, specular, normal, eye, lightPos, lightA(posLightOrigo, pos).rgb, shadow, pos);
 	}
 	color = color * (ambient + diffuse) + specular;
@@ -347,7 +344,7 @@ float occlusion(vec3 p, vec3 normal, vec3 rd)
 
 vec3 raymarch(vec3 ro, vec3 rd, vec3 eye) 
 {
-	const int maxIter = 300;
+	int maxIter = 300;
 	const float maxDis = 200.0;
 	const int jumps = 2;
 
@@ -357,6 +354,9 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 	vec3 scatteredLight = vec3(0.0);
 	float transmittance = 1.0;
 	for (int j = 0; j < jumps; j++) {
+		if (j == 1) {
+			maxIter = 10;
+		}
 		float t = 0.0;
 		for (int i = 0; i < maxIter; i++) {
 			vec3 p = ro + rd * t;
@@ -389,7 +389,8 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				vec3 c = vec3(1, 0, 1);
 				vec3 normal = getNormal(p, rd);
 
-				if (floor(m) == MAT_CORRIDOR) {
+				float fm = floor(m);
+				if (fm == MAT_CORRIDOR) {
 					vec3 dp = distort(p);
 					float pattern = BrickPattern(dp.zy * 2.1 + vec2(0.0, 0.0));
 					float n = noiseOctave(vec2(dp.z, dp.y) * 5.0, 10, 0.7);
@@ -397,11 +398,11 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					vec3 mortar = vec3(1.0);
 					c = mix(brick, mortar, pattern);
 					//c = vec3(n);
-				} else if (floor(m) == MAT_ROOF) {
+				} else if (fm == MAT_ROOF) {
 					vec3 dp = distort(p);
 					float pattern = roofPattern(dp.xz);
 					c = mix(vec3(0.5), vec3(0.85, 0.75, 0.45), pattern);
-				} else if (floor(m) == MAT_FLOOR) {
+				} else if (fm == MAT_FLOOR) {
 					vec3 dp = distort(p);
 					float n = corrNoise(dp*4.0);
 					float pattern = floorPattern(dp.xz);
@@ -433,8 +434,8 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				
 				if (ms > 0.05 ) {
 						ref *= ms * 0.2;
-				} else if(floor(m) == MAT_ROOF) {
-					ref *= 0.3;
+				//} else if(floor(m) == MAT_ROOF) {
+				//	ref *= 0.3;
 				} else {
 					return col;
 				}

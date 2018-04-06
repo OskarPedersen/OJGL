@@ -150,14 +150,14 @@ void buildSceneGraph(GLState& glState)
 
     auto baseScene = Buffer::construct(1024, 768, "baseScene", vertexShader, fragmentBaseScene);
 
-    auto roomScene = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "roomScene", vertexShader, fragmentRoomScene);
-    auto roomScenePost = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
+    auto roomScene = Buffer::construct(1920, 1080, "roomScene", vertexShader, fragmentRoomScene);
+    auto roomScenePost = Buffer::construct(1920, 1080, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
 
-    auto graveScene = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "graveScene", vertexShader, fragmentGraveScene);
-    auto graveScenePost = Buffer::construct(1920 * 3 / 4, 1080 * 3 / 4, "graveScenePost", vertexShader, fragmentGraveScenePost, { graveScene });
+    auto graveScene = Buffer::construct(1920, 1080, "graveScene", vertexShader, fragmentGraveScene);
+    auto graveScenePost = Buffer::construct(1920, 1080, "graveScenePost", vertexShader, fragmentGraveScenePost, { graveScene });
 
-    glState.addScene(Scene{ graveScenePost, timer::ms_t(3000000) });
     glState.addScene(Scene{ roomScenePost, timer::ms_t(3000000) });
+    glState.addScene(Scene{ graveScenePost, timer::ms_t(3000000) });
     glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ DOFFinal, timer::ms_t(30000) });
     glState.addScene(Scene{ tunnelScene, timer::ms_t(30000) });
@@ -176,7 +176,7 @@ int main()
 {
     const timer::ms_t desiredFrameTime(17);
 
-    Window window(1920 * 3 / 4, 1080 * 3 / 4, false);
+    Window window(1920, 1080, false);
     GLState glState;
 
     Music music(song);
@@ -249,17 +249,17 @@ int main()
 
         auto iGlobalTime = glState.relativeSceneTime();
 
-        glState[0]["graveScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
-        glState[0]["graveScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
-        glState[1]["roomScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
-        glState[1]["roomScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[1]["graveScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[1]["graveScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[0]["roomScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[0]["roomScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         glState[2]["baseScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         /*glState[2]["tunnel"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f)
                              << Uniform1f("CHANNEL_12_TOTAL", static_cast<GLfloat>(music.syncChannels[12].getTotalHitsPerNote(0)))
                              << Uniform1f("CHANNEL_13_TOTAL", static_cast<GLfloat>(music.syncChannels[13].getTotalHitsPerNote(0)));*/
 
-        for (auto& kv : music.syncChannels) {
-            auto sc = kv.second;
+        /*for (auto& kv : music.syncChannels) {
+            const auto& sc = kv.second;
             std::vector<GLfloat> valuesSince;
             std::vector<GLfloat> valuesTo;
 
@@ -267,10 +267,7 @@ int main()
                 valuesSince.push_back(static_cast<GLfloat>(sc.getTimeSinceLast(i).count()));
                 valuesTo.push_back(static_cast<GLfloat>(sc.getTimeToNext(i).count()));
             }
-
-            /*glState[2]["tunnelScene"] << Uniform1fv("CHANNEL_" + std::to_string(sc.channel) + "_TIME_SINCE", valuesSince)
-                                      << Uniform1fv("CHANNEL_" + std::to_string(sc.channel) + "_TIME_TO", valuesTo);*/
-        }
+        }*/
         if (!glState.isPaused()) {
             glState.render();
         }
@@ -283,6 +280,7 @@ int main()
         static int dbg = 0;
         //if (dbg++ % 100 == 0) {
         LOG_INFO("ms: " << durationMs.count());
+        std::cout << "ms: " << durationMs.count() << "\n";
         //}
         if (durationMs < desiredFrameTime) {
             //    std::this_thread::sleep_for(desiredFrameTime - durationMs);
