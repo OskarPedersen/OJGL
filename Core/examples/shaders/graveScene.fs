@@ -179,51 +179,41 @@ vec2 map(vec3 p, vec3 rd)
 
 	{
 		float d = p.y;
-		//if (abs(p.z) > pathWidth) {
 
-		float w = 0.4 + 0.1*abs(sin(p.x));
-		float d2 = sdBox(p, vec3(1.0, 0.5, w));
+		//float w = 0.4 + 0.1*abs(sin(p.x));
+		//float d2 = sdBox(p, vec3(1.0, 0.5, w));
 
 		d -= 0.08*noiseOctave(p.xz*10.0, 3, 0.7);
-		//d -= clamp(p.x*0.5, -1.0, 0.0)*clamp(abs(p.z*1.0)-(1.8 + 0.5*sin(p.x)),0.0, 1.0);
-		//d += sdCylinder(p.xzy, 0.1);
-		float a=  2.0*smoothstep(0.0, 1.0, -0.5*p.x - .5);
-		//if (p.x < 0.0) {
-			float i = 2.0*sin(max(0.0, (1.0 - 0.2*abs(p.x + 20 ))));
+		//float a=  2.0*smoothstep(0.0, 1.0, -0.5*p.x - .5);
+			//float i = 2.0*sin(max(0.0, (1.0 - 0.2*abs(p.x + 20 ))));
 			
 
-			float b = 2.0*smoothstep(0.0, 1.0, abs(p.z*0.5) - 0.8); // - i);
-		//}
+			//float b = 2.0*smoothstep(0.0, 1.0, abs(p.z*0.5) - 0.8); // - i);
 
-		float c = 2.0*smoothstep(4, 6, length(p.xz - vec2(-20, 10)));
 
-		d += min(a, min(b, c));
+		//float c = 2.0*smoothstep(4, 6, length(p.xz - vec2(-20, 10)));
 
-		//d += c;
+		//d += min(a, min(b, c));
+
+
 		
-		res = un(res, vec2(d, MAT_GROUND)); //max(d, -d2)
-		//} else {
-		//	d -= 0.02*pathPattern(p.xz);
-		//	res = un(res, vec2(d, MAT_PATH));-
-		//}
+		res = un(res, vec2(d, MAT_GROUND)); 
 		
 	}
 	{
-		//float d = p.y;
-		//d += 0.5;
-		//res = un(res, vec2(d, MAT_WATER));
-		res = un(res, water(p, rd));
+		
+		//res = un(res, water(p, rd));
 	}
 
 	//if (abs(p.z) > pathWidth) {
-	if (p.x > 0.5){	
+	//if (p.x > 0.5){	
 		float s = 2.0;
 		vec3 q = mod(vec3(p.x, p.y, p.z) + s*0.5, s) - s * 0.5;
 		q.y = p.y;
 		float d = sdBox(q - vec3(0, 0.7, 0), vec3(0.1, 0.5, 0.02));
 		float d2 = sdBox(q - vec3(0, 0.85, 0), vec3(0.4, 0.1, 0.02));
 		res = sunk(vec2(min(d, d2) + max(0.0, 1.0 - abs(p.z)), MAT_GRAVE), res, 0.5);
-	}
+	//}
 	//}
 
 	
@@ -281,10 +271,9 @@ vec4 lightUnion(vec4 a, vec4 b)
 
 vec4 evaluateLight(vec3 pos)
 {
-	vec4 res = lightA(lightAModifyPos(pos));
-	//res = lightUnion(res, lightB(lightBModifyPos(pos)));
-	res = lightUnion(res, lightPoles(lightPolesModifyPos(pos)));
-	//vec4 res = lightPoles(lightPolesModifyPos(pos));
+	//vec4 res = lightA(lightAModifyPos(pos));
+	//res = lightUnion(res, lightPoles(lightPolesModifyPos(pos)));
+	vec4 res = lightPoles(lightPolesModifyPos(pos));
 	return res;
 }
 
@@ -334,8 +323,8 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) 
 	}
 
 	{
-		vec3 posLightOrigo = lightAModifyPos(pos);
-		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos, matSpec);
+		//vec3 posLightOrigo = lightAModifyPos(pos);
+		//addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos, matSpec);
 	}
 	{
 		//p.z = abs(p.z) - LIGHT_WIDTH;
@@ -373,8 +362,8 @@ float occlusion(vec3 p, vec3 normal, vec3 rd)
 vec3 raymarch(vec3 ro, vec3 rd, vec3 eye) 
 {
 	const int maxIter = 90;
-	const float maxDis = 200.0;
-	const int jumps = 4;
+	const float maxDis = 100.0;
+	const int jumps = 1;
 
 	vec3 col = vec3(0);	
 	float ref = 1.0;
@@ -433,6 +422,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				if (m == MAT_WATER) {
 					ref *= 0.9;
 				} else {
+					//return vec3(float(i)/float(maxIter));
 					return col;
 				}
 
@@ -464,7 +454,10 @@ void main()
  u = u * (1 + 0.001 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r);
  v = v * (1 + 0.001 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r); 
  u *= 16.0 / 9.0;
-    vec3 eye = vec3(6 * sin(iGlobalTime) - 20.0, 3, 6 * cos(iGlobalTime));
+   // vec3 eye = vec3(6 * sin(iGlobalTime) - 20.0, 3, 6 * cos(iGlobalTime));
+	//vec3 tar = vec3(-20 ,1, 0); 
+
+	 vec3 eye = vec3(3 * sin(iGlobalTime) - 20.0, 1, 3 * cos(iGlobalTime));
 	vec3 tar = vec3(-20 ,1, 0); 
 
 	vec3 dir = normalize(tar - eye);

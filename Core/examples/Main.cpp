@@ -142,7 +142,7 @@ void debugRereadShaderFiles()
 }
 #endif
 
-void buildSceneGraph(GLState& glState)
+void buildSceneGraph(GLState& glState, int x, int y)
 {
     glState.clearScenes();
 
@@ -158,13 +158,14 @@ void buildSceneGraph(GLState& glState)
 
     auto baseScene = Buffer::construct(1024, 768, "baseScene", vertexShader, fragmentBaseScene);
 
-    auto roomScene = Buffer::construct(1920, 1080, "roomScene", vertexShader, fragmentRoomScene);
-    auto roomScenePost = Buffer::construct(1920, 1080, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
 
-    auto graveScene = Buffer::construct(1920, 1080, "graveScene", vertexShader, fragmentGraveScene);
-    auto graveScenePost = Buffer::construct(1920, 1080, "graveScenePost", vertexShader, fragmentGraveScenePost, { graveScene });
+    auto roomScene = Buffer::construct(x, y, "roomScene", vertexShader, fragmentRoomScene);
+    auto roomScenePost = Buffer::construct(x, y, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
 
-    auto introScene = Buffer::construct(1920, 1080, "introScene", vertexShader, fragmentIntroScene);
+    auto graveScene = Buffer::construct(x, y, "graveScene", vertexShader, fragmentGraveScene);
+    auto graveScenePost = Buffer::construct(x, y, "graveScenePost", vertexShader, fragmentGraveScenePost, { graveScene });
+
+    auto introScene = Buffer::construct(x, y, "introScene", vertexShader, fragmentIntroScene);
 
     glState.addScene(Scene{ introScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ roomScenePost, timer::ms_t(3000000) });
@@ -185,15 +186,18 @@ std::tuple<int, int, int, std::unique_ptr<unsigned char, decltype(&stbi_image_fr
 
 int main()
 {
+    int x = 1920 / 2;
+    int y = 1080 / 2;
+
     const timer::ms_t desiredFrameTime(17);
 
-    Window window(1920, 1080, false);
+    Window window(x, y, false);
     GLState glState;
 
     Music music(song);
     music.play();
 
-    buildSceneGraph(glState);
+    buildSceneGraph(glState, x, y);
 
     auto[width, height, channels, data] = readTexture("examples/textures/image.png");
     auto texture = Texture::construct(width, height, channels, data.get());
@@ -244,7 +248,7 @@ int main()
             }
             if (key == Window::KEY_F1) {
                 debugRereadShaderFiles();
-                buildSceneGraph(glState);
+                buildSceneGraph(glState, x, y);
                 glState.render();
             }
 
