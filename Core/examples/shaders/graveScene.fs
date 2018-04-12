@@ -253,7 +253,7 @@ vec4 lightPoles(vec3 p) {
 }
 
 vec3 lightShipModifyPos(vec3 p) {
-	return p - vec3(sin(iGlobalTime)*5.0, 1, cos(iGlobalTime)*5.0);
+	return p - vec3(sin(iGlobalTime)*5.0, 2, cos(iGlobalTime)*5.0);
 }
 
 vec4 lightShip(vec3 p) {
@@ -329,9 +329,12 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) 
 		//vec3 posLightOrigo = lightAModifyPos(pos);
 		//addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos, matSpec);
 	}
-	{
+	{	
 		vec3 posLightOrigo = lightShipModifyPos(pos);
-		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightShip(posLightOrigo).rgb, 1.0, pos, matSpec);
+		vec3 lightPos = pos - posLightOrigo;
+		vec3 dir = lightPos - pos;
+		float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
+		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightShip(posLightOrigo).rgb, shadow, pos, matSpec);
 	}
 	{
 
