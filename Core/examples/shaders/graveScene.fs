@@ -35,7 +35,7 @@ uniform float CHANNEL_13_TOTAL;
 
 #define TONE_MAPPING
 
-
+#define PART_WALK 30
 
 #define MAT_GRAVE 1.0
 #define MAT_GROUND 2.0
@@ -177,7 +177,7 @@ vec2 map(vec3 p, vec3 rd)
 	const float pathWidth = 1.5;
 	vec2 res = vec2(99999999, 0);
 
-	{
+	if (p.y < 0.5) {
 		float d = p.y;
 
 
@@ -187,6 +187,8 @@ vec2 map(vec3 p, vec3 rd)
 		
 		res = un(res, vec2(d, MAT_GROUND)); 
 		
+	} else {
+		res = un(res, vec2(p.y, MAT_GROUND)); 
 	}
 	{
 		
@@ -274,10 +276,14 @@ vec4 evaluateLight(vec3 pos)
 {
 	//vec4 res = lightA(lightAModifyPos(pos));
 	//res = lightUnion(res, lightPoles(lightPolesModifyPos(pos)));
-	vec4 res = lightPoles(lightPolesModifyPos(pos));
-	res = lightUnion(res, lightShip(lightShipModifyPos(pos)));
-	res = lightShip(lightShipModifyPos(pos));
-	return res;
+	vec4 res = vec4(0);//lightPoles(lightPolesModifyPos(pos));
+	//res = lightUnion(res, lightShip(lightShipModifyPos(pos)));
+	//res = lightShip(lightShipModifyPos(pos));
+	if (iGlobalTime < PART_WALK) {
+		return  lightPoles(lightPolesModifyPos(pos));
+	} else {
+		return lightShip(lightShipModifyPos(pos));
+	}
 }
 
 #ifdef SHADOWS
@@ -329,22 +335,22 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) 
 		//vec3 posLightOrigo = lightAModifyPos(pos);
 		//addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos, matSpec);
 	}
-	{	
-		vec3 posLightOrigo = lightShipModifyPos(pos);
-		vec3 lightPos = pos - posLightOrigo;
-		vec3 dir = lightPos - pos;
-		float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
-		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightShip(posLightOrigo).rgb, shadow, pos, matSpec);
-	}
-	{
 
-		/*int qx = int(round(pos.x / LIGHT_SPACING));
+	if (iGlobalTime < PART_WALK){
+
+		int qx = int(round(pos.x / LIGHT_SPACING));
 		vec3 lightPos = vec3(qx*LIGHT_SPACING, LIGHT_HEIGHT + 0.1, sign(pos.z)*LIGHT_WIDTH(pos)*0.9); 
 		vec3 dir = lightPos - pos;
 		float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
 
 		vec3 posLightOrigo = lightPolesModifyPos(pos);
-		addLight(diffuse, specular, normal, eye, lightPos, lightPoles(posLightOrigo).rgb, shadow*0.5 + 0.5, pos, matSpec);*/
+		addLight(diffuse, specular, normal, eye, lightPos, lightPoles(posLightOrigo).rgb, shadow*0.5 + 0.5, pos, matSpec);
+	} else {
+				vec3 posLightOrigo = lightShipModifyPos(pos);
+		vec3 lightPos = pos - posLightOrigo;
+		vec3 dir = lightPos - pos;
+		float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
+		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightShip(posLightOrigo).rgb, shadow, pos, matSpec);
 	}
 	color = color * (ambient + diffuse) + specular;
 }
@@ -368,7 +374,7 @@ float occlusion(vec3 p, vec3 normal, vec3 rd)
 
 vec3 raymarch(vec3 ro, vec3 rd, vec3 eye) 
 {
-	const int maxIter = 90;
+	const int maxIter = 300;
 	const float maxDis = 100.0;
 	const int jumps = 1;
 
@@ -386,6 +392,9 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 			float m = res.y;
 #ifdef VOLUMETRIC_LIGHTNING
 			float fogAmount = 0.5;
+			if (iGlobalTime < PART_WALK) {
+				fogAmount = 0.005;
+			}
 			vec4 lightColDis = evaluateLight(p);
 			vec3 light = lightColDis.rgb;
 			d = min(d, lightColDis.w);
@@ -466,6 +475,18 @@ void main()
 
 	 vec3 eye = vec3(4 * sin(iGlobalTime*0), 2, 4 * cos(iGlobalTime*0));
 	vec3 tar = vec3(0 ,1, 0); 
+	if (iGlobalTime < PART_WALK) {
+		if (iGlobalTime < 15) {
+			float bob = min(iGlobalTime, 10.0);
+			eye = vec3(bob, 1.2 + sin(bob*8.0)*0.05, 0);
+			float look = max(0.0, iGlobalTime - 10.0);
+			tar = eye + vec3(1, 0, sin(look));
+		} else {
+			eye = vec3(0, 4, iGlobalTime-20.0);
+			tar = eye + vec3(0, -1, 1);
+		}
+		
+	}
 
 	vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
