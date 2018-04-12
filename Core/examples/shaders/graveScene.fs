@@ -180,20 +180,8 @@ vec2 map(vec3 p, vec3 rd)
 	{
 		float d = p.y;
 
-		//float w = 0.4 + 0.1*abs(sin(p.x));
-		//float d2 = sdBox(p, vec3(1.0, 0.5, w));
 
 		d -= 0.08*noiseOctave(p.xz*10.0, 3, 0.7);
-		//float a=  2.0*smoothstep(0.0, 1.0, -0.5*p.x - .5);
-			//float i = 2.0*sin(max(0.0, (1.0 - 0.2*abs(p.x + 20 ))));
-			
-
-			//float b = 2.0*smoothstep(0.0, 1.0, abs(p.z*0.5) - 0.8); // - i);
-
-
-		//float c = 2.0*smoothstep(4, 6, length(p.xz - vec2(-20, 10)));
-
-		//d += min(a, min(b, c));
 
 
 		
@@ -264,6 +252,19 @@ vec4 lightPoles(vec3 p) {
 	return vec4(res, dis);
 }
 
+vec3 lightShipModifyPos(vec3 p) {
+	return p - vec3(sin(iGlobalTime)*5.0, 1, cos(iGlobalTime)*5.0);
+}
+
+vec4 lightShip(vec3 p) {
+	float dis = sdCylinder(p, 0.0);
+	vec3 col = vec3(1.0, 1.0, 1.0);
+	float strength = 20.0;
+
+	vec3 res = col * strength / (dis * dis * dis);
+	return vec4(res, dis);
+}
+
 vec4 lightUnion(vec4 a, vec4 b)
 {
 	return vec4(a.rgb + b.rgb, min(a.w, b.w));
@@ -274,6 +275,8 @@ vec4 evaluateLight(vec3 pos)
 	//vec4 res = lightA(lightAModifyPos(pos));
 	//res = lightUnion(res, lightPoles(lightPolesModifyPos(pos)));
 	vec4 res = lightPoles(lightPolesModifyPos(pos));
+	res = lightUnion(res, lightShip(lightShipModifyPos(pos)));
+	res = lightShip(lightShipModifyPos(pos));
 	return res;
 }
 
@@ -327,17 +330,18 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) 
 		//addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightA(posLightOrigo).rgb, 1.0, pos, matSpec);
 	}
 	{
-		//p.z = abs(p.z) - LIGHT_WIDTH;
-		//p.y -= LIGHT_HEIGHT + 0.1;
-		//p.x = mod(p.x + LIGHT_SPACING * 0.5, LIGHT_SPACING) - LIGHT_SPACING * 0.5;
+		vec3 posLightOrigo = lightShipModifyPos(pos);
+		addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightShip(posLightOrigo).rgb, 1.0, pos, matSpec);
+	}
+	{
 
-		int qx = int(round(pos.x / LIGHT_SPACING));
+		/*int qx = int(round(pos.x / LIGHT_SPACING));
 		vec3 lightPos = vec3(qx*LIGHT_SPACING, LIGHT_HEIGHT + 0.1, sign(pos.z)*LIGHT_WIDTH(pos)*0.9); 
 		vec3 dir = lightPos - pos;
 		float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
 
 		vec3 posLightOrigo = lightPolesModifyPos(pos);
-		addLight(diffuse, specular, normal, eye, lightPos, lightPoles(posLightOrigo).rgb, shadow*0.5 + 0.5, pos, matSpec);
+		addLight(diffuse, specular, normal, eye, lightPos, lightPoles(posLightOrigo).rgb, shadow*0.5 + 0.5, pos, matSpec);*/
 	}
 	color = color * (ambient + diffuse) + specular;
 }
@@ -378,7 +382,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 			float d = res.x;
 			float m = res.y;
 #ifdef VOLUMETRIC_LIGHTNING
-			float fogAmount = 0.005;
+			float fogAmount = 0.5;
 			vec4 lightColDis = evaluateLight(p);
 			vec3 light = lightColDis.rgb;
 			d = min(d, lightColDis.w);
@@ -457,8 +461,8 @@ void main()
    // vec3 eye = vec3(6 * sin(iGlobalTime) - 20.0, 3, 6 * cos(iGlobalTime));
 	//vec3 tar = vec3(-20 ,1, 0); 
 
-	 vec3 eye = vec3(3 * sin(iGlobalTime) - 20.0, 1, 3 * cos(iGlobalTime));
-	vec3 tar = vec3(-20 ,1, 0); 
+	 vec3 eye = vec3(4 * sin(iGlobalTime*0), 2, 4 * cos(iGlobalTime*0));
+	vec3 tar = vec3(0 ,1, 0); 
 
 	vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
