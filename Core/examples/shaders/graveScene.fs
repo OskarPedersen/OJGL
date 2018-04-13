@@ -35,7 +35,8 @@ uniform float CHANNEL_13_TOTAL;
 
 #define TONE_MAPPING
 
-#define PART_WALK 30
+#define PART_FLY 17
+#define PART_WALK (PART_FLY + 15)
 
 #define MAT_GRAVE 1.0
 #define MAT_GROUND 2.0
@@ -475,16 +476,17 @@ void main()
 
 	 vec3 eye = vec3(4 * sin(iGlobalTime*0), 2, 4 * cos(iGlobalTime*0));
 	vec3 tar = vec3(0 ,1, 0); 
-	if (iGlobalTime < PART_WALK) {
-		if (iGlobalTime < 15) {
-			float bob = min(iGlobalTime, 10.0);
+	if (iGlobalTime < PART_FLY) {
+		float t = iGlobalTime - 0.0;
+		eye = vec3(0, 4, t-17.0);
+			tar = eye + vec3(0, -1, 0.01);
+	} else if (iGlobalTime < PART_WALK) {
+		float t = iGlobalTime - PART_FLY;
+			float bob = min(t, 10.0);
 			eye = vec3(bob, 1.2 + sin(bob*8.0)*0.05, 0);
-			float look = max(0.0, iGlobalTime - 10.0);
+			float look = max(0.0, t - 10.0);
 			tar = eye + vec3(1, 0, sin(look));
-		} else {
-			eye = vec3(0, 4, iGlobalTime-20.0);
-			tar = eye + vec3(0, -1, 1);
-		}
+
 		
 	}
 

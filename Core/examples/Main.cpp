@@ -167,9 +167,10 @@ void buildSceneGraph(GLState& glState, int x, int y)
 
     auto introScene = Buffer::construct(x, y, "introScene", vertexShader, fragmentIntroScene);
 
-    glState.addScene(Scene{ introScene, timer::ms_t(3000000) });
-    glState.addScene(Scene{ roomScenePost, timer::ms_t(3000000) });
+    glState.addScene(Scene{ introScene, timer::ms_t(7000) });
     glState.addScene(Scene{ graveScenePost, timer::ms_t(3000000) });
+    glState.addScene(Scene{ roomScenePost, timer::ms_t(3000000) });
+
     glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ DOFFinal, timer::ms_t(30000) });
     glState.addScene(Scene{ tunnelScene, timer::ms_t(30000) });
@@ -219,11 +220,11 @@ int main()
             bool timeChanged(false);
             LOG_INFO("key: " << key);
             if (key == Window::KEY_LEFT) {
-                glState.changeTime(timer::ms_t(-1000));
+                glState.changeTime(timer::ms_t(-5000));
                 timeChanged = true;
             }
             if (key == Window::KEY_RIGHT) {
-                glState.changeTime(timer::ms_t(1000));
+                glState.changeTime(timer::ms_t(5000));
                 timeChanged = true;
             }
             if (key == Window::KEY_SPACE) {
@@ -265,10 +266,10 @@ int main()
         auto iGlobalTime = glState.relativeSceneTime();
 
         glState[0]["introScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
-        glState[2]["graveScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
-        glState[2]["graveScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
-        glState[1]["roomScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
-        glState[1]["roomScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[1]["graveScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[1]["graveScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[2]["roomScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        glState[2]["roomScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         glState[3]["baseScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         /*glState[2]["tunnel"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f)
                              << Uniform1f("CHANNEL_12_TOTAL", static_cast<GLfloat>(music.syncChannels[12].getTotalHitsPerNote(0)))

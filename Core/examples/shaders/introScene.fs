@@ -460,7 +460,8 @@ void main()
 	float v = fragCoord.y * 2.0 - 1.0;
 	u *= 16.0 / 9.0;
 
-    vec3 eye = vec3( 0.5, 0.0, -3); 
+	float y = max(iGlobalTime - 3.0, 0.0);
+    vec3 eye = vec3( 0.5, y, -3); 
 
 	vec3 ed = distort(eye);
 	vec3 td = distort(eye + vec3(0, 0, 1));
