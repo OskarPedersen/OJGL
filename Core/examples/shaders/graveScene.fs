@@ -35,7 +35,7 @@ uniform float CHANNEL_13_TOTAL;
 
 #define TONE_MAPPING
 
-#define PART_FLY 17
+#define PART_FLY 22.5
 #define PART_WALK (PART_FLY + 15)
 
 #define MAT_GRAVE 1.0
@@ -478,8 +478,8 @@ void main()
 	vec3 tar = vec3(0 ,1, 0); 
 	if (iGlobalTime < PART_FLY) {
 		float t = iGlobalTime - 0.0;
-		eye = vec3(0, 4, t-17.0);
-			tar = eye + vec3(0, -1, 0.01);
+		eye = vec3(0, 4, t-15.0);
+			tar = eye + vec3(0, -1, 0.01 + 0.5*max(0.0, t - PART_FLY + 5.0));
 	} else if (iGlobalTime < PART_WALK) {
 		float t = iGlobalTime - PART_FLY;
 			float bob = min(t, 10.0);
@@ -498,6 +498,11 @@ void main()
 	vec3 rd = normalize(dir + right*u + up*v);
 	
 	vec3 color = raymarch(ro, rd, eye);
+
+	float trans = 0.5;
+	float a = abs(iGlobalTime - PART_FLY);
+	color = mix(color, vec3(0), clamp(1.0 - a / trans + length(vec2(u,v)), 0, 1));
+
 #ifdef TONE_MAPPING
 	color /= (color + vec3(1.0));
 #endif
