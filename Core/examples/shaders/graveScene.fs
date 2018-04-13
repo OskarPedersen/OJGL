@@ -256,7 +256,7 @@ vec4 lightPoles(vec3 p) {
 }
 
 vec3 lightShipModifyPos(vec3 p) {
-	return p - vec3(sin(iGlobalTime)*5.0, 2, cos(iGlobalTime)*5.0);
+	return p - vec3( sin(iGlobalTime)*5.0, 2,10 +  cos(iGlobalTime)*5.0);
 }
 
 vec4 lightShip(vec3 p) {
@@ -462,14 +462,26 @@ void main()
 {
     float u = fragCoord.x * 2.0 - 1.0;
 	float v = fragCoord.y * 2.0 - 1.0;
+	float f = 1.0;
+	if (iGlobalTime < PART_FLY) {
+		f = 1.2;
+	}
+	u *= f;
+	v *= f;
 	//
 
 	float r = length(vec2(u,v));
- float k1 = 0;
- float k2 = 0.5;
- float k3 = 0.1;
- u = u * (1 + 0.001 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r);
- v = v * (1 + 0.001 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r); 
+	float k1 = 0.001;
+	float k2 = 0.5;
+	 float k3 = 0.1;
+	if (iGlobalTime < PART_FLY) {
+		k1 = 0.0;
+		k2 = 0.0;
+		k3 = 0.0;
+	}
+
+ u = u * (1 + k1 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r);
+ v = v * (1 + k1 * r * r + k2 * r * r * r * r + k3 * r * r * r * r * r * r); 
  u *= 16.0 / 9.0;
    // vec3 eye = vec3(6 * sin(iGlobalTime) - 20.0, 3, 6 * cos(iGlobalTime));
 	//vec3 tar = vec3(-20 ,1, 0); 
@@ -478,16 +490,17 @@ void main()
 	vec3 tar = vec3(0 ,1, 0); 
 	if (iGlobalTime < PART_FLY) {
 		float t = iGlobalTime - 0.0;
-		eye = vec3(0, 4, t-15.0);
-			tar = eye + vec3(0, -1, 0.01 + 0.5*max(0.0, t - PART_FLY + 5.0));
+		eye = vec3(0, 8, t-15.0);
+		tar = eye + vec3(0, -1, 0.01 + 0.5*max(0.0, t - PART_FLY + 5.0));
 	} else if (iGlobalTime < PART_WALK) {
 		float t = iGlobalTime - PART_FLY;
 			float bob = min(t, 10.0);
 			eye = vec3(bob, 1.2 + sin(bob*8.0)*0.05, 0);
 			float look = max(0.0, t - 10.0);
 			tar = eye + vec3(1, 0, sin(look));
-
-		
+	} else {
+		eye = vec3(0, 2, 4);
+		tar = eye + vec3(0, -0.5, 1); 
 	}
 
 	vec3 dir = normalize(tar - eye);

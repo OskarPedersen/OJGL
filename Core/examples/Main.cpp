@@ -158,7 +158,6 @@ void buildSceneGraph(GLState& glState, int x, int y)
 
     auto baseScene = Buffer::construct(1024, 768, "baseScene", vertexShader, fragmentBaseScene);
 
-
     auto roomScene = Buffer::construct(x, y, "roomScene", vertexShader, fragmentRoomScene);
     auto roomScenePost = Buffer::construct(x, y, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
 
@@ -187,8 +186,8 @@ std::tuple<int, int, int, std::unique_ptr<unsigned char, decltype(&stbi_image_fr
 
 int main()
 {
-    int x = 1920 / 2;
-    int y = 1080 / 2;
+    int x = 1920;
+    int y = 1080;
 
     const timer::ms_t desiredFrameTime(17);
 
