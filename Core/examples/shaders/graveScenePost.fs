@@ -7,7 +7,9 @@ out vec4 fragColor;
 uniform sampler2D inTexture0;
 uniform float iGlobalTime;
 
-uniform float CHANNEL_4_SINCE;
+uniform float CHANNEL_11_SINCE;
+uniform float CHANNEL_4_TO;
+uniform float CHANNEL_4_TOTAL;
 
 void main()
 {
@@ -15,7 +17,7 @@ void main()
 
 	fragColor = texture(inTexture0, uv);
 	
-	float red = clamp(2.0 - CHANNEL_4_SINCE, 0.0, 1.0);
+	float red = clamp(2.0 - CHANNEL_11_SINCE, 0.0, 1.0);
 	//fragColor.rgb = mix(vec3(1,0,0), fragColor.rgb, min(red, 1.0));
 
 	float a = 0.5 + 0.5 * sin(iGlobalTime* 5.0);
@@ -30,6 +32,11 @@ void main()
     
 	//fragColor.rgb = vec3(sin(iGlobalTime*1000.0));
 
+	if (CHANNEL_4_TO > 0.0 && CHANNEL_4_TOTAL < 0.5) {
+		fragColor.rgb = vec3(1,0,0);
+	} else {
+		fragColor.rgb = vec3(1,0,1);
+	}
 		
 }
 )""

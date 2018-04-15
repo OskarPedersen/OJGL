@@ -285,8 +285,11 @@ int main()
             }
         }
 
-        float m = min(music.syncChannels[4].getTimeSinceLast(0).count(), music.syncChannels[4].getTimeSinceLast(1).count());
-        glState[1]["graveScenePost"] << Uniform1f("CHANNEL_4_SINCE", music.syncChannels[11].getTimeSinceLast(0).count() / 1000.f);
+        float m = min(music.syncChannels[4].getTimeToNext(0).count(), music.syncChannels[4].getTimeToNext(1).count());
+        std::cout << "m: " << m << "\n";
+        glState[1]["graveScenePost"] << Uniform1f("CHANNEL_4_TO", m / 1000.f);
+        glState[1]["graveScenePost"] << Uniform1f("CHANNEL_4_TOTAL", music.syncChannels[4].getTotalHitsPerNote(0) + music.syncChannels[4].getTotalHitsPerNote(1));
+        glState[1]["graveScenePost"] << Uniform1f("CHANNEL_11_SINCE", music.syncChannels[11].getTimeSinceLast(0).count() / 1000.f);
         if (!glState.isPaused()) {
             glState.render();
         }
@@ -298,8 +301,8 @@ int main()
         auto durationMs = t.time<timer::ms_t>();
         static int dbg = 0;
         //if (dbg++ % 100 == 0) {
-        LOG_INFO("ms: " << durationMs.count());
-        std::cout << "ms: " << durationMs.count() << "\n";
+        //LOG_INFO("ms: " << durationMs.count());
+        //std::cout << "ms: " << durationMs.count() << "\n";
         //}
         if (durationMs < desiredFrameTime) {
             //    std::this_thread::sleep_for(desiredFrameTime - durationMs);
