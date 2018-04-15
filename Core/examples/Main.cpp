@@ -274,7 +274,7 @@ int main()
                              << Uniform1f("CHANNEL_12_TOTAL", static_cast<GLfloat>(music.syncChannels[12].getTotalHitsPerNote(0)))
                              << Uniform1f("CHANNEL_13_TOTAL", static_cast<GLfloat>(music.syncChannels[13].getTotalHitsPerNote(0)));*/
 
-        /*for (auto& kv : music.syncChannels) {
+        for (auto& kv : music.syncChannels) {
             const auto& sc = kv.second;
             std::vector<GLfloat> valuesSince;
             std::vector<GLfloat> valuesTo;
@@ -283,7 +283,10 @@ int main()
                 valuesSince.push_back(static_cast<GLfloat>(sc.getTimeSinceLast(i).count()));
                 valuesTo.push_back(static_cast<GLfloat>(sc.getTimeToNext(i).count()));
             }
-        }*/
+        }
+
+        float m = min(music.syncChannels[4].getTimeSinceLast(0).count(), music.syncChannels[4].getTimeSinceLast(1).count());
+        glState[1]["graveScenePost"] << Uniform1f("CHANNEL_4_SINCE", music.syncChannels[11].getTimeSinceLast(0).count() / 1000.f);
         if (!glState.isPaused()) {
             glState.render();
         }

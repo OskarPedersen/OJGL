@@ -9,7 +9,7 @@ uniform sampler2D inTexture0;
 uniform sampler2D inTexture1;
 uniform sampler2D inTexture2;
 
-uniform float CHANNEL_0_TIME_SINCE[41];
+/*uniform float CHANNEL_0_TIME_SINCE[41];
 uniform float CHANNEL_1_TIME_SINCE[23];
 uniform float CHANNEL_11_TIME_SINCE[28];
 uniform float CHANNEL_12_TIME_SINCE[2];
@@ -22,7 +22,9 @@ uniform float CHANNEL_12_TIME_TO[2];
 uniform float CHANNEL_13_TIME_TO[1];
 
 uniform float CHANNEL_12_TOTAL;
-uniform float CHANNEL_13_TOTAL;
+uniform float CHANNEL_13_TOTAL;*/
+
+
 
 //////////////////////////////////////////////////////
 
@@ -521,6 +523,8 @@ void main()
 #endif
     fragColor = vec4(color, 1.0);
 	
+
+
 } 
 
 )""  
