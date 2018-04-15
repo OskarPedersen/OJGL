@@ -61,7 +61,7 @@ void Music::_initSync()
 
 void Music::updateSync()
 {
-    auto time = timer::duration_cast<timer::ms_t>(timer::clock_t::now() - _startTime);
+    auto time = timer::duration_cast<timer::ms_t>(timer::clock_t::now() - _startTime - timer::ms_t(200));
     for (auto& kv : syncChannels) {
         kv.second.tick(time);
     }

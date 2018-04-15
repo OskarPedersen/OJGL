@@ -32,11 +32,11 @@ void main()
     
 	//fragColor.rgb = vec3(sin(iGlobalTime*1000.0));
 
-	if (CHANNEL_4_TO > 0.0 && CHANNEL_4_TOTAL < 0.5) {
+	/*if (CHANNEL_4_TO > 0.0 && CHANNEL_4_TOTAL < 0.5) {
 		fragColor.rgb = vec3(1,0,0);
 	} else {
 		fragColor.rgb = vec3(1,0,1);
-	}
+	}*/
 		
 }
 )""
