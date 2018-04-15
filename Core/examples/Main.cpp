@@ -186,8 +186,8 @@ std::tuple<int, int, int, std::unique_ptr<unsigned char, decltype(&stbi_image_fr
 
 int main()
 {
-    int x = 1920;
-    int y = 1080;
+    int x = 1920 / 2;
+    int y = 1080 / 2;
 
     const timer::ms_t desiredFrameTime(17);
 
