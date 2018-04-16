@@ -286,10 +286,17 @@ int main()
         }
 
         float m = min(music.syncChannels[4].getTimeToNext(0).count(), music.syncChannels[4].getTimeToNext(1).count());
-        std::cout << "m: " << m << "\n";
+        //std::cout << "m: " << m << "\n";
         glState[1]["graveScenePost"] << Uniform1f("CHANNEL_4_TO", m / 1000.f);
         glState[1]["graveScenePost"] << Uniform1f("CHANNEL_4_TOTAL", music.syncChannels[4].getTotalHitsPerNote(0) + music.syncChannels[4].getTotalHitsPerNote(1));
         glState[1]["graveScenePost"] << Uniform1f("CHANNEL_11_SINCE", music.syncChannels[11].getTimeSinceLast(0).count() / 1000.f);
+        glState[1]["graveScene"] << Uniform1f("CHANNEL_11_SINCE", music.syncChannels[11].getTimeSinceLast(0).count() / 1000.f);
+        glState[1]["graveScene"] << Uniform1f("CHANNEL_11_TOTAL", music.syncChannels[11].getTotalHits());
+        std::vector<float> since;
+        since.push_back(music.syncChannels[4].getTimeSinceLast(0).count() / 1000.f);
+        since.push_back(music.syncChannels[4].getTimeSinceLast(1).count() / 1000.f);
+        glState[1]["graveScene"] << Uniform1fv("CHANNEL_4_SINCE", since);
+        std::cout << (music.syncChannels[11].getTimeSinceLast(0).count() / 1000.f) << "\n";
         if (!glState.isPaused()) {
             glState.render();
         }

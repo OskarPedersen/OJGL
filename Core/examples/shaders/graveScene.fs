@@ -24,6 +24,10 @@ uniform float CHANNEL_13_TIME_TO[1];
 uniform float CHANNEL_12_TOTAL;
 uniform float CHANNEL_13_TOTAL;*/
 
+uniform float CHANNEL_11_SINCE;
+uniform float CHANNEL_11_TOTAL;
+
+uniform float CHANNEL_4_SINCE[2];
 
 
 //////////////////////////////////////////////////////
@@ -39,6 +43,7 @@ uniform float CHANNEL_13_TOTAL;*/
 
 #define PART_FLY 22.5
 #define PART_WALK (PART_FLY + 15)
+#define PART_DRUM
 
 #define MAT_GRAVE 1.0
 #define MAT_GROUND 2.0
@@ -493,7 +498,16 @@ void main()
 	if (iGlobalTime < PART_FLY) {
 		float t = iGlobalTime - 0.0;
 		eye = vec3(0, 8, t-15.0);
-		tar = eye + vec3(0, -1, 0.01 + 0.5*max(0.0, t - PART_FLY + 5.0));
+		float a = -3.1415 / 2;
+		float c = 0;
+		if (CHANNEL_11_TOTAL == 1) {
+			c =  min(1.0, CHANNEL_11_SINCE);
+		} else if (CHANNEL_11_TOTAL > 1) {
+			c = 1.0;
+		}
+		a += 3.1415* 0.5 * c;
+		tar = eye + vec3(0, sin(a), cos(a));
+		//tar = eye + vec3(0, -1, 0.01 + 0.5*max(0.0, t - PART_FLY + 5.0));
 	} else if (iGlobalTime < PART_WALK) {
 		float t = iGlobalTime - PART_FLY;
 			float bob = min(t, 10.0);
