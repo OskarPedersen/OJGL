@@ -43,7 +43,7 @@ uniform float CHANNEL_4_SINCE[2];
 
 #define PART_FLY 22.5
 #define PART_WALK (PART_FLY + 15)
-#define PART_DRUM
+#define PART_DRUM (PART_WALK + 20000)
 
 #define MAT_GRAVE 1.0
 #define MAT_GROUND 2.0
@@ -275,6 +275,25 @@ vec4 lightShip(vec3 p) {
 	return vec4(res, dis);
 }
 
+vec3 lightDrumModifyPos(vec3 p, float side) {
+	//p.x = abs(p.x) - 2.0;
+	return p- vec3(sign(side)*3.0, 2.0, 8.5);
+}
+
+vec4 lightDrum(vec3 p, vec3 rp, float c) {
+	float dis = sdCylinder(p, 0.0);
+	vec3 col = vec3(1.0, 0.0, 0.0);
+	float strength = 20.0;
+	/*float c = CHANNEL_4_SINCE[0];
+	if (rp.x > 0.0) {
+		c = CHANNEL_4_SINCE[1];
+	}*/
+	strength *= max(0.0, 1.0 - c*2.0);
+
+	vec3 res = col * strength / (dis * dis * dis);
+	return vec4(res, dis);
+}
+
 vec4 lightUnion(vec4 a, vec4 b)
 {
 	return vec4(a.rgb + b.rgb, min(a.w, b.w));
@@ -289,6 +308,10 @@ vec4 evaluateLight(vec3 pos)
 	//res = lightShip(lightShipModifyPos(pos));
 	if (iGlobalTime < PART_WALK) {
 		return  lightPoles(lightPolesModifyPos(pos));
+	} else if (iGlobalTime < PART_DRUM ) {
+		vec4 a = lightDrum(lightDrumModifyPos(pos, -1.0), pos, CHANNEL_4_SINCE[0]);
+		vec4 b = lightDrum(lightDrumModifyPos(pos, 1.0), pos, CHANNEL_4_SINCE[1]);
+		return lightUnion(a, b);
 	} else {
 		return lightShip(lightShipModifyPos(pos));
 	}
@@ -353,8 +376,24 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) 
 
 		vec3 posLightOrigo = lightPolesModifyPos(pos);
 		addLight(diffuse, specular, normal, eye, lightPos, lightPoles(posLightOrigo).rgb, shadow*0.5 + 0.5, pos, matSpec);
+	} else if (iGlobalTime < PART_DRUM) {
+		{
+			vec3 posLightOrigo = lightDrumModifyPos(pos, -1.0);
+			vec3 lightPos = pos - posLightOrigo;
+			vec3 dir = lightPos - pos;
+			float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
+			addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightDrum(posLightOrigo, pos, CHANNEL_4_SINCE[0]).rgb, shadow, pos, matSpec);
+		}
+		{
+			vec3 posLightOrigo = lightDrumModifyPos(pos, 1.0);
+			vec3 lightPos = pos - posLightOrigo;
+			vec3 dir = lightPos - pos;
+			float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
+			addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightDrum(posLightOrigo, pos, CHANNEL_4_SINCE[1]).rgb, shadow, pos, matSpec);
+		}
+		
 	} else {
-				vec3 posLightOrigo = lightShipModifyPos(pos);
+		vec3 posLightOrigo = lightShipModifyPos(pos);
 		vec3 lightPos = pos - posLightOrigo;
 		vec3 dir = lightPos - pos;
 		float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
@@ -514,6 +553,10 @@ void main()
 			eye = vec3(bob, 1.2 + sin(bob*8.0)*0.05, 0);
 			float look = max(0.0, t - 10.0);
 			tar = eye + vec3(1, 0, sin(look));
+	} else if (iGlobalTime < PART_DRUM) {
+		float t = iGlobalTime - PART_WALK;
+		eye = vec3(0, 2, 4 + t);
+		tar = eye + vec3(0, -0.5, 1); 
 	} else {
 		eye = vec3(0, 2, 4);
 		tar = eye + vec3(0, -0.5, 1); 
