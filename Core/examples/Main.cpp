@@ -90,6 +90,14 @@ std::string fragmentIntroScene{
 #include SHADER_FRAGMENT_INTRO_SCENE
 };
 
+std::string fxaaVertex{
+#include "shaders/fxaa.vs"
+};
+
+std::string fxaaFragment{
+#include "shaders/fxaa.fs"
+};
+
 using namespace ojgl;
 
 #ifdef _DEBUG
@@ -159,15 +167,17 @@ void buildSceneGraph(GLState& glState, int x, int y)
     auto baseScene = Buffer::construct(1024, 768, "baseScene", vertexShader, fragmentBaseScene);
 
     auto roomScene = Buffer::construct(x, y, "roomScene", vertexShader, fragmentRoomScene);
-    auto roomScenePost = Buffer::construct(x, y, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomScene });
+    auto roomFxaa = Buffer::construct(x, y, "roomFxaa", fxaaVertex, fxaaFragment, { roomScene });
+    auto roomScenePost = Buffer::construct(x, y, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomFxaa });
 
     auto graveScene = Buffer::construct(x, y, "graveScene", vertexShader, fragmentGraveScene);
-    auto graveScenePost = Buffer::construct(x, y, "graveScenePost", vertexShader, fragmentGraveScenePost, { graveScene });
+    auto graveFxaa = Buffer::construct(x, y, "graveFxaa", fxaaVertex, fxaaFragment, { graveScene });
+    auto graveScenePost = Buffer::construct(x, y, "graveScenePost", vertexShader, fragmentGraveScenePost, { graveFxaa });
 
     auto introScene = Buffer::construct(x, y, "introScene", vertexShader, fragmentIntroScene);
 
     glState.addScene(Scene{ introScene, timer::ms_t(7000) });
-    glState.addScene(Scene{ graveScenePost, timer::ms_t(3000000) });
+    glState.addScene(Scene{ graveScenePost, timer::ms_t(22500 + 15000 + 15000 + 10000) });
     glState.addScene(Scene{ roomScenePost, timer::ms_t(3000000) });
 
     glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
@@ -184,14 +194,22 @@ std::tuple<int, int, int, std::unique_ptr<unsigned char, decltype(&stbi_image_fr
     return std::make_tuple(width, height, channels, std::move(dataptr));
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-    int x = 1920 / 2;
-    int y = 1080 / 2;
+    int x = 1920;
+    int y = 1080;
+    bool full = false;
+    if (argc >= 3) {
+        x = std::stoi(argv[1]);
+        y = std::stoi(argv[2]);
+        if (argc >= 4) {
+            full = static_cast<bool>(std::stoi(argv[3]));
+        }
+    }
 
     const timer::ms_t desiredFrameTime(17);
 
-    Window window(x, y, false);
+    Window window(x, y, full);
     GLState glState;
 
     Music music(song);
@@ -264,6 +282,11 @@ int main()
 
         auto iGlobalTime = glState.relativeSceneTime();
 
+        glState[1]["graveFxaa"] << Uniform1f("resolutionWidth", static_cast<float>(x));
+        glState[1]["graveFxaa"] << Uniform1f("resolutionHeight", static_cast<float>(y));
+        glState[2]["roomFxaa"] << Uniform1f("resolutionWidth", static_cast<float>(x));
+        glState[2]["roomFxaa"] << Uniform1f("resolutionHeight", static_cast<float>(y));
+
         glState[0]["introScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         glState[1]["graveScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         glState[1]["graveScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
@@ -296,7 +319,7 @@ int main()
         since.push_back(music.syncChannels[4].getTimeSinceLast(0).count() / 1000.f);
         since.push_back(music.syncChannels[4].getTimeSinceLast(1).count() / 1000.f);
         glState[1]["graveScene"] << Uniform1fv("CHANNEL_4_SINCE", since);
-        std::cout << (music.syncChannels[11].getTimeSinceLast(0).count() / 1000.f) << "\n";
+        // std::cout << (music.syncChannels[11].getTimeSinceLast(0).count() / 1000.f) << "\n";
         if (!glState.isPaused()) {
             glState.render();
         }
@@ -307,10 +330,10 @@ int main()
         t.end();
         auto durationMs = t.time<timer::ms_t>();
         static int dbg = 0;
-        //if (dbg++ % 100 == 0) {
-        //LOG_INFO("ms: " << durationMs.count());
-        //std::cout << "ms: " << durationMs.count() << "\n";
-        //}
+        if (dbg++ % 100 == 0) {
+            //LOG_INFO("ms: " << durationMs.count());
+            std::cout << "ms: " << durationMs.count() << "\n";
+        }
         if (durationMs < desiredFrameTime) {
             //    std::this_thread::sleep_for(desiredFrameTime - durationMs);
         }

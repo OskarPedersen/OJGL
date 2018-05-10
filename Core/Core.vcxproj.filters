@@ -19,6 +19,8 @@
     <None Include="examples\shaders\graveScene.fs" />
     <None Include="examples\shaders\graveScenePost.fs" />
     <None Include="examples\shaders\introScene.fs" />
+    <None Include="examples\shaders\fxaa.fs" />
+    <None Include="examples\shaders\fxaa.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="examples\Main.cpp" />

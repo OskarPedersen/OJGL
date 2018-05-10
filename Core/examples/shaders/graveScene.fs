@@ -43,7 +43,7 @@ uniform float CHANNEL_4_SINCE[2];
 
 #define PART_FLY 22.5
 #define PART_WALK (PART_FLY + 15)
-#define PART_DRUM (PART_WALK + 20000)
+#define PART_DRUM (PART_WALK + 15)
 
 #define MAT_GRAVE 1.0
 #define MAT_GROUND 2.0
@@ -391,6 +391,7 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, float mat) 
 			float shadow = shadowFunction(pos, normalize(dir), 0.1, length(dir));
 			addLight(diffuse, specular, normal, eye, pos-posLightOrigo, lightDrum(posLightOrigo, pos, CHANNEL_4_SINCE[1]).rgb, shadow, pos, matSpec);
 		}
+
 		
 	} else {
 		vec3 posLightOrigo = lightShipModifyPos(pos);
@@ -421,7 +422,10 @@ float occlusion(vec3 p, vec3 normal, vec3 rd)
 
 vec3 raymarch(vec3 ro, vec3 rd, vec3 eye) 
 {
-	const int maxIter = 300;
+	int maxIter = 300;//300;
+	if (iGlobalTime > PART_WALK) {
+		maxIter = 30;
+	}
 	const float maxDis = 100.0;
 	const int jumps = 1;
 
@@ -555,7 +559,7 @@ void main()
 			tar = eye + vec3(1, 0, sin(look));
 	} else if (iGlobalTime < PART_DRUM) {
 		float t = iGlobalTime - PART_WALK;
-		eye = vec3(0, 2, 4 + t);
+		eye = vec3(0, 2, 0 + t);
 		tar = eye + vec3(0, -0.5, 1); 
 	} else {
 		eye = vec3(0, 2, 4);
