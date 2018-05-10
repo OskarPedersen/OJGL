@@ -282,7 +282,8 @@ vec3 lightDrumModifyPos(vec3 p, float side) {
 
 vec4 lightDrum(vec3 p, vec3 rp, float c) {
 	float dis = sdCylinder(p, 0.0);
-	vec3 col = vec3(1.0, 0.0, 0.0);
+	vec3 col =  vec3(1.0, 0.5, 0.1);
+
 	float strength = 20.0;
 	/*float c = CHANNEL_4_SINCE[0];
 	if (rp.x > 0.0) {
@@ -422,7 +423,7 @@ float occlusion(vec3 p, vec3 normal, vec3 rd)
 
 vec3 raymarch(vec3 ro, vec3 rd, vec3 eye) 
 {
-	int maxIter = 300;//300;
+	int maxIter = 300;
 	if (iGlobalTime > PART_WALK) {
 		maxIter = 30;
 	}

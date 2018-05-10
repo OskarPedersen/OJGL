@@ -178,12 +178,12 @@ void buildSceneGraph(GLState& glState, int x, int y)
 
     glState.addScene(Scene{ introScene, timer::ms_t(7000) });
     glState.addScene(Scene{ graveScenePost, timer::ms_t(22500 + 15000 + 15000 + 10000) });
-    glState.addScene(Scene{ roomScenePost, timer::ms_t(3000000) });
+    glState.addScene(Scene{ roomScenePost, timer::ms_t(40000) });
 
-    glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
+    /*glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ DOFFinal, timer::ms_t(30000) });
     glState.addScene(Scene{ tunnelScene, timer::ms_t(30000) });
-    glState.addScene(Scene{ pre, timer::ms_t(30000) });
+    glState.addScene(Scene{ pre, timer::ms_t(30000) });*/
 }
 
 std::tuple<int, int, int, std::unique_ptr<unsigned char, decltype(&stbi_image_free)>> readTexture(const std::string& filepath)
@@ -231,6 +231,7 @@ int main(int argc, char* argv[])
 
         for (auto key : window.getPressedKeys()) {
             if (key == Window::KEY_ESCAPE) {
+                std::cout << "end\n";
                 return 0;
             }
 #ifdef _DEBUG
@@ -292,7 +293,7 @@ int main(int argc, char* argv[])
         glState[1]["graveScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         glState[2]["roomScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         glState[2]["roomScenePost"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
-        glState[3]["baseScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
+        //glState[3]["baseScene"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f);
         /*glState[2]["tunnel"] << Uniform1f("iGlobalTime", iGlobalTime.count() / 1000.f)
                              << Uniform1f("CHANNEL_12_TOTAL", static_cast<GLfloat>(music.syncChannels[12].getTotalHitsPerNote(0)))
                              << Uniform1f("CHANNEL_13_TOTAL", static_cast<GLfloat>(music.syncChannels[13].getTotalHitsPerNote(0)));*/
@@ -321,7 +322,10 @@ int main(int argc, char* argv[])
         glState[1]["graveScene"] << Uniform1fv("CHANNEL_4_SINCE", since);
         // std::cout << (music.syncChannels[11].getTimeSinceLast(0).count() / 1000.f) << "\n";
         if (!glState.isPaused()) {
-            glState.render();
+            bool end = glState.render();
+            if (end) {
+                break;
+            }
         }
 
         if (!glState.isPaused()) {

@@ -27,6 +27,7 @@ uniform float CHANNEL_13_TOTAL;
 
 
 #define PART_TWIST 15.0
+#define PART_END (PART_TWIST + 20)
 
 #define PI 3.141592
 
@@ -252,6 +253,11 @@ vec4 lightA(vec3 p, vec3 realp)
 
 		
 	}
+	if (iGlobalTime > PART_END) {
+		float m = (1.0 - (iGlobalTime - PART_END - 4.0));
+		m = clamp(m, 0.0, 1.0);
+		strength *= m;
+	}
 	vec3 res = col * strength / (dis * dis * dis);
 	return vec4(res, dis);
 }
@@ -460,8 +466,12 @@ void main()
     float u = fragCoord.x * 2.0 - 1.0;
 	float v = fragCoord.y * 2.0 - 1.0;
 	u *= 16.0 / 9.0;
-
+	float end = PART_END;
     vec3 eye = vec3( 0.0, 0.0, iGlobalTime); 
+	if (iGlobalTime > end){
+		float x = iGlobalTime - end;
+		eye.z = end + 1 - pow(3.0, -x);
+	}
 	if (iGlobalTime > PART_TWIST) {
 		//vec3 sp = p;
 		//float s = 5.0;
@@ -473,6 +483,7 @@ void main()
 		eye.x = cos(eye.z * 0.2 + o) * 0.7;
 		eye.y = sin(eye.z * 0.2 + o) * 0.5;
 	}
+	
 	vec3 ed = distort(eye);
 	vec3 td = distort(eye + vec3(0, 0, 1));
 	td.x = -td.x;

@@ -14,7 +14,7 @@ public:
     GLState();
     ~GLState();
 
-    void render();
+    bool render();
     void addScene(const Scene& scene);
     void setStartTime(timer::time_point_t time);
     void restart();

@@ -33,16 +33,18 @@ void GLState::addScene(const Scene& scene)
     _scenes.push_back(scene);
 }
 
-void GLState::render()
+bool GLState::render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindVertexArray(_vaoID);
 
     auto t = timer::ms_t(0);
     auto elapsed = elapsedTime();
+    bool end = true;
     for (auto& v : _scenes) {
         if (elapsed < v.duration() + t) {
             v.render();
+            end = false;
             break;
         }
         t = t + v.duration();
@@ -51,6 +53,7 @@ void GLState::render()
     glBindVertexArray(0);
     glFlush();
     glFinish();
+    return end;
 }
 
 Scene& GLState::operator[](size_t i)
