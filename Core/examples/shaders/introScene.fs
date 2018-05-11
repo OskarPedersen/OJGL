@@ -23,8 +23,6 @@ uniform float CHANNEL_13_TIME_TO[1];
 uniform float CHANNEL_12_TOTAL;
 uniform float CHANNEL_13_TOTAL;
 
-//////////////////////////////////////////////////////
-
 
 #define PART_TWIST 15.0
 
@@ -118,10 +116,10 @@ float noiseOctave(in vec2 p, int octaves, float persistence)
 
 float BrickPattern(in vec2 p) 
 {
-  p *= vec2 (1.0, 2.8);  // scale
+  p *= vec2 (1.0, 2.8);
   vec2 f = floor (p);
   if (2. * floor (f.y * 0.5) != f.y) 
-    p.x += 0.5;  // brick shift
+    p.x += 0.5; 
   p = smoothstep (0.03, 0.08, abs (fract (p + 0.5) - 0.5));
   return 1. - 0.9 * p.x * p.y;
 }
@@ -154,8 +152,8 @@ float roofPattern(vec2 p) {
 }
 
 float corrNoise(vec3 p){
-	return 0.4*noiseOctave(vec2(p.z, abs(p.y) > 0.95 ? p.x : p.y) * 25.0, 3, 1.0); // Use same noise for walls and floor
-	//return noiseOctave(vec2(p.z, abs(p.y) > 0.95 ? p.x : p.y) * 5.0, 10, 0.7); // Use same noise for walls and floor
+	return 0.4*noiseOctave(vec2(p.z, abs(p.y) > 0.95 ? p.x : p.y) * 25.0, 3, 1.0);
+
 }
 
 vec3 distort(vec3 p) {
@@ -175,7 +173,7 @@ vec3 distort(vec3 p) {
 	return vec3(cos(a) * l, sin(a) * l, p.z);*/
 }
 
-// Smooth min
+
 float smin( float a, float b)
 {
 	float k = 0.1;
@@ -183,7 +181,7 @@ float smin( float a, float b)
     return mix( b, a, h ) - k*h*(1.0-h);
 }
 
-// Smooth min. k determines smoothness
+
 float smink( float a, float b, float k, inout float h)
 {
     h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
@@ -227,7 +225,7 @@ float sdTorusJ( vec3 p, vec2 t )
 vec3 lightAModifyPos(vec3 p)
 {
 	float s = 2.0;
-	//p.z = mod(p.z + s*0.5, s) - s*0.5;
+
 	return p;
 }
 
@@ -317,7 +315,7 @@ void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos) {
 		int q = int(round(dp.z / s));
 		vec3 lightPos = distort(vec3(0.0, 0.8, q*s)); 
 		vec3 dir = lightPos - pos;
-		float shadow = 1.0;//shadowFunction(pos, normalize(dir), 0.1, length(dir));
+		float shadow = 1.0;
 		addLight(diffuse, specular, normal, eye, lightPos, lightA(posLightOrigo, pos).rgb, shadow, pos);
 	}
 	color = color * (ambient + diffuse) + specular;
@@ -359,7 +357,6 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 		float t = 0.0;
 		for (int i = 0; i < maxIter; i++) {
 			vec3 p = ro + rd * t;
-			//p.x += sin(p.z*0.5);
 			vec2 res = map(p, rd);
 			float d = res.x;
 			float m = res.y;
@@ -396,7 +393,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 					vec3 brick = vec3(1.0, 0.6, 0.35)*(0.1 + 0.9 * n);
 					vec3 mortar = vec3(1.0);
 					c = mix(brick, mortar, pattern);
-					//c = vec3(n);
+
 				} else if (fm == MAT_ROOF) {
 					vec3 dp = distort(p);
 					float pattern = roofPattern(dp.xz);
@@ -412,8 +409,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 						tile = vec3(0.8);
 					}*/
 					c = mix(tile,mortar, pattern);
-					//c = tile;
-					//c = vec3(n);
+
 				}
 
 				float ms = mod(m, 1.0) * 2.0;
@@ -421,7 +417,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				vec3 dp = distort(p);
 				vec3 pc = vec3(1.0, 0.0, 0.0);
 				c = mix(c, pc, ms);
-				//c = vec3(ms);
+
 
 				c *= occlusion(p, normal, rd);
 				addLightning(c, normal, eye, p);
@@ -433,8 +429,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec3 eye)
 				
 				if (ms > 0.05 ) {
 						ref *= ms * 0.2;
-				//} else if(floor(m) == MAT_ROOF) {
-				//	ref *= 0.3;
+
 				} else {
 					return col;
 				}
@@ -460,7 +455,7 @@ void main()
 	float v = fragCoord.y * 2.0 - 1.0;
 	u *= 16.0 / 9.0;
 
-	float y = 10.0*smoothstep(2.0, 7.0*2.0, iGlobalTime); // max(iGlobalTime - 3.0, 0.0) + 
+	float y = 10.0*smoothstep(2.0, 7.0*2.0, iGlobalTime);
     vec3 eye = vec3( 0.5, y, -3); 
 
 	vec3 ed = distort(eye);

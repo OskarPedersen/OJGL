@@ -19,14 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <None Include="examples\shaderlibs\distanceFunctions.fs" />
-    <None Include="examples\shaderlibs\misc.fs" />
-    <None Include="examples\shaders\baseScene.fs" />
-    <None Include="examples\shaders\dofBlur1.fs" />
-    <None Include="examples\shaders\dofBlur2.fs" />
-    <None Include="examples\shaders\demo.fs" />
     <None Include="examples\shaders\demo.vs" />
-    <None Include="examples\shaders\dofFinal.fs" />
     <None Include="examples\shaders\fxaa.fs" />
     <None Include="examples\shaders\fxaa.vs" />
     <None Include="examples\shaders\graveScenePost.fs" />
@@ -34,10 +27,8 @@
     <None Include="examples\shaders\introScene.fs" />
     <None Include="examples\shaders\post.fs" />
     <None Include="examples\shaders\post.vs" />
-    <None Include="examples\shaders\dofScene.fs" />
     <None Include="examples\shaders\roomScene.fs" />
     <None Include="examples\shaders\roomScenePost.fs" />
-    <None Include="examples\shaders\tunnelScene.fs" />
     <None Include="examples\songs\song.inc" />
   </ItemGroup>
   <ItemGroup>
@@ -48,9 +39,9 @@
     <ClCompile Include="src\music\V2MPlayer.cpp" />
     <ClCompile Include="src\render\Buffer.cpp" />
     <ClCompile Include="src\render\GLState.cpp" />
+    <ClCompile Include="src\render\Texture.cpp" />
     <ClCompile Include="src\render\Window.cpp" />
     <ClCompile Include="src\winapi\gl_loader.cpp" />
-    <ClCompile Include="src\render\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\render\Scene.h" />
@@ -61,6 +52,7 @@
     <ClInclude Include="src\OJGL.h" />
     <ClInclude Include="src\render\Buffer.h" />
     <ClInclude Include="src\render\GLState.h" />
+    <ClInclude Include="src\render\Texture.h" />
     <ClInclude Include="src\render\Uniform.hpp" />
     <ClInclude Include="src\render\Window.h" />
     <ClInclude Include="src\utility\Log.h" />
@@ -69,10 +61,6 @@
     <ClInclude Include="src\winapi\gl_loader.h" />
     <ClInclude Include="src\thirdparty\libv2.h" />
     <ClInclude Include="src\winapi\wglext.h" />
-    <ClInclude Include="src\render\Texture.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="examples\textures\image.png" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -155,11 +143,12 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
+      <Optimization>MinSpace</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/std:c++latest</AdditionalOptions>
-      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(SolutionDir)Core/src</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -171,11 +160,12 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
+      <Optimization>MinSpace</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/std:c++latest</AdditionalOptions>
-      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(SolutionDir)Core/src</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -187,13 +177,14 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/std:c++latest</AdditionalOptions>
-      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(SolutionDir)Core/src</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -208,13 +199,14 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/std:c++latest</AdditionalOptions>
-      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(SolutionDir)Core/src</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

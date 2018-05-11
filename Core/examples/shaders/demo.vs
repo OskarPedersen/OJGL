@@ -5,8 +5,8 @@ out vec2 fragCoord;
 
 void main()
 {
-	fragCoord.x = (position.x + 1) * 1 / 2.0;
-	fragCoord.y = (position.y + 1) * 1 / 2.0;
+	fragCoord.x = (position.x + 1) * 1 / 2.;
+	fragCoord.y = (position.y + 1) * 1 / 2.;
 	gl_Position = vec4(position, 1);
 }
 )""

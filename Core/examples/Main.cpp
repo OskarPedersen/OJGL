@@ -23,46 +23,12 @@ std::string vertexShader{
 #include "shaders/demo.vs"
 };
 
-std::string fragmentShader{
-#include "shaders/demo.fs"
-};
-
 std::string vertexShaderPost{
 #include "shaders/post.vs"
 };
 
 std::string fragmentShaderPost{
 #include "shaders/post.fs"
-};
-
-#define SHADER_FRAGMENT_DOF_SCENE "shaders/dofScene.fs"
-std::string fragmentDOFScene{
-#include SHADER_FRAGMENT_DOF_SCENE
-};
-
-#define SHADER_FRAGMENT_DOF_BLUR1 "shaders/dofBlur1.fs"
-std::string fragmentDOFBlur1{
-#include SHADER_FRAGMENT_DOF_BLUR1
-};
-
-#define SHADER_FRAGMENT_DOF_BLUR2 "shaders/dofBlur2.fs"
-std::string fragmentDOFBlur2{
-#include SHADER_FRAGMENT_DOF_BLUR2
-};
-
-#define SHADER_FRAGMENT_DOF_FINAL "shaders/dofFinal.fs"
-std::string fragmentDOFFinal{
-#include SHADER_FRAGMENT_DOF_FINAL
-};
-
-#define SHADER_FRAGMENT_TUNNEL_SCENE "shaders/tunnelScene.fs"
-std::string fragmentTunnelScene{
-#include SHADER_FRAGMENT_TUNNEL_SCENE
-};
-
-#define SHADER_FRAGMENT_BASE_SCENE "shaders/baseScene.fs"
-std::string fragmentBaseScene{
-#include SHADER_FRAGMENT_BASE_SCENE
 };
 
 #define SHADER_FRAGMENT_ROOM_SCENE "shaders/roomScene.fs"
@@ -104,17 +70,8 @@ using namespace ojgl;
 void debugRereadShaderFiles()
 {
     std::unordered_map<std::string*, std::string> shaders;
-    shaders[&fragmentShader] = "examples/shaders/demo.fs";
+
     shaders[&fragmentShaderPost] = "examples/shaders/post.fs";
-
-    shaders[&fragmentDOFScene] = "examples/" SHADER_FRAGMENT_DOF_SCENE;
-    shaders[&fragmentDOFBlur1] = "examples/" SHADER_FRAGMENT_DOF_BLUR1;
-    shaders[&fragmentDOFBlur2] = "examples/" SHADER_FRAGMENT_DOF_BLUR2;
-    shaders[&fragmentDOFFinal] = "examples/" SHADER_FRAGMENT_DOF_FINAL;
-
-    shaders[&fragmentTunnelScene] = "examples/" SHADER_FRAGMENT_TUNNEL_SCENE;
-
-    shaders[&fragmentBaseScene] = "examples/" SHADER_FRAGMENT_BASE_SCENE;
 
     shaders[&fragmentRoomScene] = "examples/" SHADER_FRAGMENT_ROOM_SCENE;
     shaders[&fragmentRoomScenePost] = "examples/" SHADER_FRAGMENT_ROOM_SCENE_POST;
@@ -154,18 +111,6 @@ void buildSceneGraph(GLState& glState, int x, int y)
 {
     glState.clearScenes();
 
-    auto pre = Buffer::construct(1024, 768, "main", vertexShader, fragmentShader);
-    auto post = Buffer::construct(1024, 768, "post", vertexShaderPost, fragmentShaderPost);
-
-    auto DOFScene = Buffer::construct(1024, 768, "DOFScene", vertexShader, fragmentDOFScene);
-    auto DOFBlur1 = Buffer::construct(1024, 768, "DOFBlur1", vertexShader, fragmentDOFBlur1, { DOFScene });
-    auto DOFBlur2 = Buffer::construct(1024, 768, "DOFBlur2", vertexShader, fragmentDOFBlur2, { DOFBlur1 });
-    auto DOFFinal = Buffer::construct(1024, 768, "DOFFinal", vertexShader, fragmentDOFFinal, { DOFScene, DOFBlur2, DOFBlur1 });
-
-    auto tunnelScene = Buffer::construct(1024, 768, "tunnelScene", vertexShader, fragmentTunnelScene);
-
-    auto baseScene = Buffer::construct(1024, 768, "baseScene", vertexShader, fragmentBaseScene);
-
     auto roomScene = Buffer::construct(x, y, "roomScene", vertexShader, fragmentRoomScene);
     auto roomFxaa = Buffer::construct(x, y, "roomFxaa", fxaaVertex, fxaaFragment, { roomScene });
     auto roomScenePost = Buffer::construct(x, y, "roomScenePost", vertexShader, fragmentRoomScenePost, { roomFxaa });
@@ -178,7 +123,7 @@ void buildSceneGraph(GLState& glState, int x, int y)
 
     glState.addScene(Scene{ introScene, timer::ms_t(7000) });
     glState.addScene(Scene{ graveScenePost, timer::ms_t(22500 + 15000 + 15000 + 10000) });
-    glState.addScene(Scene{ roomScenePost, timer::ms_t(41000) });
+    glState.addScene(Scene{ roomScenePost, timer::ms_t(42000) });
 
     /*glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ DOFFinal, timer::ms_t(30000) });
@@ -330,7 +275,7 @@ int main(int argc, char* argv[])
             //LOG_INFO("ms: " << durationMs.count());
             //std::cout << "ms: " << durationMs.count() << "\n";
         }
-        std::cout << (iGlobalTime.count() / 1000.f) << "\n";
+        //std::cout << (iGlobalTime.count() / 1000.f) << "\n";
         if (durationMs < desiredFrameTime) {
             //    std::this_thread::sleep_for(desiredFrameTime - durationMs);
         }

@@ -2,18 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <None Include="examples\songs\song.inc" />
-    <None Include="examples\shaders\demo.fs" />
     <None Include="examples\shaders\demo.vs" />
     <None Include="examples\shaders\post.fs" />
     <None Include="examples\shaders\post.vs" />
-    <None Include="examples\shaders\dofScene.fs" />
-    <None Include="examples\shaders\dofBlur2.fs" />
-    <None Include="examples\shaders\dofBlur1.fs" />
-    <None Include="examples\shaders\dofFinal.fs" />
-    <None Include="examples\shaders\tunnelScene.fs" />
-    <None Include="examples\shaders\baseScene.fs" />
-    <None Include="examples\shaderlibs\distanceFunctions.fs" />
-    <None Include="examples\shaderlibs\misc.fs" />
     <None Include="examples\shaders\roomScene.fs" />
     <None Include="examples\shaders\roomScenePost.fs" />
     <None Include="examples\shaders\graveScene.fs" />
@@ -49,11 +40,8 @@
     <ClInclude Include="src\render\Uniform.hpp" />
     <ClInclude Include="src\render\Buffer.h" />
     <ClInclude Include="src\render\Scene.h" />
-    <ClInclude Include="src\render\Texture.h" />
     <ClInclude Include="src\thirdparty\libv2.h" />
     <ClInclude Include="src\utility\Log.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="examples\textures\image.png" />
+    <ClInclude Include="src\render\Texture.h" />
   </ItemGroup>
 </Project>
