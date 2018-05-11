@@ -63,7 +63,6 @@
     <ClInclude Include="src\render\GLState.h" />
     <ClInclude Include="src\render\Uniform.hpp" />
     <ClInclude Include="src\render\Window.h" />
-    <ClInclude Include="src\thirdparty\stb_image.h" />
     <ClInclude Include="src\utility\Log.h" />
     <ClInclude Include="src\utility\Timer.hpp" />
     <ClInclude Include="src\winapi\glext.h" />

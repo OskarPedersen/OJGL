@@ -18,6 +18,13 @@ void main()
 	fragColor = texture(inTexture0, uv);
 	
 	float red = clamp(2.0 - CHANNEL_11_SINCE, 0.0, 1.0);
+	if (iGlobalTime > 28.1 && iGlobalTime < 30.8) {
+		red = 0.0;
+	}
+	if (iGlobalTime > 36.6 && iGlobalTime < 37.1) {
+		red = 0.0;
+	}
+
 	//fragColor.rgb = mix(vec3(1,0,0), fragColor.rgb, min(red, 1.0));
 
 	float a = 0.5 + 0.5 * sin(iGlobalTime* 5.0);

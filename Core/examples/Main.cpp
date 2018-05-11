@@ -1,6 +1,6 @@
 #include "OJGL.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "thirdparty\stb_image.h"
+//#define STB_IMAGE_IMPLEMENTATION
+//#include "thirdparty\stb_image.h"
 #include "utility\Log.h"
 #include "utility\Timer.hpp"
 #include <cassert>
@@ -178,7 +178,7 @@ void buildSceneGraph(GLState& glState, int x, int y)
 
     glState.addScene(Scene{ introScene, timer::ms_t(7000) });
     glState.addScene(Scene{ graveScenePost, timer::ms_t(22500 + 15000 + 15000 + 10000) });
-    glState.addScene(Scene{ roomScenePost, timer::ms_t(40000) });
+    glState.addScene(Scene{ roomScenePost, timer::ms_t(41000) });
 
     /*glState.addScene(Scene{ baseScene, timer::ms_t(3000000) });
     glState.addScene(Scene{ DOFFinal, timer::ms_t(30000) });
@@ -186,19 +186,14 @@ void buildSceneGraph(GLState& glState, int x, int y)
     glState.addScene(Scene{ pre, timer::ms_t(30000) });*/
 }
 
-std::tuple<int, int, int, std::unique_ptr<unsigned char, decltype(&stbi_image_free)>> readTexture(const std::string& filepath)
-{
-    int width = 0, height = 0, channels = 0;
-    unsigned char* data = stbi_load(filepath.c_str(), &width, &height, &channels, 0);
-    std::unique_ptr<unsigned char, decltype(&stbi_image_free)> dataptr(data, stbi_image_free);
-    return std::make_tuple(width, height, channels, std::move(dataptr));
-}
-
 int main(int argc, char* argv[])
 {
     int x = 1920;
     int y = 1080;
-    bool full = false;
+    bool full = true;
+#ifdef _DEBUG
+    full = false;
+#endif
     if (argc >= 3) {
         x = std::stoi(argv[1]);
         y = std::stoi(argv[2]);
@@ -217,9 +212,6 @@ int main(int argc, char* argv[])
 
     buildSceneGraph(glState, x, y);
 
-    auto[width, height, channels, data] = readTexture("examples/textures/image.png");
-    auto texture = Texture::construct(width, height, channels, data.get());
-
     //glState[3]["main"] << Uniform1t("image", texture);
     glState.setStartTime(timer::clock_t::now());
 
@@ -231,7 +223,7 @@ int main(int argc, char* argv[])
 
         for (auto key : window.getPressedKeys()) {
             if (key == Window::KEY_ESCAPE) {
-                std::cout << "end\n";
+                //std::cout << "end\n";
                 return 0;
             }
 #ifdef _DEBUG
@@ -336,8 +328,9 @@ int main(int argc, char* argv[])
         static int dbg = 0;
         if (dbg++ % 100 == 0) {
             //LOG_INFO("ms: " << durationMs.count());
-            std::cout << "ms: " << durationMs.count() << "\n";
+            //std::cout << "ms: " << durationMs.count() << "\n";
         }
+        std::cout << (iGlobalTime.count() / 1000.f) << "\n";
         if (durationMs < desiredFrameTime) {
             //    std::this_thread::sleep_for(desiredFrameTime - durationMs);
         }
