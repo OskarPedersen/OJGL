@@ -57,6 +57,14 @@ namespace resources {
         std::string roomPost{
 #include "shaders/roomScenePost.fs"
         };
+
+        std::string mountain{
+#include "shaders/mountain.fs"
+        };
+
+        std::string mountainNoise{
+#include "shaders/mountainNoise.fs"
+        };
     } //namespace fragment
 
     namespace vertex {

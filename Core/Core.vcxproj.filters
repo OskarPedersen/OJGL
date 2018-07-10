@@ -21,6 +21,8 @@
     <None Include="examples\shaders\introScene.fs" />
     <None Include="examples\shaders\fxaa.fs" />
     <None Include="examples\shaders\fxaa.vs" />
+    <None Include="examples\shaders\mountain.fs" />
+    <None Include="examples\shaders\mountainNoise.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="examples\Main.cpp" />

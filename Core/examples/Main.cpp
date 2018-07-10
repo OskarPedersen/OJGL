@@ -36,6 +36,11 @@ void buildSceneGraph(GLState& glState, int x, int y)
     auto roomFxaa = Buffer::construct(x, y, "fxaa", "fxaa.vs", "fxaa.fs", room);
     auto roomPost = Buffer::construct(x, y, "roomPost", "demo.vs", "roomScenePost.fs", roomFxaa);
 
+    auto mountainNoise = Buffer::construct(x, y, "mountainNoise", "demo.vs", "mountainNoise.fs");
+    auto mountain = Buffer::construct(x, y, "mountain", "demo.vs", "mountain.fs", mountainNoise);
+
+    glState.addScene("mountain", mountain, Duration::milliseconds(3000000));
+
     glState.addScene("introScene", intro, Duration::milliseconds(7000));
     glState.addScene("graveScene", gravePost, Duration::milliseconds(3000000));
     glState.addScene("roomScene", roomPost, Duration::milliseconds(3000000));
@@ -55,8 +60,8 @@ std::tuple<int, int, int, std::unique_ptr<unsigned char, decltype(&stbi_image_fr
 
 int main()
 {
-    int width = 1920 / 2;
-    int height = 1080 / 2;
+    int width = 1920;
+    int height = 1080;
     ShaderReader::setBasePath("examples/shaders/");
     ShaderReader::preLoad("demo.vs", resources::vertex::demo);
     ShaderReader::preLoad("post.vs", resources::vertex::post);
@@ -75,6 +80,9 @@ int main()
     ShaderReader::preLoad("graveScenePost.fs", resources::fragment::gravePost);
     ShaderReader::preLoad("roomScene.fs", resources::fragment::room);
     ShaderReader::preLoad("roomScenePost.fs", resources::fragment::roomPost);
+
+    ShaderReader::preLoad("mountain.fs", resources::fragment::mountain);
+    ShaderReader::preLoad("mountainNoise.fs", resources::fragment::mountainNoise);
 
     const auto desiredFrameTime = Duration::milliseconds(17);
 
@@ -141,6 +149,8 @@ int main()
 
             if (!glState.isPaused() && timeChanged)
                 music.setTime(glState.elapsedTime());
+#else
+            }
 #endif
         }
 
@@ -163,7 +173,7 @@ int main()
         timer.end();
 
         auto timeSinceLastPrint = Timepoint::now() - previousPrintTime;
-        if (timeSinceLastPrint > Duration::seconds(2)) {
+        if (timeSinceLastPrint > Duration::seconds(1)) {
             LOG_INFO("Frame time: " << timer.currentTime());
             previousPrintTime = Timepoint::now();
         }
