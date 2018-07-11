@@ -146,10 +146,14 @@ vec2 scene(vec3 p, float t, vec3 rd)
 	vec2 m = mountains(p.xz);
 	res = un(res, vec2(p.y -m.x, m.y));
 	res.x *= 0.5;
-	{
-		vec3 o = p;
-		float s = 400.0;
-		p.x = mod(p.x + s * 0.5, s) - s * 0.5;
+
+	
+	vec3 o = p;
+	float s = 400.0;
+	p.x = mod(p.x + s * 0.5, s) - s * 0.5;
+	float bound = sdBox(p - vec3(0.0, 150.0, 0.0), vec3(10.0, 50.0, 10.0));
+	if (bound < 1) {
+		
 		//p.z += sin(o.x * 0.001) * 200.0 + 30.0;
 		//p.y -= mountains(floor((o.xz +10.0) / 40.0) * 40.0).x;
 		p.y -= mountains(round((o.xz) / 50.0) * 50.0).x;
@@ -163,6 +167,7 @@ vec2 scene(vec3 p, float t, vec3 rd)
 		pModPolar(q, 8.0);
 		float b = sdBox(vec3(q.x, p.y, q.y) - vec3(10, 33, 0), vec3(5.0, 2.0, 1.0));
 		d = min(d, max(top, -b));
+		
 		//res.x = smink(res.x, d, 10.0);
 		//res = un(res, vec2(d, MAT_MOUNTAIN));
 		res = sunk(res, vec2(d, MAT_MOUNTAIN), 10.0);
