@@ -144,20 +144,20 @@ vec2 scene(vec3 p, float t, vec3 rd)
 	}
 	vec2 m = mountains(p.xz);
 	res = un(res, vec2(p.y -m.x, m.y));
+	res.x *= 0.5;
 	{
 		vec3 o = p;
 		float s = 400.0;
 		p.x = mod(p.x + s * 0.5, s) - s * 0.5;
-		p.z += sin(o.x * 0.001) * 200.0;
+		//p.z += sin(o.x * 0.001) * 200.0 + 30.0;
+		//p.y -= mountains(floor((o.xz +10.0) / 40.0) * 40.0).x;
+		p.y -= mountains(round((o.xz) / 50.0) * 50.0).x;
 		//p.y -= 150.0;
-		p.y -= mountains(floor((o.xz +10.0) / 40.0) * 40.0).x;
 
-		//p -= vec3(300.0, 150.0, 90.0);
-		//float d = udRoundBox(p, vec3(5.0, 30.0, 5.0), 1.0);
 		float d = sdCappedCylinder(p, vec2(7.0, 30.0));
 		float top = max(sdCappedCylinder(p - vec3(0, 31, 0), vec2(8.0, 3.0)), -sdCappedCylinder(p - vec3(0, 30, 0), vec2(6.0, 20.0)));
 		
-		//float pModPolar(inout vec2 p, float repetitions)
+
 		vec2 q = p.xz;
 		pModPolar(q, 8.0);
 		float b = sdBox(vec3(q.x, p.y, q.y) - vec3(10, 33, 0), vec3(5.0, 2.0, 1.0));
@@ -174,7 +174,7 @@ vec4 evaluateLight(vec3 p)
 	vec3 o = p;
 	float s = 400.0;
 	p.x = mod(p.x + s * 0.5, s) - s * 0.5;
-	p.z += sin(o.x * 0.001) * 200.0;
+	//p.z += sin(o.x * 0.001) * 200.0;
 	//p.y -= 150.0;
 	p.y -= mountains(floor((o.xz +10.0) / 40.0) * 40.0).x + 33.0;
 	float dis = length(p) - 1.0;
@@ -301,17 +301,22 @@ void main()
 	    float d = dm.x;
 	    float m = dm.y;
          
-         float fogAmount = 0.0008 + 0.03 * (1.0 - smoothstep(100.0, 150.0, p.y));
+         float fogAmount = 0.003 + 0.07 * (1.0 - smoothstep(100.0, 160.0, p.y));
          
          vec4 lightColDis = evaluateLight(p);
          vec3 light = lightColDis.rgb;
-         d = min(d, lightColDis.w);
-         
+         d = min(d, max(0.01, lightColDis.w * 0.25));
+		 //d = max(d*0.2, 0.01);
+		 //d *= 0.5;
          vec3 lightIntegrated = light - light * exp(-fogAmount * d);
          scatteredLight += transmittance * lightIntegrated;	
          transmittance *= exp(-fogAmount * d);
          
-		t += max(d*0.2, 0.01);
+		//t += max(d*0.2, 0.01);
+		//t +=  max(d*0.2, 0.01);
+		//d = max(d*0.2, 0.01);
+		t += d;
+
         bool end = i == 1000 - 1 || t >= 1000.0;
 	    if(d < 0.01 || end) 
 	    {
@@ -341,6 +346,7 @@ void main()
 			color = 0.7 * color * (1.0 + diffuse);
 	    	color += spec * specular(normal, -invLight, normalize(eye - p), 70.0);
 		   	//color =  applyFog(color, distance(eye, p), rd, invLight, p);
+
 
             color = transmittance * color + scatteredLight;
 	    	
