@@ -39,9 +39,42 @@ float noiseOctave(in vec2 p, int octaves, float persistence)
 	return n / maxValue; 
 }
 
+float udRoundBox( vec3 p, vec3 b, float r )
+{
+  return length(max(abs(p)-b,0.0))-r;
+}
 
+float sdCappedCylinder( vec3 p, vec2 h )
+{
+  vec2 d = abs(vec2(length(p.xz),p.y)) - h;
+  return min(max(d.x,d.y),0.0) + length(max(d,0.0));
+}
 
+float sdBox( vec3 p, vec3 b )
+{
+  vec3 d = abs(p) - b;
+  return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));
+}
 
+#define PI 3.14159265
+
+// Repeat around the origin by a fixed angle.
+// For easier use, num of repetitions is use to specify the angle.
+float pModPolar(inout vec2 p, float repetitions) {
+	float angle = 2*PI/repetitions;
+	float a = atan(p.y, p.x) + angle/2.;
+	float r = length(p);
+	float c = floor(a/angle);
+	a = mod(a,angle) - angle/2.;
+	p = vec2(cos(a), sin(a))*r;
+	// For an odd number of repetitions, fix cell index of the cell in -x direction
+	// (cell index would be e.g. -5 and 5 in the two halves of the cell):
+	if (abs(c) >= (repetitions/2)) c = abs(c);
+	return c;
+}
+
+#define MAT_MOUNTAIN 1.0
+#define MAT_TOWER 2.0
 
 
 
@@ -70,6 +103,7 @@ vec2 mountains(vec2 p)
 	float t = 5.0 * texture(inTexture0, p.xy/50.0).x + 
 				50.0 * texture(inTexture0, p.xy/300.0).x + 
 				200.0 * texture(inTexture0, p.xy/6000.0).x;
+	//t *= 1.25;
     /*float t = 5.0 * noiseOctave(p.xy / 50.0, 5, 0.7) +
         		50.0 * noiseOctave(p.xy / 300.0, 5, 0.7) + 
         		200.0 * noiseOctave(p.xy / 6000.0, 5, 0.7);*/
@@ -92,6 +126,19 @@ vec2 scene(vec3 p, float t, vec3 rd)
 	}
 	vec2 m = mountains(p.xz);
 	res = un(res, vec2(p.y -m.x, m.y));
+	{
+		p -= vec3(300.0, 150.0, 90.0);
+		//float d = udRoundBox(p, vec3(5.0, 30.0, 5.0), 1.0);
+		float d = sdCappedCylinder(p, vec2(7.0, 30.0));
+		float top = max(sdCappedCylinder(p - vec3(0, 31, 0), vec2(8.0, 3.0)), -sdCappedCylinder(p - vec3(0, 30, 0), vec2(6.0, 20.0)));
+		
+		//float pModPolar(inout vec2 p, float repetitions)
+		vec2 q = p.xz;
+		pModPolar(q, 8.0);
+		float b = sdBox(vec3(q.x, p.y, q.y) - vec3(10, 33, 0), vec3(5.0, 2.0, 1.0));
+		d = min(d, max(top, -b));
+		res = un(res, vec2(d, MAT_TOWER));
+	}
     return res;
 }
 
@@ -157,14 +204,17 @@ vec4 evaluateLight(vec3 p)
 	return vec4(res + res2, dis);
 }
 
-#define PI 3.1415
+
 void main()
 {
 
     
     vec2 iMouse = vec2(160.5, 0.0);
-	vec3 eye = vec3(100.0*sin(iMouse.x * 0.01), 250.0, 100.0*cos(iMouse.x  * 0.01));
+	vec3 eye = vec3(110.0*sin(iMouse.x * 0.01), 250.0, 110.0*cos(iMouse.x  * 0.01));
 	vec3 tar = vec3(eye.x * 1.1, eye.y - 2.0, eye.z * 1.1);
+	eye = vec3(220.0, 200.0, 50.0);
+	eye = vec3(300.0, 200.0, 90.0) + vec3(60.0 * cos(iGlobalTime * 0.1), 0.0, 60.0 * sin(iGlobalTime * 0.1));
+	tar = vec3(300.0, 180.0, 90.0);
 	 vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir)); 
  	vec3 up = cross(dir, right);
@@ -176,6 +226,7 @@ void main()
     float v = ((fragCoord.y / iResolution.y) * 2.0 - 1.0) * (iResolution.y/iResolution.x);*/
 	float u = fragCoord.x * 2.0 - 1.0;
 	float v = fragCoord.y * 2.0 - 1.0;
+	v *= 9.0 / 16.0;
     
 
 
@@ -227,7 +278,9 @@ void main()
 	    		color =  mix(vec3(smoothstep(0.6, 0.9, normal.y) * 0.7), vec3(n.y), 0.2);
 	    		spec = normal.y;
 	
-            }
+            } else if (m == MAT_TOWER) {
+				color = vec3(0.5);
+			}
 			
             
             
