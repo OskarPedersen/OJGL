@@ -145,7 +145,14 @@ vec2 scene(vec3 p, float t, vec3 rd)
 	vec2 m = mountains(p.xz);
 	res = un(res, vec2(p.y -m.x, m.y));
 	{
-		p -= vec3(300.0, 150.0, 90.0);
+		vec3 o = p;
+		float s = 400.0;
+		p.x = mod(p.x + s * 0.5, s) - s * 0.5;
+		p.z += sin(o.x * 0.001) * 200.0;
+		//p.y -= 150.0;
+		p.y -= mountains(floor((o.xz +10.0) / 40.0) * 40.0).x;
+
+		//p -= vec3(300.0, 150.0, 90.0);
 		//float d = udRoundBox(p, vec3(5.0, 30.0, 5.0), 1.0);
 		float d = sdCappedCylinder(p, vec2(7.0, 30.0));
 		float top = max(sdCappedCylinder(p - vec3(0, 31, 0), vec2(8.0, 3.0)), -sdCappedCylinder(p - vec3(0, 30, 0), vec2(6.0, 20.0)));
@@ -160,6 +167,31 @@ vec2 scene(vec3 p, float t, vec3 rd)
 		res = sunk(res, vec2(d, MAT_MOUNTAIN), 10.0);
 	}
     return res;
+}
+
+vec4 evaluateLight(vec3 p)
+{
+	vec3 o = p;
+	float s = 400.0;
+	p.x = mod(p.x + s * 0.5, s) - s * 0.5;
+	p.z += sin(o.x * 0.001) * 200.0;
+	//p.y -= 150.0;
+	p.y -= mountains(floor((o.xz +10.0) / 40.0) * 40.0).x + 33.0;
+	float dis = length(p) - 1.0;
+
+	//float dis = length(p + vec3(-300.0, -150.0 + sin(iGlobalTime) * 50.0, 0.0)) - 1.0;
+	//float dis = length(p - vec3(300.0, 185.0, 90.0)) - 1.0;
+	vec3 col = vec3(1.0, 0.4, 0.1);
+	float strength = 10000.0;
+
+	vec3 res = col * strength / (dis * dis * dis);
+	//return vec4(res, dis);
+    
+	vec3 col2 = vec3(0.8);
+	float strength2 = 1.0;
+
+	vec3 res2 = col2 * strength2;
+	return vec4(res + res2, dis);
 }
 
 
@@ -208,22 +240,7 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
     return pow(k, s);
 }
 
-vec4 evaluateLight(vec3 p)
-{
-	//float dis = length(p + vec3(-300.0, -150.0 + sin(iGlobalTime) * 50.0, 0.0)) - 1.0;
-	float dis = length(p - vec3(300.0, 185.0, 90.0)) - 1.0;
-	vec3 col = vec3(1.0, 0.6, 0.6);
-	float strength = 10000.0;
 
-	vec3 res = col * strength / (dis * dis * dis);
-	//return vec4(res, dis);
-    
-	vec3 col2 = vec3(0.8);
-	float strength2 = 1.0;
-
-	vec3 res2 = col2 * strength2;
-	return vec4(res + res2, dis);
-}
 
 float BrickPattern(in vec2 p) 
 {
