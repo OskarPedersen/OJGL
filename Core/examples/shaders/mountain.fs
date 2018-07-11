@@ -39,6 +39,24 @@ float noiseOctave(in vec2 p, int octaves, float persistence)
 	return n / maxValue; 
 }
 
+
+
+float smink( float a, float b, float k )
+{
+    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
+    return mix( b, a, h ) - k*h*(1.0-h);
+}
+
+// Union with smink
+vec2 sunk(vec2 a, vec2 b, float k)
+{
+	float sm = smink(a.x,b.x, k);
+	float m = min(a.x, b.x);
+	float ca = abs(sm -a.x);
+	float cb = abs(sm -b.x);
+	return ca < cb ? vec2(sm, a.y) : vec2(sm, b.y);
+}
+
 float udRoundBox( vec3 p, vec3 b, float r )
 {
   return length(max(abs(p)-b,0.0))-r;
@@ -137,7 +155,9 @@ vec2 scene(vec3 p, float t, vec3 rd)
 		pModPolar(q, 8.0);
 		float b = sdBox(vec3(q.x, p.y, q.y) - vec3(10, 33, 0), vec3(5.0, 2.0, 1.0));
 		d = min(d, max(top, -b));
-		res = un(res, vec2(d, MAT_TOWER));
+		//res.x = smink(res.x, d, 10.0);
+		//res = un(res, vec2(d, MAT_MOUNTAIN));
+		res = sunk(res, vec2(d, MAT_MOUNTAIN), 10.0);
 	}
     return res;
 }
@@ -190,7 +210,8 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 
 vec4 evaluateLight(vec3 p)
 {
-	float dis = length(p + vec3(-300.0, -150.0 + sin(iGlobalTime) * 50.0, 0.0)) - 1.0;
+	//float dis = length(p + vec3(-300.0, -150.0 + sin(iGlobalTime) * 50.0, 0.0)) - 1.0;
+	float dis = length(p - vec3(300.0, 185.0, 90.0)) - 1.0;
 	vec3 col = vec3(1.0, 0.6, 0.6);
 	float strength = 10000.0;
 
@@ -204,6 +225,15 @@ vec4 evaluateLight(vec3 p)
 	return vec4(res + res2, dis);
 }
 
+float BrickPattern(in vec2 p) 
+{
+  p *= vec2 (1.0, 2.8);  // scale
+  vec2 f = floor (p);
+  if (2. * floor (f.y * 0.5) != f.y) 
+    p.x += 0.5;  // brick shift
+  p = smoothstep (0.03, 0.08, abs (fract (p + 0.5) - 0.5));
+  return 1. - 0.9 * p.x * p.y;
+}
 
 void main()
 {
@@ -212,9 +242,11 @@ void main()
     vec2 iMouse = vec2(160.5, 0.0);
 	vec3 eye = vec3(110.0*sin(iMouse.x * 0.01), 250.0, 110.0*cos(iMouse.x  * 0.01));
 	vec3 tar = vec3(eye.x * 1.1, eye.y - 2.0, eye.z * 1.1);
-	eye = vec3(220.0, 200.0, 50.0);
+	//eye = vec3(220.0, 200.0, 50.0);
+
 	eye = vec3(300.0, 200.0, 90.0) + vec3(60.0 * cos(iGlobalTime * 0.1), 0.0, 60.0 * sin(iGlobalTime * 0.1));
 	tar = vec3(300.0, 180.0, 90.0);
+
 	 vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir)); 
  	vec3 up = cross(dir, right);
@@ -262,9 +294,9 @@ void main()
          scatteredLight += transmittance * lightIntegrated;	
          transmittance *= exp(-fogAmount * d);
          
-		
-         
-	    if(d < 0.01) 
+		t += max(d*0.2, 0.01);
+        bool end = i == 1000 - 1 || t >= 1000.0;
+	    if(d < 0.01 || end) 
 	    {
 	    	float spec = 1.0;
 	    	vec3 normal = getNormal(p, iGlobalTime, rd);
@@ -279,9 +311,13 @@ void main()
 	    		spec = normal.y;
 	
             } else if (m == MAT_TOWER) {
-				color = vec3(0.5);
+				float b = BrickPattern(p.xy);
+				color = vec3(b);
 			}
 			
+			if (end) {
+				color = vec3(1.0);
+			}
             
             
 			float diffuse = max(0., dot(invLight, normal)); 
@@ -294,7 +330,7 @@ void main()
 	        sky = false;
 	       	break;
 	    }
-	    t += max(d*0.2, 0.01);
+	    
 	 }
 	
 	//if (sky) {
