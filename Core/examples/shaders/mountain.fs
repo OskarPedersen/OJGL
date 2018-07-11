@@ -121,6 +121,7 @@ vec2 mountains(vec2 p)
 	float t = 5.0 * texture(inTexture0, p.xy/50.0).x + 
 				50.0 * texture(inTexture0, p.xy/300.0).x + 
 				200.0 * texture(inTexture0, p.xy/6000.0).x;
+
 	//t *= 1.25;
     /*float t = 5.0 * noiseOctave(p.xy / 50.0, 5, 0.7) +
         		50.0 * noiseOctave(p.xy / 300.0, 5, 0.7) + 
@@ -293,15 +294,18 @@ void main()
 	float transmittance = 1.0;
     
 	float ref = 0.0;
+	
+	const float maxDis = 1000.0;
+	const int maxIter = 1000;
 
-	 for(int i = 0; i < 1000 && t < 1000.0; ++i) 
+	 for(int i = 0; i < maxIter && t < maxDis; ++i) 
 	 {
 	   	vec3 p = ro + rd * t;
 	    vec2 dm = scene(p, iGlobalTime, rd);
 	    float d = dm.x;
 	    float m = dm.y;
          
-         float fogAmount = 0.003 + 0.07 * (1.0 - smoothstep(100.0, 160.0, p.y));
+         float fogAmount = 0.004 + 0.07 * (1.0 - smoothstep(100.0, 160.0, p.y));
          
          vec4 lightColDis = evaluateLight(p);
          vec3 light = lightColDis.rgb;
@@ -317,7 +321,7 @@ void main()
 		//d = max(d*0.2, 0.01);
 		t += d;
 
-        bool end = i == 1000 - 1 || t >= 1000.0;
+        bool end = i == maxIter - 1 || t >= maxDis;
 	    if(d < 0.01 || end) 
 	    {
 	    	float spec = 1.0;
@@ -339,12 +343,14 @@ void main()
 			
 			if (end) {
 				color = vec3(1.0);
+			} else {
+				float diffuse = max(0., dot(invLight, normal)); 
+				color = 0.7 * color * (1.0 + diffuse);
+	    		color += spec * specular(normal, -invLight, normalize(eye - p), 70.0);
 			}
             
             
-			float diffuse = max(0., dot(invLight, normal)); 
-			color = 0.7 * color * (1.0 + diffuse);
-	    	color += spec * specular(normal, -invLight, normalize(eye - p), 70.0);
+			
 		   	//color =  applyFog(color, distance(eye, p), rd, invLight, p);
 
 
