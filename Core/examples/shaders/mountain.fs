@@ -94,7 +94,8 @@ float pModPolar(inout vec2 p, float repetitions) {
 #define MAT_MOUNTAIN 1.0
 #define MAT_TOWER 2.0
 
-#define PART_BOTTOM 8.0
+#define PART_FLY 10.0
+#define PART_BOTTOM (PART_FLY + 8.0)
 #define PART_SPIN (PART_BOTTOM + 10.0)
 #define PART_LIGHT_UP ( PART_SPIN + 15.0)
 #define PART_FAR (PART_LIGHT_UP + 15.0)
@@ -280,8 +281,11 @@ void main()
 	eye = vec3(300.0, 200.0, 90.0) + vec3(60.0 * cos(iGlobalTime * 0.1), 0.0, 60.0 * sin(iGlobalTime * 0.1));
 	tar = vec3(300.0, 180.0, 90.0);
 
-	if (iGlobalTime < PART_BOTTOM) {
-		float p = iGlobalTime;
+	if (iGlobalTime < PART_FLY) {
+		eye = vec3(700.0 + iGlobalTime * 10.0, 300.0, 1000.0);
+		tar = eye + vec3(1.0, -0.5, 0.0);
+	} else if (iGlobalTime < PART_BOTTOM) {
+		float p = iGlobalTime - PART_FLY;
 		eye = vec3(400.0, 140.0 + p * 5.0, 150.0);
 		tar = vec3(400.0, 200.0, 0.0);
 	} else if (iGlobalTime < PART_SPIN) {
