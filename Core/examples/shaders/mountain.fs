@@ -94,7 +94,10 @@ float pModPolar(inout vec2 p, float repetitions) {
 #define MAT_MOUNTAIN 1.0
 #define MAT_TOWER 2.0
 
-
+#define PART_BOTTOM 8.0
+#define PART_SPIN (PART_BOTTOM + 10.0)
+#define PART_LIGHT_UP ( PART_SPIN + 15.0)
+#define PART_FAR (PART_LIGHT_UP + 15.0)
 
 
 vec2 un(vec2 a, vec2 b)
@@ -140,9 +143,9 @@ vec2 mountains(vec2 p)
 vec2 scene(vec3 p, float t, vec3 rd)
 {  
 	vec2 res = vec2(99999999.0, -1.0);
-	if (p.y > 275.0 || rd.y > 0.2) { 
+	/*if (p.y > 275.0 || rd.y > 0.2) { 
 		return res;
-	}
+	}*/
 	vec2 m = mountains(p.xz);
 	res = un(res, vec2(p.y -m.x, m.y));
 	res.x *= 0.5;
@@ -183,12 +186,19 @@ vec4 evaluateLight(vec3 p)
 	//p.z += sin(o.x * 0.001) * 200.0;
 	//p.y -= 150.0;
 	p.y -= mountains(floor((o.xz +10.0) / 40.0) * 40.0).x + 33.0;
-	float dis = length(p) - 1.0;
+	float dis = length(p) - 0.0;
 
 	//float dis = length(p + vec3(-300.0, -150.0 + sin(iGlobalTime) * 50.0, 0.0)) - 1.0;
 	//float dis = length(p - vec3(300.0, 185.0, 90.0)) - 1.0;
 	vec3 col = vec3(1.0, 0.4, 0.1);
 	float strength = 10000.0;
+
+	strength = 0.0;
+	if (iGlobalTime > PART_SPIN) {
+		float p = iGlobalTime - PART_SPIN;
+		float c = floor((o.x - 350.0) / 400.0);
+		strength = 20000.0 * smoothstep(2.0, 5.0, p +  c * 5.0 );
+	}
 
 	vec3 res = col * strength / (dis * dis * dis);
 	//return vec4(res, dis);
@@ -269,6 +279,25 @@ void main()
 
 	eye = vec3(300.0, 200.0, 90.0) + vec3(60.0 * cos(iGlobalTime * 0.1), 0.0, 60.0 * sin(iGlobalTime * 0.1));
 	tar = vec3(300.0, 180.0, 90.0);
+
+	if (iGlobalTime < PART_BOTTOM) {
+		float p = iGlobalTime;
+		eye = vec3(400.0, 140.0 + p * 5.0, 150.0);
+		tar = vec3(400.0, 200.0, 0.0);
+	} else if (iGlobalTime < PART_SPIN) {
+		float p = iGlobalTime - PART_BOTTOM;
+		eye = vec3(400.0, 230.0, 0.0);
+		eye += vec3(120.0 * cos(iGlobalTime * 0.1), 0.0, 120.0 * sin(iGlobalTime * 0.1));
+		tar = vec3(400.0, 200.0, 0.0);
+	} else if (iGlobalTime < PART_LIGHT_UP) {
+		float p = iGlobalTime - PART_SPIN;
+		eye = vec3(450.0 + p, 230.0, 50.0 + p);
+		tar = vec3(400.0 - max(0.0, (p - 4.0) * 10.0), 200.0, 0.0);
+	} else  if (iGlobalTime < PART_FAR) {
+		float p = iGlobalTime - PART_SPIN;
+		eye = vec3(-1800.0 - p * 2.0, 280.0, 200.0 - p * 2.0);
+		tar = vec3(-1500.0 , 200.0, 0.0);
+	}
 
 	 vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir)); 
