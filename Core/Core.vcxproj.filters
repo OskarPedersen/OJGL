@@ -23,6 +23,7 @@
     <None Include="examples\shaders\fxaa.vs" />
     <None Include="examples\shaders\mountain.fs" />
     <None Include="examples\shaders\mountainNoise.fs" />
+    <None Include="examples\shaders\mountainPost.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="examples\Main.cpp" />

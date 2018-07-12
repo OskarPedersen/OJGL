@@ -34,6 +34,7 @@
     <None Include="examples\shaders\introScene.fs" />
     <None Include="examples\shaders\mountain.fs" />
     <None Include="examples\shaders\mountainNoise.fs" />
+    <None Include="examples\shaders\mountainPost.fs" />
     <None Include="examples\shaders\post.fs" />
     <None Include="examples\shaders\post.vs" />
     <None Include="examples\shaders\dofScene.fs" />

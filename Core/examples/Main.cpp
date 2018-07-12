@@ -38,8 +38,9 @@ void buildSceneGraph(GLState& glState, int x, int y)
 
     auto mountainNoise = Buffer::construct(x, y, "mountainNoise", "demo.vs", "mountainNoise.fs");
     auto mountain = Buffer::construct(x, y, "mountain", "demo.vs", "mountain.fs", mountainNoise);
+    auto mountainPost = Buffer::construct(x, y, "mountain", "demo.vs", "mountainPost.fs", mountain);
 
-    glState.addScene("mountain", mountain, Duration::milliseconds(3000000));
+    glState.addScene("mountain", mountainPost, Duration::milliseconds(3000000));
 
     glState.addScene("introScene", intro, Duration::milliseconds(7000));
     glState.addScene("graveScene", gravePost, Duration::milliseconds(3000000));
@@ -83,6 +84,7 @@ int main()
 
     ShaderReader::preLoad("mountain.fs", resources::fragment::mountain);
     ShaderReader::preLoad("mountainNoise.fs", resources::fragment::mountainNoise);
+    ShaderReader::preLoad("mountainPost.fs", resources::fragment::mountainPost);
 
     const auto desiredFrameTime = Duration::milliseconds(17);
 
@@ -158,12 +160,13 @@ int main()
         glState << Uniform1f("resolutionWidth", static_cast<float>(width));
         glState << Uniform1f("resolutionHeight", static_cast<float>(height));
 
-        glState["graveScene"]["gravePost"] << Uniform1f("CHANNEL_4_TO", min(music.syncChannels()[4].getTimeToNext(0).toSeconds(), music.syncChannels()[4].getTimeToNext(1).toSeconds()));
+        /* glState["graveScene"]["gravePost"] << Uniform1f("CHANNEL_4_TO", min(music.syncChannels()[4].getTimeToNext(0).toSeconds(), music.syncChannels()[4].getTimeToNext(1).toSeconds()));
+       /* glState["graveScene"]["gravePost"] << Uniform1f("CHANNEL_4_TO", min(music.syncChannels()[4].getTimeToNext(0).toSeconds(), music.syncChannels()[4].getTimeToNext(1).toSeconds()));
         glState["graveScene"]["gravePost"] << Uniform1f("CHANNEL_4_TOTAL", static_cast<float>(music.syncChannels()[4].getTotalHitsPerNote(0) + music.syncChannels()[4].getTotalHitsPerNote(1)));
         glState["graveScene"]["gravePost"] << Uniform1f("CHANNEL_11_SINCE", music.syncChannels()[11].getTimeSinceLast(0).toSeconds());
         glState["graveScene"]["grave"] << Uniform1f("CHANNEL_11_SINCE", music.syncChannels()[11].getTimeSinceLast(0).toSeconds());
         glState["graveScene"]["grave"] << Uniform1f("CHANNEL_11_TOTAL", static_cast<float>(music.syncChannels()[11].getTotalHits()));
-        glState["graveScene"]["grave"] << Uniform1fv("CHANNEL_4_SINCE", { music.syncChannels()[4].getTimeSinceLast(0).toSeconds(), music.syncChannels()[4].getTimeSinceLast(1).toSeconds() });
+        glState["graveScene"]["grave"] << Uniform1fv("CHANNEL_4_SINCE", { music.syncChannels()[4].getTimeSinceLast(0).toSeconds(), music.syncChannels()[4].getTimeSinceLast(1).toSeconds() });*/
 
         glState.render();
 

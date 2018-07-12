@@ -65,6 +65,10 @@ namespace resources {
         std::string mountainNoise{
 #include "shaders/mountainNoise.fs"
         };
+
+        std::string mountainPost{
+#include "shaders/mountainPost.fs"
+        };
     } //namespace fragment
 
     namespace vertex {
