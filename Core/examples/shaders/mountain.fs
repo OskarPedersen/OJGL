@@ -74,6 +74,11 @@ float sdBox( vec3 p, vec3 b )
   return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));
 }
 
+
+float sdCylinder( vec3 p, vec3 c )
+{
+  return length(p.xz-c.xy)-c.z;
+}
 #define PI 3.14159265
 
 // Repeat around the origin by a fixed angle.
@@ -99,6 +104,7 @@ float pModPolar(inout vec2 p, float repetitions) {
 #define PART_SPIN (PART_BOTTOM + 10.0)
 #define PART_LIGHT_UP ( PART_SPIN + 15.0)
 #define PART_FAR (PART_LIGHT_UP + 15.0)
+#define PART_TRAVEL (PART_FAR + 20.0)
 
 
 vec2 un(vec2 a, vec2 b)
@@ -188,17 +194,25 @@ vec4 evaluateLight(vec3 p)
 	//p.y -= 150.0;
 	p.y -= mountains(floor((o.xz +10.0) / 40.0) * 40.0).x + 33.0;
 	float dis = length(p) - 0.0;
+	float strength = 0.0;
+	
 
 	//float dis = length(p + vec3(-300.0, -150.0 + sin(iGlobalTime) * 50.0, 0.0)) - 1.0;
 	//float dis = length(p - vec3(300.0, 185.0, 90.0)) - 1.0;
 	vec3 col = vec3(1.0, 0.4, 0.1);
-	float strength = 10000.0;
+	
 
 	strength = 0.0;
 	if (iGlobalTime > PART_SPIN) {
 		float p = iGlobalTime - PART_SPIN;
 		float c = floor((o.x - 350.0) / 400.0);
 		strength = 20000.0 * smoothstep(2.0, 5.0, p +  c * 5.0 );
+	}
+
+	if (iGlobalTime < PART_TRAVEL) {
+		float t = PART_TRAVEL - iGlobalTime;
+		dis = min(dis, sdCylinder(p, vec3(2.0, 2.0, 0.0)));
+		strength *= 100.0;
 	}
 
 	vec3 res = col * strength / (dis * dis * dis);
@@ -301,6 +315,11 @@ void main()
 		float p = iGlobalTime - PART_SPIN;
 		eye = vec3(-1800.0 - p * 2.0, 280.0, 200.0 - p * 2.0);
 		tar = vec3(-1500.0 , 200.0, 0.0);
+	} else if (iGlobalTime < PART_TRAVEL) {
+		float p = iGlobalTime - PART_FAR;
+		eye = vec3(-1800.0 - p*45.0, 280.0, 30.0);
+		tar = eye + vec3(-1.0, -0.5, 0.0) + vec3(sin(p * 3.0) * 0.005, sin(p * 5.0) * 0.004, sin(p * 7.0) * 0.003);
+		//tar = vec3(-1500.0 , 200.0, 0.0);
 	}
 
 	 vec3 dir = normalize(tar - eye);
