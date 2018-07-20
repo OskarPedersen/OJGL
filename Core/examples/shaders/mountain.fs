@@ -199,7 +199,7 @@ vec4 evaluateLight(vec3 p)
 
 	//float dis = length(p + vec3(-300.0, -150.0 + sin(iGlobalTime) * 50.0, 0.0)) - 1.0;
 	//float dis = length(p - vec3(300.0, 185.0, 90.0)) - 1.0;
-	vec3 col = vec3(1.0, 0.4, 0.1);
+	vec3 col = vec3(1.0, 0.1, 0.0);
 	
 
 	strength = 0.0;
@@ -209,7 +209,7 @@ vec4 evaluateLight(vec3 p)
 		strength = 20000.0 * smoothstep(2.0, 5.0, p +  c * 5.0 );
 	}
 
-	if (iGlobalTime < PART_TRAVEL) {
+	if (iGlobalTime > PART_FAR) {
 		float t = PART_TRAVEL - iGlobalTime;
 		dis = min(dis, sdCylinder(p, vec3(2.0, 2.0, 0.0)));
 		strength *= 100.0;
@@ -220,6 +220,9 @@ vec4 evaluateLight(vec3 p)
     
 	vec3 col2 = vec3(0.8);
 	float strength2 = 1.0;
+	if (iGlobalTime < PART_FLY) {
+		strength2 = smoothstep(2.0, 8.0, iGlobalTime);
+	}
 
 	vec3 res2 = col2 * strength2;
 	return vec4(res + res2, dis);
@@ -399,11 +402,18 @@ void main()
 			}
 			
 			if (end) {
-				color = vec3(1.0);
+				color = vec3(0.0);
 			} else {
-				float diffuse = max(0., dot(invLight, normal)); 
-				color = 0.7 * color * (1.0 + diffuse);
+				float diffuse = max(0., dot(invLight, normal));
+				float s = smoothstep(2.0, 8.0, iGlobalTime);
+				if (iGlobalTime < PART_FLY) {
+					
+					diffuse *= s;
+					spec *= s;
+				}
+				color = 0.7 * color * (s + diffuse);
 	    		color += spec * specular(normal, -invLight, normalize(eye - p), 70.0);
+				
 			}
             
             
@@ -432,20 +442,6 @@ void main()
 			color = mix(color, vec3(0.4, 0.4, 1), 0.8)*2;
 			color = applyFog(color, dis, rd, invLight, ro + t*rd);*/
 			
-			// Northen lights
-			/*float a = atan(rd.z, rd.x) + PI;
-			a /= 2.0 *  PI;
-			float b = rd.y;
-			float timeMul = 0.03;
-			float spaceMul = 3.0;
-			a *= spaceMul;
-			b *= spaceMul;
-			float raw = texture(iChannel0, vec2(a + iGlobalTime * timeMul, b + iGlobalTime * timeMul)).x 
-				+ texture(iChannel0, vec2(a - iGlobalTime * timeMul, b - iGlobalTime * timeMul)).x;
-			raw = 2 - raw;
-			raw /= 2.0;
-			raw = pow(raw, 8.0);
-			color = vec3(0.0, raw * 1.5, 0.0);*/
 		//} 
 	//}
 	//color =  applyFog(color, distance(eye, ro + rd * t), rd, invLight, ro + rd * t);

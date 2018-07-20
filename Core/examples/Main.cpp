@@ -61,8 +61,8 @@ std::tuple<int, int, int, std::unique_ptr<unsigned char, decltype(&stbi_image_fr
 
 int main()
 {
-    int width = 1920;
-    int height = 1080;
+    int width = 1920 / 2;
+    int height = 1080 / 2;
     ShaderReader::setBasePath("examples/shaders/");
     ShaderReader::preLoad("demo.vs", resources::vertex::demo);
     ShaderReader::preLoad("post.vs", resources::vertex::post);
