@@ -212,7 +212,7 @@ vec4 evaluateLight(vec3 p)
 	if (iGlobalTime > PART_FAR && o.x < -2500.0) {
 		float t = iGlobalTime - PART_TRAVEL;
 		float s = smoothstep(14.0, 16.0, t);
-		dis = min(dis, sdCylinder(p, vec3(2.0, 2.0, 0.0)));
+		dis = min(dis, sdCylinder(p, vec3(2.0, 0.0 , 0.0)));
 		strength *= 10.0;// * s;
 	}
 	if (o.x < -2800.0) {
@@ -229,7 +229,8 @@ vec4 evaluateLight(vec3 p)
 	}
 
 	vec3 res2 = col2 * strength2;
-	return vec4(res + res2, dis);
+	
+	return vec4((res + res2), dis);
 }
 
 
@@ -462,6 +463,10 @@ void main()
 	float e = iGlobalTime - PART_FAR - 16.0;
 	if (e > 0) {
 		fragColor.rgb *= 1.0 -  e * 0.5;
+	}
+
+	if (iGlobalTime > 35.5) {
+	// 	fragColor.rgb = vec3(1.0, 0.0, 0.0);
 	}
 	
 }
