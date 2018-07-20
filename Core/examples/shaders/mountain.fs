@@ -104,7 +104,7 @@ float pModPolar(inout vec2 p, float repetitions) {
 #define PART_SPIN (PART_BOTTOM + 10.0)
 #define PART_LIGHT_UP ( PART_SPIN + 15.0)
 #define PART_FAR (PART_LIGHT_UP + 15.0)
-#define PART_TRAVEL (PART_FAR + 20.0)
+#define PART_TRAVEL (PART_FAR + 30.0)
 
 
 vec2 un(vec2 a, vec2 b)
@@ -161,7 +161,7 @@ vec2 scene(vec3 p, float t, vec3 rd)
 	vec3 o = p;
 	float s = 400.0;
 	p.x = mod(p.x + s * 0.5, s) - s * 0.5;
-	float bound = sdBox(p - vec3(0.0, 150.0, 0.0), vec3(10.0, 50.0, 10.0));
+	float bound = sdBox(p - vec3(0.0, 150.0, 0.0), vec3(15.0, 70.0, 15.0));
 	if (bound < 1) {
 		
 		//p.z += sin(o.x * 0.001) * 200.0 + 30.0;
@@ -209,10 +209,14 @@ vec4 evaluateLight(vec3 p)
 		strength = 20000.0 * smoothstep(2.0, 5.0, p +  c * 5.0 );
 	}
 
-	if (iGlobalTime > PART_FAR) {
-		float t = PART_TRAVEL - iGlobalTime;
+	if (iGlobalTime > PART_FAR && o.x < -2500.0) {
+		float t = iGlobalTime - PART_TRAVEL;
+		float s = smoothstep(14.0, 16.0, t);
 		dis = min(dis, sdCylinder(p, vec3(2.0, 2.0, 0.0)));
-		strength *= 100.0;
+		strength *= 10.0;// * s;
+	}
+	if (o.x < -2800.0) {
+		strength = 0.0;
 	}
 
 	vec3 res = col * strength / (dis * dis * dis);
@@ -320,13 +324,15 @@ void main()
 		tar = vec3(-1500.0 , 200.0, 0.0);
 	} else if (iGlobalTime < PART_TRAVEL) {
 		float p = iGlobalTime - PART_FAR;
-		eye = vec3(-1800.0 - p*45.0, 280.0, 30.0);
-		tar = eye + vec3(-1.0, -0.5, 0.0) + vec3(sin(p * 3.0) * 0.005, sin(p * 5.0) * 0.004, sin(p * 7.0) * 0.003);
+		eye = vec3(-1800.0 - p*50.0, 280.0, 30.0);
+		tar = eye + vec3(-1.0, -0.5, 0.0);
 		//tar = vec3(-1500.0 , 200.0, 0.0);
+		tar = mix(tar, vec3(-2800.0, 300.0, 0.0), smoothstep(12.0, 35.0,p));
+		tar += + vec3(sin(p * 3.0) * 0.005, sin(p * 5.0) * 0.004, sin(p * 7.0) * 0.003);
 	}
 
 	 vec3 dir = normalize(tar - eye);
-	vec3 right = normalize(cross(vec3(0, 1, 0), dir)); 
+	vec3 right = normalize(cross(vec3(0, 1, 0), dir));  
  	vec3 up = cross(dir, right);
 
     
@@ -366,7 +372,11 @@ void main()
 	    float m = dm.y;
          
          float fogAmount = 0.004 + 0.07 * (1.0 - smoothstep(100.0, 160.0, p.y));
-         
+         if (iGlobalTime > PART_FAR) {
+			float p = iGlobalTime - PART_FAR - 15.0;
+			if (p > 0.0)
+				fogAmount += p*0.02;
+		 }
          vec4 lightColDis = evaluateLight(p);
          vec3 light = lightColDis.rgb;
          d = min(d, max(0.01, lightColDis.w * 0.25));
@@ -449,6 +459,11 @@ void main()
     
     color /= (color + vec3(1.0));
     fragColor = vec4(color, 0.0);
+	float e = iGlobalTime - PART_FAR - 16.0;
+	if (e > 0) {
+		fragColor.rgb *= 1.0 -  e * 0.5;
+	}
+	
 }
 
 )""
