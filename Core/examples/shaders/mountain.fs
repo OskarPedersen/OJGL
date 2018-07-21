@@ -164,10 +164,7 @@ vec2 scene(vec3 p, float t, vec3 rd)
 	float bound = sdBox(p - vec3(0.0, 150.0, 0.0), vec3(15.0, 70.0, 15.0));
 	if (bound < 1) {
 		
-		//p.z += sin(o.x * 0.001) * 200.0 + 30.0;
-		//p.y -= mountains(floor((o.xz +10.0) / 40.0) * 40.0).x;
 		p.y -= mountains(round((o.xz) / 50.0) * 50.0).x;
-		//p.y -= 150.0;
 
 		float d = sdCappedCylinder(p, vec2(7.0, 30.0));
 		float top = max(sdCappedCylinder(p - vec3(0, 31, 0), vec2(8.0, 3.0)), -sdCappedCylinder(p - vec3(0, 30, 0), vec2(6.0, 20.0)));
@@ -178,8 +175,6 @@ vec2 scene(vec3 p, float t, vec3 rd)
 		float b = sdBox(vec3(q.x, p.y, q.y) - vec3(10, 33, 0), vec3(5.0, 2.0, 1.0));
 		d = min(d, max(top, -b));
 		
-		//res.x = smink(res.x, d, 10.0);
-		//res = un(res, vec2(d, MAT_MOUNTAIN));
 		res = sunk(res, vec2(d, MAT_MOUNTAIN), 10.0);
 	}
     return res;
@@ -210,9 +205,14 @@ vec4 evaluateLight(vec3 p)
 	}
 
 	if (iGlobalTime > PART_FAR && o.x < -2500.0) {
-		float t = iGlobalTime - PART_TRAVEL;
-		float s = smoothstep(14.0, 16.0, t);
-		dis = min(dis, sdCylinder(p, vec3(2.0, 0.0 , 0.0)));
+		float t = iGlobalTime - PART_FAR;
+		float s = smoothstep(15.0, 17.0, t);
+
+		dis = min(dis, sdCylinder(p + vec3(0.0, 0.0, 
+					sin(o.y + iGlobalTime * 13.0) * 0.7 +
+					sin(o.y * 0.5 + iGlobalTime * 10.0) * 1.5 +
+					sin(o.y * 0.9 + iGlobalTime * 14.0) * 1.5 +
+					sin(o.y * 0.4 + iGlobalTime * 8.0) * 2.5) * s, vec3(2.0, 0.0 , 0.0)));
 		strength *= 10.0;// * s;
 	}
 	if (o.x < -2800.0) {
@@ -381,6 +381,9 @@ void main()
          vec4 lightColDis = evaluateLight(p);
          vec3 light = lightColDis.rgb;
          d = min(d, max(0.01, lightColDis.w * 0.25));
+		 if (iGlobalTime < PART_BOTTOM && iGlobalTime > PART_FLY) {
+			d *= 0.8;
+		 }
 		 //d = max(d*0.2, 0.01);
 		 //d *= 0.5;
          vec3 lightIntegrated = light - light * exp(-fogAmount * d);
@@ -465,8 +468,8 @@ void main()
 		fragColor.rgb *= 1.0 -  e * 0.5;
 	}
 
-	if (iGlobalTime > 35.5) {
-	// 	fragColor.rgb = vec3(1.0, 0.0, 0.0);
+	if (iGlobalTime > 7.0) {
+	 //	fragColor.rgb = vec3(1.0, 0.0, 0.0);
 	}
 	
 }
