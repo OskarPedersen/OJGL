@@ -7,37 +7,41 @@ namespace resources {
 
     namespace fragment {
 
-        ojstd::string post {
+        ojstd::string post{
 #include "shaders/post.fs"
         };
 
-        ojstd::string fxaa {
+        ojstd::string fxaa{
 #include "shaders/fxaa.fs"
         };
 
-        ojstd::string edison_1 {
+        ojstd::string edison_1{
 #include "shaders/edison_1.fs"
         };
 
-        ojstd::string edison_2 {
-#include "shaders/edison_2.fs"
+        ojstd::string edison_2{
+#include "shaders/edison_1.fs"
         };
 
-        ojstd::string edison_1_post {
+        ojstd::string edison_1_post{
 #include "shaders/edison_1_post.fs"
+        };
+
+        ojstd::string planets{
+#include "shaders/planets.fs"
         };
 
     } //namespace fragment
 
     namespace vertex {
 
-        ojstd::string edison {
+        ojstd::string edison{
 #include "shaders/edison.vs"
         };
-        ojstd::string fxaa {
+        ojstd::string fxaa{
 #include "shaders/fxaa.vs"
         };
-        ojstd::string post {
+        ojstd::string post{
 #include "shaders/post.vs"
         };
 

@@ -44,7 +44,7 @@ void Buffer::render()
     }
 
     int index = 0;
-    for (auto [location, texture] : _textures) {
+    for (auto[location, texture] : _textures) {
         glUniform1i(glGetUniformLocation(_programID, location.c_str()), _inputs.size() + index);
         index++;
     }
@@ -55,7 +55,7 @@ void Buffer::render()
     }
 
     index = 0;
-    for (auto [location, texture] : _textures) {
+    for (auto[location, texture] : _textures) {
         glActiveTexture(GL_TEXTURE0 + _inputs.size() + index);
         glBindTexture(GL_TEXTURE_2D, texture->textureID());
         index++;
@@ -143,6 +143,11 @@ void Buffer::loadShader()
     glAttachShader(_programID, vertID);
     glAttachShader(_programID, fragID);
     glLinkProgram(_programID);
+
+    glGetProgramiv(_programID, GL_LINK_STATUS, &param);
+    if (param == GL_FALSE) {
+        LOG_ERROR("Failed to link shader program!"); // Got this when defining main on the shadertoy format, "void mainImage( out vec4 fragColor, in vec2 fragCoord )" vs "void main()"
+    }
 
     glValidateProgram(_programID);
     glGetProgramiv(_programID, GL_VALIDATE_STATUS, &param);

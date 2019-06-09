@@ -16,6 +16,12 @@ void buildSceneGraph(GLState& glState, int x, int y)
     glState.clearScenes();
 
     {
+        auto planets = Buffer::construct(BufferFormat::Quad, x, y, "planets", "shaders/edison.vs", "shaders/planets.fs");
+
+        glState.addScene("planetsScene", planets, Duration::seconds(30));
+    }
+
+    {
         auto edison = Buffer::construct(BufferFormat::Quad, x, y, "intro", "shaders/edison.vs", "shaders/edison_1.fs");
         auto fxaa = Buffer::construct(BufferFormat::Quad, x, y, "fxaa", "shaders/fxaa.vs", "shaders/fxaa.fs", edison);
         auto post = Buffer::construct(BufferFormat::Quad, x, y, "post", "shaders/post.vs", "shaders/edison_1_post.fs", fxaa);
@@ -86,6 +92,8 @@ int main(int argc, char* argv[])
     ShaderReader::preLoad("shaders/edison_1.fs", resources::fragment::edison_1);
     ShaderReader::preLoad("shaders/edison_2.fs", resources::fragment::edison_2);
     ShaderReader::preLoad("shaders/edison_1_post.fs", resources::fragment::edison_1_post);
+
+    ShaderReader::preLoad("shaders/planets.fs", resources::fragment::planets);
 
     /*{
         auto edison = Buffer::construct(BufferFormat::Quad, x, y, "intro", "shaders/edison.vs", "shaders/edison_1.fs");
@@ -167,7 +175,8 @@ int main(int argc, char* argv[])
         glState.update();
 
         timer.end();
-        ojstd::sleep(33); // Are OpenGL calls async?
+        LOG_INFO("Frame time: " << timer.elapsed().toMilliseconds());
+        //ojstd::sleep(33); // Are OpenGL calls async?
     }
 }
 

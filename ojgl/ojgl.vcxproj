@@ -302,6 +302,7 @@
     <None Include="examples\shaders\mountainNoise.fs" />
     <None Include="examples\shaders\mountainPost.fs" />
     <None Include="examples\shaders\outro.fs" />
+    <None Include="examples\shaders\planets.fs" />
     <None Include="examples\shaders\post.fs" />
     <None Include="examples\shaders\post.vs" />
     <None Include="examples\songs\song.inc" />
