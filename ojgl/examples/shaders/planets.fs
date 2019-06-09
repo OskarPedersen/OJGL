@@ -9,6 +9,7 @@ uniform float iGlobalTime;
 uniform float iTime;
 uniform vec2 iResolution;
 
+uniform vec3 positions[9];
 
 // Uses some iq functions and patterns from https://www.shadertoy.com/view/4dfyzf
 
@@ -419,11 +420,11 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
                 
                 
                 vec3 lightAura = vec3(0.0);
-                for (int pl = 0; pl < 20; pl++){
+                for (int pl = 0; pl < positions.length(); pl++){
                     float plf = float(pl);
                     float lightInvSize = 52.1 + 20.0*sin(float(pl));
                     float speed = 1.0 * iTime/float(pl);
-                    vec3 light = 0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
+                    vec3 light = positions[pl]; //0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
                     vec3 x0 = light;
                     vec3 x1 = ro;
                     vec3 x2 = ro + rd;
@@ -491,10 +492,10 @@ void main()
              float d = 2.5;
              //float rot = iMouse.x * 0.01;
              //float cameraY = iMouse.y * 0.01;
-             vec3 eye = vec3(0.0, 1.0, 0.0);//vec3( cos(rot) * d, cameraY, sin(rot) * d); 
+             vec3 eye = vec3(0.0, 1.0, 10.0);//vec3( cos(rot) * d, cameraY, sin(rot) * d); 
 
 
-             vec3 tar = eye + vec3(0.0, 0.0, 1.0);
+             vec3 tar = vec3(0.0, 0.0, 0.0);
 
              vec3 dir = normalize(tar - eye);
              vec3 right = normalize(cross(vec3(0, 1, 0), dir));
@@ -521,8 +522,7 @@ void main()
     fragColor = vec4(tot, 1.0);
     
     // Height
-    //fragColor.rgb = vec3(height(ivec2(fragCoord*0.1)));
-    
+    //fragColor.rgb = vec3(height(ivec2(fragCoord*0.1))); 
 } 
 
 

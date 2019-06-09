@@ -64,8 +64,8 @@ int main(int argc, char* argv[])
 
     OJ_UNUSED(argc);
     OJ_UNUSED(argv);
-    int width = 1600 * 0.8;
-    int height = 900 * 0.8;
+    int width = static_cast<int>(1600 * 0.8);
+    int height = static_cast<int>(900 * 0.8);
     bool fullScreen = false;
     bool showCursor = !fullScreen;
 
@@ -164,7 +164,7 @@ int main(int argc, char* argv[])
         //glState["meshScene"]["mesh"].insertMesh(mesh, Matrix::scaling(0.4f) * Matrix::translation(0.3, ojstd::sin(glState.relativeSceneTime().toSeconds()), 0.0));
 
         // TODO: Aspect ratio
-        glState << UniformMatrix4fv("P", Matrix::perspective(45 * 3.14159265 / 180.0, 16 / 9.0, 0.001, 1000.0) * Matrix::translation(0.0, 0.0, -5.0));
+        glState << UniformMatrix4fv("P", Matrix::perspective(45 * 3.14159265f / 180.0f, 16 / 9.0f, 0.001f, 1000.0f) * Matrix::translation(0.0f, 0.0f, -5.0f));
 
         glState << Uniform1f("iTime", glState.relativeSceneTime().toSeconds());
         glState << Uniform1f("iGlobalTime", glState.relativeSceneTime().toSeconds() - 2.f);
@@ -172,6 +172,16 @@ int main(int argc, char* argv[])
         glState << Uniform1f("DEBUG_D1", camera.d1);
         glState << Uniform1f("DEBUG_D2", camera.d2);
         glState << Uniform1f("DEBUG_D3", camera.d3);
+
+        ojstd::vector<float> pos;
+        for (int i = 0; i < 9; i++) {
+            float t = glState.relativeSceneTime().toSeconds();
+            pos.emplace_back(ojstd::sin(t) * i);
+            pos.emplace_back(0.0);
+            pos.emplace_back(ojstd::cos(t) * i);
+        }
+        glState << Uniform3fv("positions", pos);
+
         glState.update();
 
         timer.end();
