@@ -1,5 +1,6 @@
 
 #include "EmbeddedResources.h"
+#include "SolarSystem.h"
 #include "render/GLState.h"
 #include "render/Popup.h"
 #include "render/Texture.h"
@@ -121,6 +122,8 @@ int main(int argc, char* argv[])
 
     auto mesh = Mesh::constructCube();
 
+    SolarSystem solarSystem;
+
     Camera camera;
     while (!glState.end() && !window.isClosePressed()) {
         Timer timer;
@@ -173,14 +176,8 @@ int main(int argc, char* argv[])
         glState << Uniform1f("DEBUG_D2", camera.d2);
         glState << Uniform1f("DEBUG_D3", camera.d3);
 
-        ojstd::vector<float> pos;
-        for (int i = 0; i < 9; i++) {
-            float t = glState.relativeSceneTime().toSeconds();
-            pos.emplace_back(ojstd::sin(t) * i);
-            pos.emplace_back(0.0);
-            pos.emplace_back(ojstd::cos(t) * i);
-        }
-        glState << Uniform3fv("positions", pos);
+        solarSystem.tick();
+        glState << Uniform3fv("positions", solarSystem.getValues());
 
         glState.update();
 

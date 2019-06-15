@@ -366,4 +366,18 @@ private:
 
 void sleep(int milliseconds);
 
+struct Vec3 {
+    Vec3();
+    Vec3(float x, float y, float z);
+
+    Vec3 operator*(float a);
+    void operator+=(Vec3 v);
+    Vec3 operator-(Vec3 v);
+
+    const Vec3& Vec3::normalize();
+    float lenSq();
+
+    float x, y, z;
+};
+
 } //end namespace ojstd

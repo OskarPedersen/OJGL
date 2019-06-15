@@ -1,5 +1,5 @@
-#include "OJstd.h"
 #include "Macros.h"
+#include "OJstd.h"
 #include "windows.h"
 #include <stdlib.h>
 #include <string.h>
@@ -204,4 +204,48 @@ putsign:
     return -i;
 }
 
+Vec3::Vec3()
+    : x(0.0f)
+    , y(0.0f)
+    , z(0.0f)
+{
+}
+
+Vec3::Vec3(float x, float y, float z)
+    : x(x)
+    , y(y)
+    , z(z)
+{
+}
+
+Vec3 Vec3::operator*(float a)
+{
+    return Vec3(x * a, y * a, z * a);
+}
+
+void Vec3::operator+=(Vec3 v)
+{
+    x += v.x;
+    y += v.y;
+    z += v.z;
+}
+
+Vec3 Vec3::operator-(Vec3 v)
+{
+    return Vec3(x - v.x, y - v.y, z - v.z);
+}
+
+const Vec3& Vec3::normalize()
+{
+    float len = sqrt(x * x + y * y + z * z);
+    x /= len;
+    y /= len;
+    z /= len;
+    return *this;
+}
+
+float Vec3::lenSq()
+{
+    return x * x + y * y + z * z;
+}
 }

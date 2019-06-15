@@ -9,7 +9,7 @@ uniform float iGlobalTime;
 uniform float iTime;
 uniform vec2 iResolution;
 
-uniform vec3 positions[9];
+uniform vec3 positions[10];
 
 // Uses some iq functions and patterns from https://www.shadertoy.com/view/4dfyzf
 
@@ -47,6 +47,7 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 #define MAT_DOOR 8.0
 #define MAT_THING 9.0
 #define MAT_SCREEN 10.0
+#define MAT_PLANET 11.0
 
 float udRoundBox( vec3 p, vec3 b, float r )
 {
@@ -214,9 +215,17 @@ vec2 map(vec3 p, vec3 rd, vec3 eye)
         }
         
         {
-            float d = -sdBox(p, vec3(20.0, 5.0, 20.0));
+            float d = -sdBox(p, vec3(20.0, 20.0, 20.0));
         	res = vec2(d, MAT_ROOM);
         }
+
+		{
+			//res = vec2(9999999.0, 0.0);
+			//for (int i = 0; i < positions.length(); i++) {
+			//	float d = length(p - positions[i]) - 0.;
+			//	res = un(res, vec2(d, MAT_PLANET));
+			//}
+		}
     }
     
 	return res;
@@ -309,7 +318,7 @@ void yolo(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, vec3 loff, vec3 rd,
 void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, vec3 rd) {
 	vec3 diffuse = vec3(0.0);
 	float specular = 0.0;
-	float ambient = 0.0 * occlusion(pos, normal, rd, eye);
+	float ambient = 0.1 * occlusion(pos, normal, rd, eye);
 
     
     {
@@ -387,16 +396,8 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
 				vec3 normal = getNormal(p, rd, eye);
 
 
-				if (m == MAT_BOX) {
-					c = vec3(0.5);
-                } else if (m == MAT_ROOM) {
-                    if (p.y > 0.0) {
-                        c = vec3(1.0);
-                    } else {
-                        c = vec3(255.0, 93.0, 12.0) / 255.0;
-					}
-                } else {
-                    c = vec3(1.0, 0.0, 0.0);
+				if (m == MAT_PLANET) {
+					c = vec3(1.0, 0.0, 0.0);
                 }
 
 
@@ -422,7 +423,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
                 vec3 lightAura = vec3(0.0);
                 for (int pl = 0; pl < positions.length(); pl++){
                     float plf = float(pl);
-                    float lightInvSize = 52.1 + 20.0*sin(float(pl));
+                    float lightInvSize = 10000.0;//52.1 + 20.0*sin(float(pl));
                     float speed = 1.0 * iTime/float(pl);
                     vec3 light = positions[pl]; //0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
                     vec3 x0 = light;
@@ -432,7 +433,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
                     
                     
                     float tl = -dot(x1 - x0, x2 - x1)/pow(distance(x2,x1),2.0);
-                    bool lightCollision = true;
+                    bool lightCollision = false;
                     if(tl > 0.0 && ((lightCollision && distance(eye, light) < distance(eye, p)) || !lightCollision)){
                         //lightAura = max(lightAura, 1.0/(0.01 + lightInvSize*ldis));
                         vec3 col = vec3(0.5 + 0.5*sin(plf), 0.5 + 0.5*sin(plf*2.0), 0.5 + 0.5*sin(plf*0.5));
@@ -492,10 +493,12 @@ void main()
              float d = 2.5;
              //float rot = iMouse.x * 0.01;
              //float cameraY = iMouse.y * 0.01;
-             vec3 eye = vec3(0.0, 1.0, 10.0);//vec3( cos(rot) * d, cameraY, sin(rot) * d); 
-
-
+            
+			vec3 eye = vec3(0.0, 0.0, 3.0);//vec3( cos(rot) * d, cameraY, sin(rot) * d); 
              vec3 tar = vec3(0.0, 0.0, 0.0);
+
+			 //eye = positions[1] - vec3(0.0, 0.0, 1.0);
+			 tar = positions[0];
 
              vec3 dir = normalize(tar - eye);
              vec3 right = normalize(cross(vec3(0, 1, 0), dir));
