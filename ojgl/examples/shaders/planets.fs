@@ -9,7 +9,11 @@ uniform float iGlobalTime;
 uniform float iTime;
 uniform vec2 iResolution;
 
-uniform vec3 positions[10];
+uniform vec3 planets[10];
+
+uniform float DEBUG_D1;
+uniform float DEBUG_D2;
+uniform float DEBUG_D3;
 
 // Uses some iq functions and patterns from https://www.shadertoy.com/view/4dfyzf
 
@@ -48,6 +52,7 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 #define MAT_THING 9.0
 #define MAT_SCREEN 10.0
 #define MAT_PLANET 11.0
+#define MAT_GRID 12.0
 
 float udRoundBox( vec3 p, vec3 b, float r )
 {
@@ -220,11 +225,16 @@ vec2 map(vec3 p, vec3 rd, vec3 eye)
         }
 
 		{
+			float d = sdBox(p, vec3(1.0, 1.0, 0.1));
+			res = un(res, vec2(d, MAT_GRID));
+		}
+			
+		{
 			//res = vec2(9999999.0, 0.0);
-			//for (int i = 0; i < positions.length(); i++) {
-			//	float d = length(p - positions[i]) - 0.;
-			//	res = un(res, vec2(d, MAT_PLANET));
-			//}
+			for (int i = 0; i < planets.length(); i++) {
+				float d = length(p - planets[i]) - 0.01;
+				res = un(res, vec2(d, MAT_PLANET));
+			}
 		}
     }
     
@@ -398,7 +408,9 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
 
 				if (m == MAT_PLANET) {
 					c = vec3(1.0, 0.0, 0.0);
-                }
+                } else if (m == MAT_GRID) {
+					c = vec3(0.0, 1.0, 0.0);
+				}
 
 
 
@@ -421,11 +433,11 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
                 
                 
                 vec3 lightAura = vec3(0.0);
-                for (int pl = 0; pl < positions.length(); pl++){
+                for (int pl = 0; pl < planets.length(); pl++){
                     float plf = float(pl);
                     float lightInvSize = 10000.0;//52.1 + 20.0*sin(float(pl));
                     float speed = 1.0 * iTime/float(pl);
-                    vec3 light = positions[pl]; //0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
+                    vec3 light = planets[pl]; //0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
                     vec3 x0 = light;
                     vec3 x1 = ro;
                     vec3 x2 = ro + rd;
@@ -494,11 +506,11 @@ void main()
              //float rot = iMouse.x * 0.01;
              //float cameraY = iMouse.y * 0.01;
             
-			vec3 eye = vec3(0.0, 0.0, 3.0);//vec3( cos(rot) * d, cameraY, sin(rot) * d); 
-             vec3 tar = vec3(0.0, 0.0, 0.0);
+			vec3 eye = vec3(0.0, 0.0, 1.0);//vec3( cos(rot) * d, cameraY, sin(rot) * d); 
+             vec3 tar = vec3(0.001);
 
-			 //eye = positions[1] - vec3(0.0, 0.0, 1.0);
-			 tar = positions[0];
+			 eye +=  vec3(DEBUG_D1, DEBUG_D2, DEBUG_D3);
+			 
 
              vec3 dir = normalize(tar - eye);
              vec3 right = normalize(cross(vec3(0, 1, 0), dir));
@@ -526,6 +538,8 @@ void main()
     
     // Height
     //fragColor.rgb = vec3(height(ivec2(fragCoord*0.1))); 
+
+	//fragColor.rgb = vec3(planets[0].z / 1.0);
 } 
 
 

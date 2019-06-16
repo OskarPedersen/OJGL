@@ -73,34 +73,27 @@ vector<float> SolarSystem::getValues()
         values.emplace_back(planets[i].pos.y * scale);
         values.emplace_back(planets[i].pos.z * scale);
     }
+
     return values;
-    /*  static float time = 0.0;
-    time += 1.0 / 60.0;
-    ojstd::vector<float> pos;
-    for (int i = 0; i < 9; i++) {
-        float t = time;
-        pos.emplace_back(ojstd::sin(t) * i);
-        pos.emplace_back(0.0);
-        pos.emplace_back(ojstd::cos(t) * i);
-    }
-    return pos;*/
 }
 
 void SolarSystem::tick()
 {
-    const float G = 6.673e-20; //G är upphöjt i -20 pga att den ska räknas i km och inte i m
-    float dt = 10.0; // *24.0;
+    const float G = 6.673e-20;
+    float dt = 10.0;
     vector<Vec3> forces;
-    for (int i = 0; i < planets.size(); i++) {
-        for (int j = 0; j < planets.size(); j++) {
-            if (i != j) {
-                float r2 = (planets[i].pos, planets[j].pos).lenSq();
-                float a = G * planets[j].mass / r2;
-                // v = v0 + a *dt
-                Vec3 dir = (planets[j].pos - planets[i].pos).normalize();
-                planets[i].vel += dir * a * dt;
-                // s = s0 + v * dt
-                planets[i].pos += planets[i].vel * dt;
+    for (int rep = 0; rep < 100; rep++) {
+        for (int i = 0; i < planets.size(); i++) {
+            for (int j = 0; j < planets.size(); j++) {
+                if (i != j) {
+                    float r2 = Vec3(planets[j].pos - planets[i].pos).lenSq();
+                    float F = G * planets[i].mass * planets[j].mass / r2;
+                    float a = F / planets[i].mass;
+
+                    Vec3 dir = (planets[j].pos - planets[i].pos).normalize();
+                    planets[i].vel += dir * (a * dt);
+                    planets[i].pos += (planets[i].vel * dt);
+                }
             }
         }
     }
