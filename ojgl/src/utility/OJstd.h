@@ -380,4 +380,7 @@ struct Vec3 {
     float x, y, z;
 };
 
+// https://www.gamedev.net/forums/topic/671079-fast-sqrt-for-64bit/
+double inline __fastcall sqrt_asm(double n);
+
 } //end namespace ojstd

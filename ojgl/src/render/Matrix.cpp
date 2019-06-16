@@ -22,19 +22,9 @@ Matrix Matrix::perspective(float fovy, float aspect, float zNear, float zFar)
     return Matrix(data);
 }
 
-// https://www.gamedev.net/forums/topic/671079-fast-sqrt-for-64bit/
-double inline __declspec(naked) __fastcall sqrt_asm(double n)
-{
-    _asm {
-		fld qword ptr[esp + 4]
-		fsqrt
-		ret 8
-    }
-}
-
 Matrix Matrix::rotation(float x, float y, float z, float angle)
 {
-    float n = sqrt_asm(x * x + y * y + z * z);
+    float n = ojstd::sqrt_asm(x * x + y * y + z * z);
     _ASSERTE(n != 0);
     x /= n;
     y /= n;

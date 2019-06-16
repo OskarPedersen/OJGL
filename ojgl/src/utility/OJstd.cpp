@@ -237,7 +237,7 @@ Vec3 Vec3::operator-(Vec3 v)
 
 const Vec3& Vec3::normalize()
 {
-    float len = sqrt(x * x + y * y + z * z);
+    float len = sqrt_asm(x * x + y * y + z * z);
     x /= len;
     y /= len;
     z /= len;
@@ -247,5 +247,15 @@ const Vec3& Vec3::normalize()
 float Vec3::lenSq()
 {
     return x * x + y * y + z * z;
+}
+
+// https://www.gamedev.net/forums/topic/671079-fast-sqrt-for-64bit/
+double inline __declspec(naked) __fastcall sqrt_asm(double n)
+{
+    _asm {
+		fld qword ptr[esp + 4]
+		fsqrt
+		ret 8
+    }
 }
 }
