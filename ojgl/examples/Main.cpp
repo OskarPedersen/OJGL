@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
     // and perhaps have a unified update() which does getMessages(), music sync update and
     // so on.
     Window window(width, height, "Eldur - OJ", fullScreen, showCursor);
-    GLState glState;
+    GLState glState{ resources::songs::song };
     buildSceneGraph(glState, width, height);
     glState.initialize();
 

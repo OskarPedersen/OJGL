@@ -220,19 +220,19 @@ vec2 map(vec3 p, vec3 rd, vec3 eye)
         }
         
         {
-            float d = -sdBox(p, vec3(20.0, 20.0, 20.0));
-        	res = vec2(d, MAT_ROOM);
+            //float d = -sdBox(p, vec3(20.0, 20.0, 20.0));
+        	//res = vec2(d, MAT_ROOM);
         }
 
-		{
-			float d = sdBox(p, vec3(1.0, 1.0, 0.1));
-			res = un(res, vec2(d, MAT_GRID));
-		}
+		//{
+		//	float d = sdBox(p, vec3(1.0, 1.0, 0.1));
+		//	res = un(res, vec2(d, MAT_GRID));
+		//}
 			
 		{
-			//res = vec2(9999999.0, 0.0);
+			res = vec2(9999999.0, 0.0);
 			for (int i = 0; i < planets.length(); i++) {
-				float d = length(p - planets[i]) - 0.01;
+				float d = sdBox(p - planets[i], vec3(0.1));//length(p - planets[i]) - 0.1;
 				res = un(res, vec2(d, MAT_PLANET));
 			}
 		}
@@ -506,13 +506,13 @@ void main()
              //float rot = iMouse.x * 0.01;
              //float cameraY = iMouse.y * 0.01;
             
-			//vec3 eye = vec3(0.0, 0.0, 1.0);//vec3( cos(rot) * d, cameraY, sin(rot) * d); 
-            //vec3 tar = vec3(0.001);
+			vec3 eye = vec3(0.0, 0.0, 1.0);//vec3( cos(rot) * d, cameraY, sin(rot) * d); 
+			vec3 tar = vec3(0.001);
 
-			 //eye +=  vec3(DEBUG_D1, DEBUG_D2, DEBUG_D3);
+			 eye +=  vec3(DEBUG_D1, DEBUG_D2, DEBUG_D3);
 			 
-			 vec3 tar = planets[0];
-			 vec3 eye = tar - vec3(0.001, 0.001, 0.03);
+			 //vec3 tar = planets[0];
+			 //vec3 eye = tar - vec3(0.001, 0.001, 0.03);
 
 
              vec3 dir = normalize(tar - eye);
