@@ -368,16 +368,16 @@ void sleep(int milliseconds);
 
 struct Vec3 {
     Vec3();
-    Vec3(float x, float y, float z);
+    Vec3(double x, double y, double z);
 
-    Vec3 operator*(float a);
+    Vec3 operator*(double a);
     void operator+=(Vec3 v);
     Vec3 operator-(Vec3 v);
 
     const Vec3& Vec3::normalize();
-    float lenSq();
+    double lenSq();
 
-    float x, y, z;
+    double x, y, z;
 };
 
 // https://www.gamedev.net/forums/topic/671079-fast-sqrt-for-64bit/

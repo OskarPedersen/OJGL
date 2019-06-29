@@ -435,7 +435,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
                 vec3 lightAura = vec3(0.0);
                 for (int pl = 0; pl < planets.length(); pl++){
                     float plf = float(pl);
-                    float lightInvSize = 10000.0;//52.1 + 20.0*sin(float(pl));
+                    float lightInvSize = 1000000.0;//52.1 + 20.0*sin(float(pl));
                     float speed = 1.0 * iTime/float(pl);
                     vec3 light = planets[pl]; //0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
                     vec3 x0 = light;
@@ -506,11 +506,14 @@ void main()
              //float rot = iMouse.x * 0.01;
              //float cameraY = iMouse.y * 0.01;
             
-			vec3 eye = vec3(0.0, 0.0, 1.0);//vec3( cos(rot) * d, cameraY, sin(rot) * d); 
-             vec3 tar = vec3(0.001);
+			//vec3 eye = vec3(0.0, 0.0, 1.0);//vec3( cos(rot) * d, cameraY, sin(rot) * d); 
+            //vec3 tar = vec3(0.001);
 
-			 eye +=  vec3(DEBUG_D1, DEBUG_D2, DEBUG_D3);
+			 //eye +=  vec3(DEBUG_D1, DEBUG_D2, DEBUG_D3);
 			 
+			 vec3 tar = planets[0];
+			 vec3 eye = tar - vec3(0.001, 0.001, 0.03);
+
 
              vec3 dir = normalize(tar - eye);
              vec3 right = normalize(cross(vec3(0, 1, 0), dir));

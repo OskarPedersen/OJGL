@@ -1,4 +1,5 @@
 #include "SolarSystem.h"
+#include "utility\Log.h"
 
 Planet::Planet(float mass, Vec3 pos, Vec3 vel)
     : mass(mass)
@@ -79,22 +80,29 @@ vector<float> SolarSystem::getValues()
 
 void SolarSystem::tick()
 {
-    const float G = 6.673e-20;
-    float dt = 10.0;
-    vector<Vec3> forces;
+    const double G = 6.673e-20;
+    const double dt = 100.0;
     for (int rep = 0; rep < 100; rep++) {
+        Vec3 forces[10] = {};
         for (int i = 0; i < planets.size(); i++) {
             for (int j = 0; j < planets.size(); j++) {
                 if (i != j) {
-                    float r2 = Vec3(planets[j].pos - planets[i].pos).lenSq();
-                    float F = G * planets[i].mass * planets[j].mass / r2;
-                    float a = F / planets[i].mass;
+                    double r2 = (planets[j].pos - planets[i].pos).lenSq();
+                    double a = G * planets[j].mass / r2;
 
                     Vec3 dir = (planets[j].pos - planets[i].pos).normalize();
-                    planets[i].vel += dir * (a * dt);
-                    planets[i].pos += (planets[i].vel * dt);
+                    //LOG_INFO("acceleration" << a);
+                    /*planets[i].vel += dir * (a * dt);
+                    planets[i].pos += (planets[i].vel * dt);*/
+                    forces[i] += dir * a;
                 }
             }
+        }
+        for (int i = 0; i < planets.size(); i++) {
+            planets[i].vel += forces[i] * dt;
+        }
+        for (int i = 0; i < planets.size(); i++) {
+            planets[i].pos += (planets[i].vel * dt);
         }
     }
 }

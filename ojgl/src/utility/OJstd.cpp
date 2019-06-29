@@ -211,14 +211,14 @@ Vec3::Vec3()
 {
 }
 
-Vec3::Vec3(float x, float y, float z)
+Vec3::Vec3(double x, double y, double z)
     : x(x)
     , y(y)
     , z(z)
 {
 }
 
-Vec3 Vec3::operator*(float a)
+Vec3 Vec3::operator*(double a)
 {
     return Vec3(x * a, y * a, z * a);
 }
@@ -244,7 +244,7 @@ const Vec3& Vec3::normalize()
     return *this;
 }
 
-float Vec3::lenSq()
+double Vec3::lenSq()
 {
     return x * x + y * y + z * z;
 }
