@@ -176,7 +176,7 @@ mat3 rotateAngle(vec3 v, float a )
 
 
 
-const float EPS = 2e-2;
+const float EPS = 1e-3;
 const int MAX_STEPS = 100;
 
 const float T_INF = -1.0;
@@ -401,7 +401,8 @@ vec3 ballPos() {
 }
 
 vec2 flooring(vec3 p) {
-  return vec2(p.y +1.7 + 0.02*noise_2(2.*p.xz + 0.5*iTime), T_WALL);
+return vec2(p.y + 0.5 + 0.02*noise_2(2.*p.xz + 0.5*iTime), T_WALL);
+  //return vec2(p.y +1.7 + 0.02*noise_2(2.*p.xz + 0.5*iTime), T_WALL);
 }
 
 vec2 map_old( in vec3 p )
@@ -430,6 +431,9 @@ vec2 map(in vec3 p)
 {
 	vec2 res = vec2(999999, T_PLANET);
 	for (int i = 0; i < planets.length(); i++) {
+		if (i == 1) {
+			continue;
+		}
 		float d = length(p - planets[i]) - 0.05;
 		float m = T_PLANET;
 		res = un(res, vec2(d, m));
@@ -494,7 +498,7 @@ float ambientOcclusion(vec3 p, vec3 n)
     return mix(1.0, smoothstep(0.0, float(ns *(ns - 1) / 2) * sl, as), 0.6);
 }
                           
-vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps) 
+vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro) 
 {
     vec3 light = normalize(vec3(1.0, -1,  -1.));
     vec3 lightPos = planets[1]; //ballPos();
@@ -517,8 +521,36 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps)
     if (res.x < EPS)
         col =  (lf) * (ao * col *(0.02+diffuse) + spec);
     
-    float ns = float(steps) / 100.;
-    return pow(col * ns * 20., vec3(0.4545));
+	const vec3 eye = ro;
+	vec3 rd = dir;
+	vec3 lightAura = vec3(0.0);
+	int pl = 1;
+    //for (int pl = 0; pl < planets.length(); pl++){
+	{
+        float plf = float(pl);
+        float lightInvSize = 30.0;//52.1 + 20.0*sin(float(pl));
+        float speed = 1.0 * iTime/float(pl);
+        vec3 light = planets[pl]; //0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
+        vec3 x0 = light;
+        vec3 x1 = ro;
+        vec3 x2 = ro + rd;
+        float ldis = pow(length(cross(x2 - x1, x1 - x0)),2.0) / pow( distance(x2, x1), 2.0);
+                    
+                    
+        float tl = -dot(x1 - x0, x2 - x1)/pow(distance(x2,x1),2.0);
+        bool lightCollision = false;
+        if(tl > 0.0 && ((lightCollision && distance(eye, light) < distance(eye, p)) || !lightCollision)){
+            //lightAura = max(lightAura, 1.0/(0.01 + lightInvSize*ldis));
+            vec3 col = vec3(0.5 + 0.5*sin(plf), 0.5 + 0.5*sin(plf*2.0), 0.5 + 0.5*sin(plf*0.5));
+            lightAura += col*vec3(1.0/(0.01 + lightInvSize*ldis));
+        }
+    }
+	//}
+	col += lightAura;
+
+    //float ns = float(steps) / 100.;
+    //return pow(col * ns * 20., vec3(0.4545));
+	return pow(col, vec3(0.4545));
 }
 
 void main()
@@ -541,7 +573,7 @@ void main()
 	//}
 
 
-	ro = vec3(1.0, 0.0, 1.0);
+	ro = vec3(3.0, 1.0, 3.0);
     vec3 tar = planets[1]; //vec3(0.0, 1.0, 0.0);
     //ro = mix(tar, ro, 1.0);
     vec3 dir = normalize(tar - ro);
@@ -552,14 +584,14 @@ void main()
     vec3 p;
     int steps;
     vec2 res = march(ro, rd, p, steps);
-    vec3 col = colorize(res, p, rd, steps);
+    vec3 col = colorize(res, p, rd, steps, ro);
 
     float ri = reflectiveIndex(res.y);
     if (ri > 0.0) { 
         vec3 p2;
    		rd = reflect(rd, normal(p));
     	res = march(p + 0.1 * rd, rd, p2, steps);
-    	vec3 newCol = colorize(res, p2, rd, steps);
+    	vec3 newCol = colorize(res, p2, rd, steps, ro);
     	col = mix(col, newCol, ri);
     }
 
