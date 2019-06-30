@@ -65,8 +65,8 @@ int main(int argc, char* argv[])
 
     OJ_UNUSED(argc);
     OJ_UNUSED(argv);
-    int width = static_cast<int>(1600 * 0.8);
-    int height = static_cast<int>(900 * 0.8);
+    int width = static_cast<int>(1920);
+    int height = static_cast<int>(1080);
     bool fullScreen = false;
     bool showCursor = !fullScreen;
 

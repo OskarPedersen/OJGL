@@ -71,8 +71,8 @@ vector<float> SolarSystem::getValues()
     vector<float> values;
     for (int i = 0; i < planets.size(); i++) {
         values.emplace_back(planets[i].pos.x * scale);
-        values.emplace_back(planets[i].pos.y * scale);
         values.emplace_back(planets[i].pos.z * scale);
+        values.emplace_back(planets[i].pos.y * scale);
     }
 
     return values;
@@ -98,9 +98,11 @@ void SolarSystem::tick()
                 }
             }
         }
+
         for (int i = 0; i < planets.size(); i++) {
             planets[i].vel += forces[i] * dt;
         }
+
         for (int i = 0; i < planets.size(); i++) {
             planets[i].pos += (planets[i].vel * dt);
         }

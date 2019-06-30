@@ -13,9 +13,6 @@ uniform float DEBUG_D3;
 
 uniform vec3 planets[10];
 
-// Globals
-vec3 lightPosition = vec3(4.0, 0, 4);
-
 /// start of boiler-plate
 #define NUM_SCENES 3
 float[] sceneLengths = float[NUM_SCENES](15., 15., 20.);
@@ -202,6 +199,9 @@ float reflectiveIndex(float type)
         return 0.2;
 	if (type == T_BOX)
         return 0.5;
+	if(type == T_PLANET) {
+		return 0.5;	
+	}
 	return 0.0;
 }
 
@@ -430,7 +430,7 @@ vec2 map(in vec3 p)
 {
 	vec2 res = vec2(999999, T_PLANET);
 	for (int i = 0; i < planets.length(); i++) {
-		float d = length(p - planets[i].xzy * 0.3 - vec3(0, -1.5, 0)) - 0.05;
+		float d = length(p - planets[i]) - 0.05;
 		float m = T_PLANET;
 		res = un(res, vec2(d, m));
 	}
@@ -497,8 +497,8 @@ float ambientOcclusion(vec3 p, vec3 n)
 vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps) 
 {
     vec3 light = normalize(vec3(1.0, -1,  -1.));
-    vec3 lightPos = ballPos();
-	lightPos.y = max(1., lightPos.y);
+    vec3 lightPos = planets[1]; //ballPos();
+	//lightPos.y = max(1., lightPos.y);
     //light = normalize(p - lightPos);
     
     vec3 n = normal(p);
@@ -534,14 +534,16 @@ void main()
     
 	vec3 ro = vec3(11.0, 5., 11.0);
 
-	if (cs == 1) {
-		ro = vec3(14.0, 14., 14.0);
-	}if (cs == 2) {
-		ro = vec3(13.0, 11., 13.0);
-	}
+	//if (cs == 1) {
+	//	ro = vec3(14.0, 14., 14.0);
+	//}if (cs == 2) {
+	//	ro = vec3(13.0, 11., 13.0);
+	//}
 
-    vec3 tar = vec3(0.0, 1.0, 0.0);
-    ro = mix(tar, ro, 1.0);
+
+	ro = vec3(1.0, 0.0, 1.0);
+    vec3 tar = planets[1]; //vec3(0.0, 1.0, 0.0);
+    //ro = mix(tar, ro, 1.0);
     vec3 dir = normalize(tar - ro);
 	vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), dir));
 	vec3 up = cross(dir, right);
@@ -573,7 +575,7 @@ void main()
 		f *= 1. - smoothstep(1., 0., tl);
 	}
 
-    fragColor = vec4(pow(f * col, vec3(0.4545)), 1.0);
+    fragColor = vec4(f * col, 1.0);
 }
 
 )""
