@@ -31,6 +31,10 @@ namespace resources {
 #include "shaders/planets.fs"
         };
 
+        ojstd::string edison_planets{
+#include "shaders/edison_planets.fs"
+        };
+
     } //namespace fragment
 
     namespace vertex {

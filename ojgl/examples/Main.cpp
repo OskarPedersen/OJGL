@@ -17,7 +17,7 @@ void buildSceneGraph(GLState& glState, int x, int y)
     glState.clearScenes();
 
     {
-        auto planets = Buffer::construct(BufferFormat::Quad, x, y, "planets", "shaders/edison.vs", "shaders/planets.fs");
+        auto planets = Buffer::construct(BufferFormat::Quad, x, y, "planets", "shaders/edison.vs", "shaders/edison_planets.fs");
 
         glState.addScene("planetsScene", planets, Duration::seconds(3000));
     }
@@ -95,6 +95,7 @@ int main(int argc, char* argv[])
     ShaderReader::preLoad("shaders/edison_1_post.fs", resources::fragment::edison_1_post);
 
     ShaderReader::preLoad("shaders/planets.fs", resources::fragment::planets);
+    ShaderReader::preLoad("shaders/edison_planets.fs", resources::fragment::edison_planets);
 
     /*{
         auto edison = Buffer::construct(BufferFormat::Quad, x, y, "intro", "shaders/edison.vs", "shaders/edison_1.fs");
