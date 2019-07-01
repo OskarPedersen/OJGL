@@ -200,7 +200,7 @@ float reflectiveIndex(float type)
 	if (type == T_BOX)
         return 0.5;
 	if(type == T_PLANET) {
-		return 0.5;	
+		return 1.0;	
 	}
 	return 0.0;
 }
@@ -237,7 +237,7 @@ vec3 color(float type, vec3 p)
     else if (type == T_ARROW)
         return vec3(0.1, 0.1, 0.8);
 	else if (type == T_PLANET){
-		return vec3(0.8, 0.5, 0.1);
+		return vec3(1.0, 0.0, 1.0);
 	}
     return vec3(0.0);
 }
@@ -442,7 +442,7 @@ vec2 map(in vec3 p)
 
 	vec2 w = flooring(p);
 
-	return sun(res, w);
+	return res;//sun(res, w);
 }
 
 vec3 normal(vec3 p) 
@@ -538,11 +538,12 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro)
                     
                     
         float tl = -dot(x1 - x0, x2 - x1)/pow(distance(x2,x1),2.0);
-        bool lightCollision = false;
+        const bool lightCollision = true;
+
         if(tl > 0.0 && ((lightCollision && distance(eye, light) < distance(eye, p)) || !lightCollision)){
             //lightAura = max(lightAura, 1.0/(0.01 + lightInvSize*ldis));
-            vec3 col = vec3(0.5 + 0.5*sin(plf), 0.5 + 0.5*sin(plf*2.0), 0.5 + 0.5*sin(plf*0.5));
-            lightAura += col*vec3(1.0/(0.01 + lightInvSize*ldis));
+            const vec3 auraCol = vec3(0.5 + 0.5*sin(plf), 0.5 + 0.5*sin(plf*2.0), 0.5 + 0.5*sin(plf*0.5));
+            lightAura += auraCol*vec3(1.0/(0.01 + lightInvSize*ldis));
         }
     }
 	//}
@@ -573,7 +574,7 @@ void main()
 	//}
 
 
-	ro = vec3(3.0, 1.0, 3.0);
+	ro = planets[1] + vec3(1.0, 0.0, 1.0);//vec3(3.0, 35.0, 3.0);
     vec3 tar = planets[1]; //vec3(0.0, 1.0, 0.0);
     //ro = mix(tar, ro, 1.0);
     vec3 dir = normalize(tar - ro);
@@ -586,14 +587,24 @@ void main()
     vec2 res = march(ro, rd, p, steps);
     vec3 col = colorize(res, p, rd, steps, ro);
 
-    float ri = reflectiveIndex(res.y);
-    if (ri > 0.0) { 
-        vec3 p2;
-   		rd = reflect(rd, normal(p));
-    	res = march(p + 0.1 * rd, rd, p2, steps);
-    	vec3 newCol = colorize(res, p2, rd, steps, ro);
-    	col = mix(col, newCol, ri);
-    }
+    //float ri = reflectiveIndex(res.y);
+    //if (ri > 0.0) { 
+    //    vec3 p2;
+   	//	rd = reflect(rd, normal(p));
+    //	res = march(p + 0.1 * rd, rd, p2, steps);
+    //	vec3 newCol = colorize(res, p2, rd, steps, ro);
+    //	col = mix(col, newCol, ri);
+	//
+	//
+	//	float ri = reflectiveIndex(res.y);
+	//	if (ri > 0.0) { 
+	//		vec3 p3;
+   	//		rd = reflect(rd, normal(p2));
+    //		res = march(p2 + 0.1 * rd, rd, p3, steps);
+    //		vec3 newCol = colorize(res, p3, rd, steps, ro);
+    //		col = mix(col, newCol, ri);
+	//	}
+    //}
 
 	float f = 1.0;
 	if (cs == 0) {
