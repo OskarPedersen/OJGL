@@ -12,7 +12,16 @@ uniform float DEBUG_D2;
 uniform float DEBUG_D3;
 
 uniform vec3 planets[10];
-
+float[] planetScales = float[10](2.0,	// Earth
+								1.0,	// Sun
+								1.0,	// Mercury
+								1.5,	// Venus
+								1.2,	// Mars
+								5.0,	// Jupiter
+								4.0,	// Saturnus
+								3.0,	// Uranus
+								3.0,	// Neptunus
+								0.01);	// Moon
 /// start of boiler-plate
 #define NUM_SCENES 3
 float[] sceneLengths = float[NUM_SCENES](15., 15., 20.);
@@ -185,6 +194,7 @@ const float T_WALL = 1.0;
 const float T_BOX = 2.0;
 const float T_ARROW = 3.0;
 const float T_PLANET = 4.0;
+const float T_RINGS = 5.0;
     
 float psin(float v) 
 {
@@ -239,6 +249,9 @@ vec3 color(float type, vec3 p)
 	else if (type == T_PLANET){
 		return vec3(1.0, 0.0, 1.0);
 	}
+	else if (type == T_RINGS){
+		return vec3(0.0, 1.0, 0.0);
+	}
     return vec3(0.0);
 }
 
@@ -269,11 +282,23 @@ float sdBox(vec3 p, vec3 b)
 
 
 // O
-float sdTorus(vec3 p, vec2 t)
+//float sdTorus(vec3 p, vec2 t)
+//{
+//  p.y *= 0.7;
+//  p.zy = p.yz;
+//  vec2 q = vec2(length(p.xy)-t.x,p.z);
+//  return length(q)-t.y;
+//}
+
+float sdCappedCylinder( vec3 p, float h, float r )
 {
-  p.y *= 0.7;
-  p.zy = p.yz;
-  vec2 q = vec2(length(p.xy)-t.x,p.z);
+  vec2 d = abs(vec2(length(p.xz),p.y)) - vec2(h,r);
+  return min(max(d.x,d.y),0.0) + length(max(d,0.0));
+}
+
+float sdTorus( vec3 p, vec2 t )
+{
+  vec2 q = vec2(length(p.xz)-t.x,p.y);
   return length(q)-t.y;
 }
 
@@ -434,8 +459,18 @@ vec2 map(in vec3 p)
 		if (i == 1) {
 			continue;
 		}
-		float d = length(p - planets[i]) - 0.05;
+		float d = length(p - planets[i]) - 0.05 * planetScales[i];
 		float m = T_PLANET;
+		res = un(res, vec2(d, m));
+		
+	}
+	{
+		//float d = sdTorus(p - planets[6], vec2(0.1, 0.01)* planetScales[6]);
+		float d1 = sdCappedCylinder(p - planets[6], 0.12 * planetScales[6], 0.001 * planetScales[6]);
+		float d2 = sdCappedCylinder(p - planets[6], 0.09 * planetScales[6], 0.001 * planetScales[6]);
+		float d = max(-d1,d2);
+		//float d = sdTorus(, vec2(0.1, 0.01)* planetScales[6]);
+		float m = T_RINGS;
 		res = un(res, vec2(d, m));
 	}
 	
@@ -455,7 +490,7 @@ vec3 normal(vec3 p)
 vec2 march(vec3 ro, vec3 rd, out vec3 p, out int steps)
 {
     float t = 0.0;
-   	vec2 res = vec2(0.0, -1.0);
+   	vec2 res = vec2(99999.0, -1.0);
     for(steps = 0; steps < MAX_STEPS; ++steps) {
     	p = ro + t * rd;   
         vec2 tres = map(p);
@@ -506,7 +541,7 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro)
     //light = normalize(p - lightPos);
     
     vec3 n = normal(p);
-    float lf = min(2.5, 3.0 / (0.02 + 0.1*pow(length(p - lightPos), 3)));
+    float lf = 1.0;//min(2.5, 3.0 / (0.02 + 0.1*pow(length(p - lightPos), 3)));
     
     // Material properties
     float diffuse1 = 0.0*max(0.,dot(-light, n));
@@ -516,10 +551,15 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro)
     float spec = specularFactor(res.y) * pow(k, 100.0);
     
     vec3 col = color(res.y, p);
-	float ao = ambientOcclusion(p, n);
+	float ao = 1.0;//ambientOcclusion(p, n);
    //	float sh = shadow(p, light);
-    if (res.x < EPS)
-        col =  (lf) * (ao * col *(0.02+diffuse) + spec);
+    if (res.x < EPS) {
+        //col =  (lf) * (ao * col *(1.02+diffuse) + spec);
+		//col = vec3(1.0, 0.0, 0.0);
+	} else {
+		col = vec3(0.0);
+		//return vec3(0.0);
+	}
     
 	const vec3 eye = ro;
 	vec3 rd = dir;
@@ -528,7 +568,7 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro)
     //for (int pl = 0; pl < planets.length(); pl++){
 	{
         float plf = float(pl);
-        float lightInvSize = 30.0;//52.1 + 20.0*sin(float(pl));
+        float lightInvSize = 10.0;//52.1 + 20.0*sin(float(pl));
         float speed = 1.0 * iTime/float(pl);
         vec3 light = planets[pl]; //0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
         vec3 x0 = light;
@@ -574,8 +614,15 @@ void main()
 	//}
 
 
-	ro = planets[1] + vec3(1.0, 0.0, 1.0);//vec3(3.0, 35.0, 3.0);
-    vec3 tar = planets[1]; //vec3(0.0, 1.0, 0.0);
+	ro = planets[1] + vec3(0.0, 80.0, 0.1); // top down all planets
+	//ro = planets[1] + vec3(0.0, 80.0, 0.1); // top down all planets
+
+
+    //vec3 tar = planets[1]; //vec3(0.0, 1.0, 0.0);
+
+	ro = planets[6] + vec3(5.0, 0.0, 5.0);
+	vec3 tar = planets[6];
+
     //ro = mix(tar, ro, 1.0);
     vec3 dir = normalize(tar - ro);
 	vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), dir));
@@ -587,15 +634,15 @@ void main()
     vec2 res = march(ro, rd, p, steps);
     vec3 col = colorize(res, p, rd, steps, ro);
 
-    //float ri = reflectiveIndex(res.y);
-    //if (ri > 0.0) { 
-    //    vec3 p2;
-   	//	rd = reflect(rd, normal(p));
-    //	res = march(p + 0.1 * rd, rd, p2, steps);
-    //	vec3 newCol = colorize(res, p2, rd, steps, ro);
-    //	col = mix(col, newCol, ri);
-	//
-	//
+    float ri = reflectiveIndex(res.y);
+    if (ri > 0.0) { 
+        vec3 p2;
+   		rd = reflect(rd, normal(p));
+    	res = march(p + 0.1 * rd, rd, p2, steps);
+    	vec3 newCol = colorize(res, p2, rd, steps, ro);
+    	col = mix(col, newCol, ri);
+	
+	
 	//	float ri = reflectiveIndex(res.y);
 	//	if (ri > 0.0) { 
 	//		vec3 p3;
@@ -604,7 +651,7 @@ void main()
     //		vec3 newCol = colorize(res, p3, rd, steps, ro);
     //		col = mix(col, newCol, ri);
 	//	}
-    //}
+    }
 
 	float f = 1.0;
 	if (cs == 0) {
