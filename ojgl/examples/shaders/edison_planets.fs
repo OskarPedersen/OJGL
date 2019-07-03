@@ -13,7 +13,7 @@ uniform float DEBUG_D3;
 
 uniform vec3 planets[10];
 float[] planetScales = float[10](2.0,	// Earth
-								1.0,	// Sun
+								4.0,	// Sun
 								1.0,	// Mercury
 								1.5,	// Venus
 								1.2,	// Mars
@@ -109,68 +109,6 @@ float smoothspike(float left, float right, float value)
 }
 
 
-float hash11(float p) {
-    return fract(sin(p * 727.1)*435.545);
-}
-float hash12(vec2 p) {
-	float h = dot(p,vec2(127.1,311.7));	
-    return fract(sin(h)*437.545);
-}
-vec3 hash31(float p) {
-	vec3 h = vec3(127.231,491.7,718.423) * p;	
-    return fract(sin(h)*435.543);
-}
-
-float noise_2( in vec2 p ) {
-    vec2 i = floor( p );
-    vec2 f = fract( p );	
-	vec2 u = f*f*(3.0-2.0*f);
-    return mix( mix( hash12( i + vec2(0.0,0.0) ), 
-                     hash12( i + vec2(1.0,0.0) ), u.x),
-                mix( hash12( i + vec2(0.0,1.0) ), 
-                     hash12( i + vec2(1.0,1.0) ), u.x), u.y);
-}
-// 3d noise
-float noise_3(in vec3 p) {
-    vec3 i = floor(p);
-    vec3 f = fract(p);	
-	vec3 u = f*f*(3.0-2.0*f);
-    
-    vec2 ii = i.xy + i.z * vec2(5.0);
-    float a = hash12( ii + vec2(0.0,0.0) );
-	float b = hash12( ii + vec2(1.0,0.0) );    
-    float c = hash12( ii + vec2(0.0,1.0) );
-	float d = hash12( ii + vec2(1.0,1.0) ); 
-    float v1 = mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
-    
-    ii += vec2(5.0);
-    a = hash12( ii + vec2(0.0,0.0) );
-	b = hash12( ii + vec2(1.0,0.0) );    
-    c = hash12( ii + vec2(0.0,1.0) );
-	d = hash12( ii + vec2(1.0,1.0) );
-    float v2 = mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
-        
-    return max(mix(v1,v2,u.z),0.0);
-}
-
-// fBm
-float fbm3(vec3 p, float a, float f) {
-    return noise_3(p);
-}
-
-float fbm3_high(vec3 p, float a, float f) {
-    float ret = 0.0;    
-    float amp = 1.0;
-    float frq = 1.0;
-    for(int i = 0; i < 4; i++) {
-        float n = pow(noise_3(p * frq),2.0);
-        ret += n * amp;
-        frq *= f;
-        amp *= a * (pow(n,0.2));
-    }
-    return ret;
-}
-
 
 mat3 rotateAngle(vec3 v, float a )
 {
@@ -242,7 +180,7 @@ vec3 color(float type, vec3 p)
 
 		//return palette(fract(-p.x*p.y*0.05), vec3(0.5), vec3(0.5), vec3(	2.0, 1.0, 0.0), vec3(0.50, 0.20, 0.25) );
         //return red;
-		return mix(red, yellow, 0.3*noise_3(2.0*sin(iTime*0.5)*p + iTime*0.5));
+		//return mix(red, yellow, 0.3*noise_3(2.0*sin(iTime*0.5)*p + iTime*0.5));
      }
     else if (type == T_ARROW)
         return vec3(0.1, 0.1, 0.8);
@@ -337,10 +275,6 @@ vec2 sun(vec2 a, vec2 b)
 
 vec2 un(vec2 a, vec2 b) { return a.x < b.x ? a : b; }
 
-float rv(float low, float high, float p)
-{
-    return low + (high - low) * hash11(p);
-}
 
 
 
@@ -425,59 +359,40 @@ vec3 ballPos() {
  	return vec3(px, py, pz);    
 }
 
-vec2 flooring(vec3 p) {
-return vec2(p.y + 0.5 + 0.02*noise_2(2.*p.xz + 0.5*iTime), T_WALL);
-  //return vec2(p.y +1.7 + 0.02*noise_2(2.*p.xz + 0.5*iTime), T_WALL);
-}
+//vec2 flooring(vec3 p) {
+//return vec2(p.y + 0.5 + 0.02*noise_2(2.*p.xz + 0.5*iTime), T_WALL);
+//  //return vec2(p.y +1.7 + 0.02*noise_2(2.*p.xz + 0.5*iTime), T_WALL);
+//}
 
-vec2 map_old( in vec3 p )
-{
-    vec2 s = vec2(sdSphere(p - ballPos(), 1.0), T_BOX);
-    //vec2 w = vec2(sdPlane(p, vec4(0.0, 1.0, 0.0, 1.0)) + 0.1*noise_3(p + vec3(20, 0.0, 20)), T_WALL);
-    
-    
-    // + 0.01*noise_2(10.0*p.xz + vec2(iTime, iTime*1.5)) Ripple effect.
-    vec2 w = flooring(p);
-    
-    float sc = 2.0;
-    float tf = 0.5;
-    vec3 direction = normalize(vec3(sin(iTime*tf), cos(iTime*tf), psin(iTime*tf)));
-    vec2 fs = fractalBox(   1./sc*(p - ballPos()));
-    fs.x *= sc;
-    //float oj = sdTorus(p - vec3(sin(iTime), 0.18, 0.0), vec2(1.0, 0.02));
-   // oj = min(99999999999.9, sdTorusJ(p, vec2(1.0, 0.02)));
-   // vec2 fs = vec2(oj, T_BOX);
-    
-    //fs.x = mix(sdBox(p - ballPos(), vec3(1.0)), fs.x, 0.2+0.8*psin(0.5*iTime));
-    return sun(w, fs);
-}
 
 vec2 map(in vec3 p) 
 {
 	vec2 res = vec2(999999, T_PLANET);
-	for (int i = 0; i < planets.length(); i++) {
-		if (i == 1) {
-			continue;
-		}
-		float d = length(p - planets[i]) - 0.05 * planetScales[i];
-		float m = T_PLANET;
-		res = un(res, vec2(d, m));
-		
-	}
-	{
-		//float d = sdTorus(p - planets[6], vec2(0.1, 0.01)* planetScales[6]);
-		float d1 = sdCappedCylinder(p - planets[6], 0.12 * planetScales[6], 0.001 * planetScales[6]);
-		float d2 = sdCappedCylinder(p - planets[6], 0.09 * planetScales[6], 0.001 * planetScales[6]);
-		float d = max(-d1,d2);
-		//float d = sdTorus(, vec2(0.1, 0.01)* planetScales[6]);
-		float m = T_RINGS;
-		res = un(res, vec2(d, m));
-	}
+	//for (int i = 0; i < planets.length(); i++) {
+	//	if (i != 1) {
+	//		continue;
+	//	}
+	//	float d = length(p - planets[i]) - 0.05 * planetScales[i];
+	//	float m = T_PLANET;
+	//	res = un(res, vec2(d, m));
+	//	
+	//}
+	//{
+	//	//float d = sdTorus(p - planets[6], vec2(0.1, 0.01)* planetScales[6]);
+	//	float d1 = sdCappedCylinder(p - planets[6], 0.12 * planetScales[6], 0.001 * planetScales[6]);
+	//	float d2 = sdCappedCylinder(p - planets[6], 0.09 * planetScales[6], 0.001 * planetScales[6]);
+	//	float d = max(-d1,d2);
+	//	//float d = sdTorus(, vec2(0.1, 0.01)* planetScales[6]);
+	//	float m = T_RINGS;
+	//	res = un(res, vec2(d, m));
+	//}
 	
 
-	vec2 w = flooring(p);
+	//vec2 w = flooring(p);
 
-	return res;//sun(res, w);
+	float d = -sdBox(p, vec3(20));
+
+	return vec2(d, T_PLANET); //res;//sun(res, w);
 }
 
 vec3 normal(vec3 p) 
@@ -533,7 +448,7 @@ float ambientOcclusion(vec3 p, vec3 n)
     return mix(1.0, smoothstep(0.0, float(ns *(ns - 1) / 2) * sl, as), 0.6);
 }
                           
-vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro) 
+vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro, inout vec3 lightAura) 
 {
     vec3 light = normalize(vec3(1.0, -1,  -1.));
     vec3 lightPos = planets[1]; //ballPos();
@@ -558,15 +473,17 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro)
 		//col = vec3(1.0, 0.0, 0.0);
 	} else {
 		col = vec3(0.0);
+		//col = vec3(noise_3(100.0 * vec3(uv.x, uv.y, 0)));
 		//return vec3(0.0);
 	}
     
 	const vec3 eye = ro;
 	vec3 rd = dir;
-	vec3 lightAura = vec3(0.0);
-	int pl = 1;
-    //for (int pl = 0; pl < planets.length(); pl++){
+	//vec3 lightAura = vec3(0.0);
+	//int pl = 1;
+    for (int pl = 0; pl < planets.length(); pl++)
 	{
+		//if (pl == 1) continue;
         float plf = float(pl);
         float lightInvSize = 10.0;//52.1 + 20.0*sin(float(pl));
         float speed = 1.0 * iTime/float(pl);
@@ -583,11 +500,18 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro)
         if(tl > 0.0 && ((lightCollision && distance(eye, light) < distance(eye, p)) || !lightCollision)){
             //lightAura = max(lightAura, 1.0/(0.01 + lightInvSize*ldis));
             const vec3 auraCol = vec3(0.5 + 0.5*sin(plf), 0.5 + 0.5*sin(plf*2.0), 0.5 + 0.5*sin(plf*0.5));
-            lightAura += auraCol*vec3(1.0/(0.01 + lightInvSize*ldis));
+            //const vec3 auraCol = vec3(1.0, 0.8, 0.1);
+			if (ldis < 0.5) {
+				float fade = 0.5 - ldis * 10.0;
+				fade = max(0.0, fade);
+				lightAura += auraCol*vec3(1.0/(0.01 + lightInvSize*ldis)) * fade;
+			}
+			
+			//col = lightAura;
         }
     }
 	//}
-	col += lightAura;
+	//col += lightAura;
 
     //float ns = float(steps) / 100.;
     //return pow(col * ns * 20., vec3(0.4545));
@@ -614,15 +538,16 @@ void main()
 	//}
 
 
-	ro = planets[1] + vec3(0.0, 80.0, 0.1); // top down all planets
 	//ro = planets[1] + vec3(0.0, 80.0, 0.1); // top down all planets
+	ro = planets[1] + vec3(0.0, 5.0, 0.1); // top down inner planets
 
 
-    //vec3 tar = planets[1]; //vec3(0.0, 1.0, 0.0);
+    vec3 tar = planets[1]; //vec3(0.0, 1.0, 0.0);
 
-	ro = planets[6] + vec3(5.0, 0.0, 5.0);
-	vec3 tar = planets[6];
+	//ro = planets[6] + vec3(5.0, 0.0, 5.0);
+	//vec3 tar = planets[6];
 
+	vec3 lightAura = vec3(0.0);
     //ro = mix(tar, ro, 1.0);
     vec3 dir = normalize(tar - ro);
 	vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), dir));
@@ -632,38 +557,39 @@ void main()
     vec3 p;
     int steps;
     vec2 res = march(ro, rd, p, steps);
-    vec3 col = colorize(res, p, rd, steps, ro);
+    vec3 col = colorize(res, p, rd, steps, ro, lightAura);
 
     float ri = reflectiveIndex(res.y);
     if (ri > 0.0) { 
         vec3 p2;
    		rd = reflect(rd, normal(p));
     	res = march(p + 0.1 * rd, rd, p2, steps);
-    	vec3 newCol = colorize(res, p2, rd, steps, ro);
+    	vec3 newCol = colorize(res, p2, rd, steps, p + 0.1 * rd, lightAura);
     	col = mix(col, newCol, ri);
 	
 	
-	//	float ri = reflectiveIndex(res.y);
-	//	if (ri > 0.0) { 
-	//		vec3 p3;
-   	//		rd = reflect(rd, normal(p2));
-    //		res = march(p2 + 0.1 * rd, rd, p3, steps);
-    //		vec3 newCol = colorize(res, p3, rd, steps, ro);
-    //		col = mix(col, newCol, ri);
-	//	}
+		float ri = reflectiveIndex(res.y);
+		if (ri > 0.0) { 
+			vec3 p3;
+   			rd = reflect(rd, normal(p2));
+    		res = march(p2 + 0.1 * rd, rd, p3, steps);
+    		vec3 newCol = colorize(res, p3, rd, steps, p2 + 0.1 * rd, lightAura);
+    		col = mix(col, newCol, ri);
+		}
     }
+	col += lightAura;
 
 	float f = 1.0;
-	if (cs == 0) {
-		f = smoothstep(0., 5., lt);
-		f *= 1. - smoothstep(1., 0., tl);
-	} else if (cs == 1) {
-		f = smoothstep(0., 1., lt);
-		f *= 1. - smoothstep(1., 0., tl);
-	} else if (cs == 2) {
-		f = smoothstep(0., 1., lt);
-		f *= 1. - smoothstep(1., 0., tl);
-	}
+	//if (cs == 0) {
+	//	f = smoothstep(0., 5., lt);
+	//	f *= 1. - smoothstep(1., 0., tl);
+	//} else if (cs == 1) {
+	//	f = smoothstep(0., 1., lt);
+	//	f *= 1. - smoothstep(1., 0., tl);
+	//} else if (cs == 2) {
+	//	f = smoothstep(0., 1., lt);
+	//	f *= 1. - smoothstep(1., 0., tl);
+	//}
 
     fragColor = vec4(f * col, 1.0);
 }
