@@ -9,6 +9,7 @@ Planet::Planet(float mass, Vec3 pos, Vec3 vel)
 }
 
 SolarSystem::SolarSystem()
+    : current(0)
 {
     // Earth
     planets.emplace_back(5.9736E+24,
@@ -78,33 +79,36 @@ vector<float> SolarSystem::getValues()
     return values;
 }
 
-void SolarSystem::tick()
+void SolarSystem::tick(int tick)
 {
-    const double G = 6.673e-20;
-    const double dt = 100.0;
-    for (int rep = 0; rep < 100; rep++) {
-        Vec3 forces[10] = {};
-        for (int i = 0; i < planets.size(); i++) {
-            for (int j = 0; j < planets.size(); j++) {
-                if (i != j) {
-                    double r2 = (planets[j].pos - planets[i].pos).lenSq();
-                    double a = G * planets[j].mass / r2;
+    while (current < tick) {
+        current++;
+        const double G = 6.673e-20;
+        const double dt = 100.0;
+        for (int rep = 0; rep < 1; rep++) {
+            Vec3 forces[10] = {};
+            for (int i = 0; i < planets.size(); i++) {
+                for (int j = 0; j < planets.size(); j++) {
+                    if (i != j) {
+                        double r2 = (planets[j].pos - planets[i].pos).lenSq();
+                        double a = G * planets[j].mass / r2;
 
-                    Vec3 dir = (planets[j].pos - planets[i].pos).normalize();
-                    //LOG_INFO("acceleration" << a);
-                    /*planets[i].vel += dir * (a * dt);
-                    planets[i].pos += (planets[i].vel * dt);*/
-                    forces[i] += dir * a;
+                        Vec3 dir = (planets[j].pos - planets[i].pos).normalize();
+                        //LOG_INFO("acceleration" << a);
+                        /*planets[i].vel += dir * (a * dt);
+                        planets[i].pos += (planets[i].vel * dt);*/
+                        forces[i] += dir * a;
+                    }
                 }
             }
-        }
 
-        for (int i = 0; i < planets.size(); i++) {
-            planets[i].vel += forces[i] * dt;
-        }
+            for (int i = 0; i < planets.size(); i++) {
+                planets[i].vel += forces[i] * dt;
+            }
 
-        for (int i = 0; i < planets.size(); i++) {
-            planets[i].pos += (planets[i].vel * dt);
+            for (int i = 0; i < planets.size(); i++) {
+                planets[i].pos += (planets[i].vel * dt);
+            }
         }
     }
 }

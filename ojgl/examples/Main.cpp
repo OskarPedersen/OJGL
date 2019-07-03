@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
         glState << Uniform1f("DEBUG_D2", camera.d2);
         glState << Uniform1f("DEBUG_D3", camera.d3);
 
-        solarSystem.tick();
+        solarSystem.tick(ojstd::ftoi(glState.relativeSceneTime().toMilliseconds()));
         glState << Uniform3fv("planets", solarSystem.getValues());
 
         glState.update();

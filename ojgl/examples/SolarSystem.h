@@ -17,9 +17,10 @@ public:
     SolarSystem();
     ~SolarSystem();
 
-    void tick();
+    void tick(int tick);
     vector<float> getValues();
 
 private:
     vector<Planet> planets;
+    int current;
 };
