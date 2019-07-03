@@ -10,6 +10,16 @@ uniform float iTime;
 uniform vec2 iResolution;
 
 uniform vec3 planets[10];
+float[] planetScales = float[10](2.0,	// Earth
+								10.0,	// Sun
+								1.0,	// Mercury
+								1.5,	// Venus
+								1.2,	// Mars
+								5.0,	// Jupiter
+								4.0,	// Saturnus
+								3.0,	// Uranus
+								3.0,	// Neptunus
+								0.01);	// Moon
 
 uniform float DEBUG_D1;
 uniform float DEBUG_D2;
@@ -213,11 +223,6 @@ vec2 map(vec3 p, vec3 rd, vec3 eye)
         //res = un(res, vec2(debugD, MAT_PILLAR));
         //res = vec2(debugD, MAT_PILLAR);
         
-        {
-        	float d = sdBox(q - vec3(ROOM_SIZE.x - 0.4, -0.1, ROOM_SIZE.z + 0.1), vec3(0.3, 0.2, 0.01));
-            res = un(res, vec2(d, MAT_SCREEN));
-         
-        }
         
         {
             //float d = -sdBox(p, vec3(20.0, 20.0, 20.0));
@@ -229,13 +234,13 @@ vec2 map(vec3 p, vec3 rd, vec3 eye)
 		//	res = un(res, vec2(d, MAT_GRID));
 		//}
 			
-		{
-			res = vec2(9999999.0, 0.0);
-			for (int i = 0; i < planets.length(); i++) {
-				float d = sdBox(p - planets[i], vec3(0.1));//length(p - planets[i]) - 0.1;
-				res = un(res, vec2(d, MAT_PLANET));
-			}
-		}
+		//{
+		//	res = vec2(9999999.0, 0.0);
+		//	for (int i = 0; i < planets.length(); i++) {
+		//		float d = sdBox(p - planets[i], vec3(0.1));//length(p - planets[i]) - 0.1;
+		//		res = un(res, vec2(d, MAT_PLANET));
+		//	}
+		//}
     }
     
 	return res;
@@ -316,7 +321,7 @@ void yolo(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, vec3 loff, vec3 rd,
         //
         
 
-        vec3 lp = vec3(0.0);//vec3(roomIndex.x * ROOM_GRID_SIZE, 0.55, roomIndex.y * ROOM_GRID_SIZE) + loff;
+        vec3 lp = vec3(roomIndex.x * ROOM_GRID_SIZE, 0.55, roomIndex.y * ROOM_GRID_SIZE) + loff;
         
         vec3 col = vec3(1.0);
         //col = col * 100.0 / pow(length(pos), 3.0); //???
@@ -328,7 +333,7 @@ void yolo(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, vec3 loff, vec3 rd,
 void addLightning(inout vec3 color, vec3 normal, vec3 eye, vec3 pos, vec3 rd) {
 	vec3 diffuse = vec3(0.0);
 	float specular = 0.0;
-	float ambient = 0.1 * occlusion(pos, normal, rd, eye);
+	float ambient = 0.0 * occlusion(pos, normal, rd, eye);
 
     
     {
@@ -406,11 +411,44 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
 				vec3 normal = getNormal(p, rd, eye);
 
 
-				if (m == MAT_PLANET) {
-					c = vec3(1.0, 0.0, 0.0);
-                } else if (m == MAT_GRID) {
-					c = vec3(0.0, 1.0, 0.0);
-				}
+				if (m == MAT_BOX) {
+					c = vec3(0.5);
+                } else if (m == MAT_GROUND) {
+                    
+                	c = vec3(mod(floor(p.x) + floor(p.z), 2.0));
+                } else if (m == MAT_ROOM) {
+                    if (p.y > 0.0) {
+                        c = vec3(0.1);
+                    } else {
+                        c = vec3(255.0, 93.0, 12.0) / 255.0;
+                    }
+                } else if (m == MAT_PILLAR) {
+                	c = vec3(0.5, 0.2, 0.5);
+                } else if (m == MAT_LAMP) {
+                	c = vec3(0.5);
+                } else if (m == MAT_CORRIDOR) {
+                    if (p.y > 0.0) {
+                        c = vec3(0.1);
+                    } else {
+                        c = vec3(255.0, 93.0, 12.0) / 255.0;
+                    }
+                } else if (m == MAT_CORRIDOR_ROT) {
+                    if (p.y > 0.0) {
+                        c = vec3(0.1);
+                    } else {
+                        c = vec3(255.0, 93.0, 12.0) / 255.0;
+                    }
+                } else if (m == MAT_DOOR) {
+                	c = vec3(255.0, 93.0, 12.0) / 255.0;
+                    if (mod(p.y, 0.5) > 0.25) {
+                    	c = vec3(1.0);
+                    }
+                    //c = vec3(0.1, 0.2, 0.6);
+                    c = vec3(1.0);
+                    c = vec3(255.0, 93.0, 12.0) / 255.0;
+                } else if (m == MAT_THING) {
+                	c = vec3(1.0, 0.5, 0.5);
+                }
 
 
 
@@ -431,42 +469,41 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
                 	fre = 0.0;
                 }
                 
-                
-                vec3 lightAura = vec3(0.0);
-                for (int pl = 0; pl < planets.length(); pl++){
-                    float plf = float(pl);
-                    float lightInvSize = 1000000.0;//52.1 + 20.0*sin(float(pl));
-                    float speed = 1.0 * iTime/float(pl);
-                    vec3 light = planets[pl]; //0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
-                    vec3 x0 = light;
-                    vec3 x1 = ro;
-                    vec3 x2 = ro + rd;
-                    float ldis = pow(length(cross(x2 - x1, x1 - x0)),2.0) / pow( distance(x2, x1), 2.0);
+				vec3 lightAura = vec3(0.0);
+               for (int pl = 0; pl < planets.length(); pl++)
+				{
+					//if (pl == 1) continue;
+					float plf = float(pl);
+					float lightInvSize = 10000.0;//52.1 + 20.0*sin(float(pl));
+					float speed = 1.0 * iTime/float(pl);
+					vec3 light = planets[pl]; //0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
+					vec3 x0 = light;
+					vec3 x1 = ro;
+					vec3 x2 = ro + rd;
+					float ldis = pow(length(cross(x2 - x1, x1 - x0)),2.0) / pow( distance(x2, x1), 2.0);
                     
                     
-                    float tl = -dot(x1 - x0, x2 - x1)/pow(distance(x2,x1),2.0);
-                    bool lightCollision = false;
-                    if(tl > 0.0 && ((lightCollision && distance(eye, light) < distance(eye, p)) || !lightCollision)){
-                        //lightAura = max(lightAura, 1.0/(0.01 + lightInvSize*ldis));
-                        vec3 col = vec3(0.5 + 0.5*sin(plf), 0.5 + 0.5*sin(plf*2.0), 0.5 + 0.5*sin(plf*0.5));
-                        lightAura += col*vec3(1.0/(0.01 + lightInvSize*ldis));
-                    }
-                }
+					float tl = -dot(x1 - x0, x2 - x1)/pow(distance(x2,x1),2.0);
+					const bool lightCollision = true;
+
+					if(tl > 0.0 && ((lightCollision && distance(eye, light) < distance(eye, p)) || !lightCollision)){
+						//lightAura = max(lightAura, 1.0/(0.01 + lightInvSize*ldis));
+						const vec3 auraCol = vec3(0.5 + 0.5*sin(plf), 0.5 + 0.5*sin(plf*2.0), 0.5 + 0.5*sin(plf*0.5));
+						//const vec3 auraCol = vec3(1.0, 0.8, 0.1);
+						if (ldis < 0.5) {
+							float fade = 0.5 - ldis * 10.0;
+							fade = max(0.0, fade);
+							lightAura += 10.0 * auraCol*vec3(1.0/(0.01 + lightInvSize*ldis)) * fade;
+						}
+			
+						//col = lightAura;
+					}
+				}
                 
                 
                 
                 
 				col = mix(col, c + lightAura, ref);
-				/*if (m == MAT_PILLAR ) {
-                    
-                    ref *= mix(0.1, 0.2, fre);
-                    //return col;
-                }else if (m == MAT_ROOM ) {
-                        ref *= mix(0.2, 0.3, fre);
-
-				} else {
-					return col;
-				}*/
 
 
                 	ref *= mix(0.2, 0.3, fre);
@@ -521,11 +558,6 @@ void main()
 
              vec3 ro = eye;
              vec3 rd = normalize(dir + right * uv.x * 1.0 + up  *uv.y * 1.0);
-
-             //ro = vec3(0.0);
-    		 //rd = vec3(0.0);
-   			 //Camera(fragCoord, ro, rd);
-             //ro = vec3(2.0, 0.0, 2.0);
              
              vec3 color = raymarch(ro, rd, uv);
              tot += color;
@@ -538,11 +570,6 @@ void main()
      tot = pow( tot, vec3(0.4545) );
 
     fragColor = vec4(tot, 1.0);
-    
-    // Height
-    //fragColor.rgb = vec3(height(ivec2(fragCoord*0.1))); 
-
-	//fragColor.rgb = vec3(planets[0].z / 1.0);
 } 
 
 
