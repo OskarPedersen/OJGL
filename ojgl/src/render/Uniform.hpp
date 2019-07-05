@@ -24,7 +24,7 @@ class Uniform1f : public UniformBase {
 public:
     Uniform1f(const ojstd::string& location, float x)
         : UniformBase(location)
-        , _x(x) {};
+        , _x(x){};
     void setUniform(int programID) override;
 
 private:
@@ -65,7 +65,21 @@ class Uniform1fv : public UniformBase {
 public:
     Uniform1fv(const ojstd::string& location, const ojstd::vector<float>& values)
         : UniformBase(location)
-        , _values(values) {};
+        , _values(values){};
+    void setUniform(int programID) override;
+
+private:
+    const ojstd::vector<float> _values;
+};
+
+class Uniform3fv : public UniformBase {
+public:
+    Uniform3fv(const ojstd::string& location, const ojstd::vector<float>& values)
+        : UniformBase(location)
+        , _values(values)
+    {
+        _ASSERTE(values.size() % 3 == 0);
+    };
     void setUniform(int programID) override;
 
 private:
@@ -76,7 +90,7 @@ class Uniform1t {
 public:
     Uniform1t(const ojstd::string& location, const ojstd::shared_ptr<Texture>& texture)
         : _location(location)
-        , _texture(texture) {};
+        , _texture(texture){};
     ojstd::string location() const { return _location; }
     int textureID() const
     {

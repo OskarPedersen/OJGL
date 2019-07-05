@@ -1,5 +1,6 @@
 
 #include "EmbeddedResources.h"
+#include "SolarSystem.h"
 #include "render/GLState.h"
 #include "render/Popup.h"
 #include "render/Texture.h"
@@ -14,6 +15,12 @@ using namespace ojgl;
 void buildSceneGraph(GLState& glState, int x, int y)
 {
     glState.clearScenes();
+
+    {
+        auto planets = Buffer::construct(BufferFormat::Quad, x, y, "hospital", "shaders/edison.vs", "shaders/hospital.fs");
+
+        glState.addScene("hospitalScene", planets, Duration::seconds(3000));
+    }
 
     {
         auto edison = Buffer::construct(BufferFormat::Quad, x, y, "intro", "shaders/edison.vs", "shaders/edison_1.fs");
@@ -32,6 +39,12 @@ void buildSceneGraph(GLState& glState, int x, int y)
         //  auto mesh = Buffer::construct(BufferFormat::Meshes, x, y, "mesh", "shaders/mesh.vs", "shaders/mesh.fs");
 
         glState.addScene("meshScene", post, Duration::seconds(5000));
+    }
+
+    {
+        auto planets = Buffer::construct(BufferFormat::Quad, x, y, "planets", "shaders/edison.vs", "shaders/edison_planets.fs");
+
+        glState.addScene("planetsScene", planets, Duration::seconds(3000));
     }
 }
 
@@ -63,8 +76,8 @@ int main(int argc, char* argv[])
 
     OJ_UNUSED(argc);
     OJ_UNUSED(argv);
-    int width = 1600 * 0.8;
-    int height = 900 * 0.8;
+    int width = static_cast<int>(1920);
+    int height = static_cast<int>(1080);
     bool fullScreen = false;
     bool showCursor = !fullScreen;
 
@@ -92,6 +105,8 @@ int main(int argc, char* argv[])
     ShaderReader::preLoad("shaders/edison_2.fs", resources::fragment::edison_2);
     ShaderReader::preLoad("shaders/edison_1_post.fs", resources::fragment::edison_1_post);
 
+    ShaderReader::preLoad("shaders/edison_planets.fs", resources::fragment::edison_planets);
+
     /*{
         auto edison = Buffer::construct(BufferFormat::Quad, x, y, "intro", "shaders/edison.vs", "shaders/edison_1.fs");
         auto fxaa = Buffer::construct(BufferFormat::Quad, x, y, "fxaa", "shaders/fxaa.vs", "shaders/fxaa.fs", edison);
@@ -111,12 +126,14 @@ int main(int argc, char* argv[])
     // @todo move this into GLState? We can return a const reference to window.
     // and perhaps have a unified update() which does getMessages(), music sync update and
     // so on.
-    Window window(width, height, "Eldur - OJ", fullScreen, showCursor);
-    GLState glState {};
+    Window window(width, height, "Jammlab - OJ", fullScreen, showCursor);
+    GLState glState{};
     buildSceneGraph(glState, width, height);
     glState.initialize();
 
     auto mesh = Mesh::constructCube();
+
+    SolarSystem solarSystem;
 
     Camera camera;
     while (!glState.end() && !window.isClosePressed()) {
@@ -170,10 +187,18 @@ int main(int argc, char* argv[])
         glState << Uniform1f("DEBUG_D1", camera.d1);
         glState << Uniform1f("DEBUG_D2", camera.d2);
         glState << Uniform1f("DEBUG_D3", camera.d3);
+
+        if (glState.elapsedTime().toMilliseconds() > 58 + 0) { // TODO!!!!
+            solarSystem.tick(ojstd::ftoi(glState.relativeSceneTime().toMilliseconds()));
+        }
+        glState << Uniform3fv("planets", solarSystem.getValues());
+        glState << Uniform1f("marsScale", solarSystem.getMarsScale());
+
         glState.update();
 
         timer.end();
-        ojstd::sleep(33); // Are OpenGL calls async?
+        LOG_INFO("Frame time: " << timer.elapsed().toMilliseconds());
+        //ojstd::sleep(33); // Are OpenGL calls async?
     }
 }
 

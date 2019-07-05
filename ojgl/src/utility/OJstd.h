@@ -366,4 +366,21 @@ private:
 
 void sleep(int milliseconds);
 
+struct Vec3 {
+    Vec3();
+    Vec3(double x, double y, double z);
+
+    Vec3 operator*(double a);
+    void operator+=(Vec3 v);
+    Vec3 operator-(Vec3 v);
+
+    const Vec3& Vec3::normalize();
+    double lenSq();
+
+    double x, y, z;
+};
+
+// https://www.gamedev.net/forums/topic/671079-fast-sqrt-for-64bit/
+double inline __fastcall sqrt_asm(double n);
+
 } //end namespace ojstd

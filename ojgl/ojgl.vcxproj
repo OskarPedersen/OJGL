@@ -241,6 +241,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="examples\Main.cpp" />
+    <ClCompile Include="examples\SolarSystem.cpp" />
     <ClCompile Include="src\music\Music.cpp" />
     <ClCompile Include="src\music\SyncChannel.cpp" />
     <ClCompile Include="src\music\V2MPlayer.cpp" />
@@ -261,6 +262,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="examples\EmbeddedResources.h" />
+    <ClInclude Include="examples\SolarSystem.h" />
     <ClInclude Include="src\music\Music.h" />
     <ClInclude Include="src\music\SyncChannel.h" />
     <ClInclude Include="src\music\SyncEvent.hpp" />
@@ -292,6 +294,7 @@
     <None Include="examples\shaders\edison.vs" />
     <None Include="examples\shaders\edison_1.fs" />
     <None Include="examples\shaders\edison_1_post.fs" />
+    <None Include="examples\shaders\edison_planets.fs" />
     <None Include="examples\shaders\fxaa.fs" />
     <None Include="examples\shaders\fxaa.vs" />
     <None Include="examples\shaders\edison_2.fs" />
@@ -308,6 +311,9 @@
   </ItemGroup>
   <ItemGroup>
     <Library Include="src\thirdparty\libv2.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="examples\shaders\hospital.fs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
