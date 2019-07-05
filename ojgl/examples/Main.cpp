@@ -17,7 +17,7 @@ void buildSceneGraph(GLState& glState, int x, int y)
     glState.clearScenes();
 
     {
-        auto planets = Buffer::construct(BufferFormat::Quad, x, y, "planets", "shaders/edison.vs", "shaders/planets.fs");
+        auto planets = Buffer::construct(BufferFormat::Quad, x, y, "planets", "shaders/edison.vs", "shaders/edison_planets.fs");
 
         glState.addScene("planetsScene", planets, Duration::seconds(3000));
     }

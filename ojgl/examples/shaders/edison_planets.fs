@@ -133,6 +133,7 @@ const float T_BOX = 2.0;
 const float T_ARROW = 3.0;
 const float T_PLANET = 4.0;
 const float T_RINGS = 5.0;
+const float T_TUNNEL = 6.0;
     
 float psin(float v) 
 {
@@ -149,6 +150,9 @@ float reflectiveIndex(float type)
         return 0.5;
 	if(type == T_PLANET) {
 		return 1.0;	
+	}
+	if (type == T_TUNNEL) {
+		return 0.5;
 	}
 	return 0.0;
 }
@@ -190,6 +194,9 @@ vec3 color(float type, vec3 p)
 	else if (type == T_RINGS){
 		return vec3(0.0, 1.0, 0.0);
 	}
+	else if (type == T_TUNNEL) {
+		return vec3(0.7, 0.1, 0.0);
+	}
     return vec3(0.0);
 }
 
@@ -218,6 +225,10 @@ float sdBox(vec3 p, vec3 b)
   return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
 }
 
+float udRoundBox(vec3 p, vec3 b, float r)
+{
+  return length(max(abs(p)-b,0.0)) - r;
+}
 
 // O
 //float sdTorus(vec3 p, vec2 t)
@@ -365,7 +376,35 @@ vec3 ballPos() {
 //}
 
 
-vec2 map(in vec3 p) 
+vec2 wall(vec3 pos, vec3 rd) {
+	//pos += vec3(100);
+	vec3 d = vec3(1.0);
+	vec3 q = mod(pos, d) - 0.5 * d;
+
+	vec3 s = (d * 0.5 -  sign(rd)* q) / abs(rd);
+	vec3 part = floor(pos / d);
+//	pos = mod(pos, d) - d * 0.5;
+
+	float dis = 0;
+//	float partDis = -sdHexPrism(part, vec2(3,99999));
+	//float r = floor(1 + mod(part.z * 0.25, 1) * 3);
+	//float partDis = -udBox(part,vec3(r, r, 999999));
+	float partDis = -sdBox(part, vec3(5.0));
+	if (partDis < 0) {
+		//dis = udRoundBox(q, vec3(0.45 * d.x), 0.1 * d.x);
+		dis = udRoundBox(q, vec3(0.42* d.x), 0.00 * d.x);
+	} else {
+		float b = min(s.x, min(s.y, s.z));
+		dis = max(0.02 , b);
+	}
+//		dis = udRoundBox(q, vec3(0.4), 0.1);
+//	dis = -sdHexPrism(pos, vec2(8,99999));
+//	dis = -sdCylinder(pos.xzy, 10);
+	return vec2(dis, T_TUNNEL);
+
+}
+
+vec2 map(in vec3 p, vec3 rd) 
 {
 	vec2 res = vec2(999999, T_PLANET);
 	//for (int i = 0; i < planets.length(); i++) {
@@ -390,16 +429,17 @@ vec2 map(in vec3 p)
 
 	//vec2 w = flooring(p);
 
-	float d = -sdBox(p, vec3(20));
+	float d = -udRoundBox(p, vec3(10), 1.0);
 
-	return vec2(d, T_PLANET); //res;//sun(res, w);
+	//return vec2(d, T_TUNNEL); //res;//sun(res, w);
+	return wall(p, rd);
 }
 
-vec3 normal(vec3 p) 
+vec3 normal(vec3 p, vec3 rd) 
 {
     float eps = EPS;
-    vec3 n = vec3(map(vec3(p.x + eps, p.y, p.z)).x, map(vec3(p.x, p.y + eps, p.z)).x, map(vec3(p.x, p.y, p.z + eps)).x);
-    return normalize(n - map(p).x);
+    vec3 n = vec3(map(vec3(p.x + eps, p.y, p.z), rd).x, map(vec3(p.x, p.y + eps, p.z), rd).x, map(vec3(p.x, p.y, p.z + eps), rd).x);
+    return normalize(n - map(p, rd).x);
 }
 
 vec2 march(vec3 ro, vec3 rd, out vec3 p, out int steps)
@@ -408,7 +448,7 @@ vec2 march(vec3 ro, vec3 rd, out vec3 p, out int steps)
    	vec2 res = vec2(99999.0, -1.0);
     for(steps = 0; steps < MAX_STEPS; ++steps) {
     	p = ro + t * rd;   
-        vec2 tres = map(p);
+        vec2 tres = map(p, rd);
         t += tres.x;
         if (tres.x < EPS) {
 			res = tres;
@@ -427,7 +467,7 @@ float shadow(vec3 ro, vec3 dir)
  	float sf = 1.0;
     for(int i = 0; i < MAX_STEPS; ++i) {
 		vec3 p = ro + t * dir;    	
-        vec2 res = map(p);
+        vec2 res = map(p, dir);
         t += clamp(res.x, 0.02, 0.1);
         if (res.x < 0.001)
             return 0.5;
@@ -436,14 +476,14 @@ float shadow(vec3 ro, vec3 dir)
  	return min(1.0, 0.5 + 0.5*sf);
 }
 
-float ambientOcclusion(vec3 p, vec3 n) 
+float ambientOcclusion(vec3 p, vec3 n, vec3 rd) 
 {
 	float as = 0.0;
     float sl = 60.0 * 1e-3;
     int ns = 6;
     for(int i = 0; i < ns; i++) {
     	vec3 ap = p + float(i) * sl * n;    
-    	as += map(ap).x;
+    	as += map(ap, rd).x;
     }
     return mix(1.0, smoothstep(0.0, float(ns *(ns - 1) / 2) * sl, as), 0.6);
 }
@@ -455,7 +495,7 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro, inout vec3 lightAu
 	//lightPos.y = max(1., lightPos.y);
     //light = normalize(p - lightPos);
     
-    vec3 n = normal(p);
+    vec3 n = normal(p, dir);
     float lf = 1.0;//min(2.5, 3.0 / (0.02 + 0.1*pow(length(p - lightPos), 3)));
     
     // Material properties
@@ -469,7 +509,7 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro, inout vec3 lightAu
 	float ao = 1.0;//ambientOcclusion(p, n);
    //	float sh = shadow(p, light);
     if (res.x < EPS) {
-        //col =  (lf) * (ao * col *(1.02+diffuse) + spec);
+        col =  (lf) * (ao * col *(0.00+diffuse) + spec);
 		//col = vec3(1.0, 0.0, 0.0);
 	} else {
 		col = vec3(0.0);
@@ -539,8 +579,8 @@ void main()
 
 
 	//ro = planets[1] + vec3(0.0, 80.0, 0.1); // top down all planets
-	ro = planets[1] + vec3(0.0, 5.0, 0.1); // top down inner planets
-
+	ro = planets[1] + vec3(0.1, 5.0, 0.1); // top down inner planets
+	ro = planets[1] + vec3(3.0, 1.0, 2.0);
 
     vec3 tar = planets[1]; //vec3(0.0, 1.0, 0.0);
 
@@ -562,7 +602,7 @@ void main()
     float ri = reflectiveIndex(res.y);
     if (ri > 0.0) { 
         vec3 p2;
-   		rd = reflect(rd, normal(p));
+   		rd = reflect(rd, normal(p, rd));
     	res = march(p + 0.1 * rd, rd, p2, steps);
     	vec3 newCol = colorize(res, p2, rd, steps, p + 0.1 * rd, lightAura);
     	col = mix(col, newCol, ri);
@@ -571,12 +611,39 @@ void main()
 		float ri = reflectiveIndex(res.y);
 		if (ri > 0.0) { 
 			vec3 p3;
-   			rd = reflect(rd, normal(p2));
+   			rd = reflect(rd, normal(p2, rd));
     		res = march(p2 + 0.1 * rd, rd, p3, steps);
     		vec3 newCol = colorize(res, p3, rd, steps, p2 + 0.1 * rd, lightAura);
     		col = mix(col, newCol, ri);
 		}
     }
+
+	//vec3 col = vec3(0.0);
+	float ref = 1.0;
+	int jumps = 10;
+	for (int j = 0; j < jumps; j++) {
+		vec3 p;
+		int steps;
+		vec2 res = march(ro, rd, p, steps);
+		vec3 c = colorize(res, p, rd, steps, ro, lightAura);
+
+		ref *= reflectiveIndex(res.y);
+		col = mix(col, c, ref);
+		 if (ref < 0.001) {
+			break;
+		 }
+		 
+		//vec3 p2;
+   		rd = reflect(rd, normal(p, rd));
+		ro = p + 0.1 * rd;
+
+
+    	//res = march(p + 0.1 * rd, rd, p2, steps);
+    	//vec3 newCol = colorize(res, p2, rd, steps, p + 0.1 * rd, lightAura);
+    	
+	}
+
+
 	col += lightAura;
 
 	float f = 1.0;

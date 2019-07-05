@@ -32,7 +32,7 @@ SolarSystem::SolarSystem()
         Vec3(2.983438104670340E+01, 1.782622362853692E+01, -1.485258796109859E+00));
 
     // Mars
-    planets.emplace_back(1.9891E+30, //6.4185E+23,
+    planets.emplace_back(6.4185E+23,
         Vec3(-1.487549755030171E+08, -1.774231244334544E+08, -1.512110244126618E+04),
         Vec3(1.947148471410864E+01, -1.351350153821790E+01, -7.652422983913167E-01));
 
@@ -85,7 +85,7 @@ void SolarSystem::tick(int tick)
         current++;
         const double G = 6.673e-20;
         const double dt = 100.0;
-        for (int rep = 0; rep < 1; rep++) {
+        for (int rep = 0; rep < 10; rep++) {
             Vec3 forces[10] = {};
             for (int i = 0; i < planets.size(); i++) {
                 for (int j = 0; j < planets.size(); j++) {
