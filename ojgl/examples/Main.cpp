@@ -79,13 +79,13 @@ struct Camera {
 
 int main(int argc, char* argv[])
 {
-    //  auto popupData = popup::show();
+    auto popupData = popup::show();
 
     OJ_UNUSED(argc);
     OJ_UNUSED(argv);
-    int width = static_cast<int>(1920);
-    int height = static_cast<int>(1080);
-    bool fullScreen = false;
+    int width = popupData.width; //static_cast<int>(1920);
+    int height = popupData.height; //static_cast<int>(1080);
+    bool fullScreen = popupData.full;
     bool showCursor = !fullScreen;
 
     /*#ifndef _DEBUG
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
     // and perhaps have a unified update() which does getMessages(), music sync update and
     // so on.
     Window window(width, height, "Inner System Lab - OJ", fullScreen, showCursor);
-    GLState glState{};
+    GLState glState{ resources::songs::song };
     buildSceneGraph(glState, width, height);
     glState.initialize();
 
