@@ -19,7 +19,7 @@ vec3 lightPosition = vec3(4.0, 0, 4);
 
 #define NUM_SCENES 3
 float[] sceneLengths = float[NUM_SCENES](14.5, 29., 14.5);
-
+uniform vec3 planets[10];
 #define fTime iTime
 
 int currentScene() 
@@ -397,7 +397,30 @@ vec2 grid(in vec3 p, in vec3 dir) {
 		imDim = vec2(49, 32);
 		//bit = uint(qz) * uint(imDim.x) + uint(qx);
 		//val = text[bit / 32u] & (1u << (31u - bit % (32u)));
-	    val = noise_2(vec2(qq.x, qq.z) * 0.3 + vec2(iTime, lt < 8. ? iTime * sign(p.x) : 0.)) < 0.8 ? 1u : 0u;
+	    //val = noise_2(vec2(qq.x, qq.z) * 0.3 + vec2(iTime, lt < 8. ? iTime * sign(p.x) : 0.)) < 0.8 ? 1u : 0u;
+		val = 1u;
+		//float x = floor(sin(iTime) * 5.0);
+		//float z = floor(cos(iTime) * 5.0);
+		//if (qq.x == x && qq.z == z) {
+		//	val = 0u;
+		//}
+		//
+		//float x2 = floor(sin(iTime * 2.0) * 7.0);
+		//float z2 = floor(cos(iTime * 2.0) * 6.0);
+		//if (qq.x == x2 && qq.z == z2) {
+		//	val = 0u;
+		//}
+		//
+		//if (qq.x == 0 && qq.z == 0) {
+		//	val = 0u;
+		//}
+		for (int i = 0; i < planets.length(); i++) {
+			float x = floor(planets[i].x * 8.0);
+			float z = floor(planets[i].z * 8.0);
+			if (qq.x == x && qq.z == z) {
+				val = 0u;
+			}
+		}
 	} else if (cs == 2) {
 		imDim = vec2(184, 13);
 	    qx = -qq.x +0.+ mod(4.8*lTime* 2.5, imDim.x);

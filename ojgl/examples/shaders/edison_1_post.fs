@@ -24,13 +24,13 @@ void main()
 	vec2 uv = fragCoord.xy;
 	float bpm = 133.;
     float beat = mod(iTotalTime, 60.f / bpm * 4.f);
-    float f = 1.*smoothspike(0.0, 0.45, beat);
-    float r = texture(inTexture0, uv + f*vec2(0.02, 0.01)).r;
-    float g = texture(inTexture0, uv + f*vec2(0.01, 0.01)).g;
-    float b = texture(inTexture0, uv - f*vec2(0.01, 0.01)).b;
+    float f = 1.*smoothspike(0.0, 0.3, beat);
+    float r = texture(inTexture0, uv + f*vec2(0.01, 0.005)).r;
+    float g = texture(inTexture0, uv + f*vec2(0.005, 0.005)).g;
+    float b = texture(inTexture0, uv - f*vec2(0.005, 0.005)).b;
 	vec3 org = texture(inTexture0, uv).rgb;
 	vec3 per = vec3(r, g, b);
-    fragColor.rgb  = mix(org, per, 0.6); 
+    fragColor.rgb  = mix(org, per, 0.2); 
     //fragColor.rgb *=  0.9 + 0.1*clamp(sin(uv.y*1000.0) + 0.8, 0.0, 1.0);
 	//fragColor.rgb *=  0.9 + 0.1*clamp(sin(uv.y*1000) + 0.8, 0.0, 1.0);
 

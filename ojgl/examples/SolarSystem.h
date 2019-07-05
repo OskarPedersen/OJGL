@@ -20,6 +20,7 @@ public:
     void tick(int tick);
     vector<float> getValues();
     float getMarsScale();
+    void reset();
 
 private:
     vector<Planet> planets;

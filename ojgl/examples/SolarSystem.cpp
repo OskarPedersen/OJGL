@@ -62,6 +62,10 @@ SolarSystem::SolarSystem()
         Vec3(-2.882461495739722E+01, -5.368474982969579E+00, -4.908562379039338E-02));
 }
 
+void SolarSystem::reset()
+{
+}
+
 SolarSystem::~SolarSystem()
 {
 }
@@ -115,7 +119,7 @@ void SolarSystem::tick(int tick)
 
 float SolarSystem::getMarsScale()
 {
-    const float thres = 1000 * 3;
+    const float thres = 1000 * 10;
     if (current > thres) {
         planets[4].mass = 1.9891E+30;
         float f = (current - thres) / 1000;

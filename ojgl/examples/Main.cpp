@@ -11,16 +11,13 @@
 #include "utility/ShaderReader.h"
 
 using namespace ojgl;
-
+#define TIME_1 58
+#define TIME_2 47
+#define TIME_3 25
+#define TIME_4 23
 void buildSceneGraph(GLState& glState, int x, int y)
 {
     glState.clearScenes();
-
-    {
-        auto planets = Buffer::construct(BufferFormat::Quad, x, y, "hospital", "shaders/edison.vs", "shaders/hospital.fs");
-
-        glState.addScene("hospitalScene", planets, Duration::seconds(3000));
-    }
 
     {
         auto edison = Buffer::construct(BufferFormat::Quad, x, y, "intro", "shaders/edison.vs", "shaders/edison_1.fs");
@@ -29,7 +26,7 @@ void buildSceneGraph(GLState& glState, int x, int y)
 
         //  auto mesh = Buffer::construct(BufferFormat::Meshes, x, y, "mesh", "shaders/mesh.vs", "shaders/mesh.fs");
 
-        glState.addScene("meshScene", post, Duration::seconds(58));
+        glState.addScene("meshScene", post, Duration::seconds(TIME_1));
     }
     {
         auto edison = Buffer::construct(BufferFormat::Quad, x, y, "intro", "shaders/edison.vs", "shaders/edison_2.fs");
@@ -38,13 +35,23 @@ void buildSceneGraph(GLState& glState, int x, int y)
 
         //  auto mesh = Buffer::construct(BufferFormat::Meshes, x, y, "mesh", "shaders/mesh.vs", "shaders/mesh.fs");
 
-        glState.addScene("meshScene", post, Duration::seconds(5000));
+        glState.addScene("meshScene", post, Duration::seconds(TIME_2));
     }
 
     {
         auto planets = Buffer::construct(BufferFormat::Quad, x, y, "planets", "shaders/edison.vs", "shaders/edison_planets.fs");
+        auto fxaa = Buffer::construct(BufferFormat::Quad, x, y, "fxaa", "shaders/fxaa.vs", "shaders/fxaa.fs", planets);
+        auto post = Buffer::construct(BufferFormat::Quad, x, y, "post", "shaders/post.vs", "shaders/edison_1_post.fs", fxaa);
 
-        glState.addScene("planetsScene", planets, Duration::seconds(3000));
+        glState.addScene("planetsScene", post, Duration::seconds(TIME_3));
+    }
+
+    {
+        auto planets = Buffer::construct(BufferFormat::Quad, x, y, "hospital", "shaders/edison.vs", "shaders/hospital.fs");
+        auto fxaa = Buffer::construct(BufferFormat::Quad, x, y, "fxaa", "shaders/fxaa.vs", "shaders/fxaa.fs", planets);
+        auto post = Buffer::construct(BufferFormat::Quad, x, y, "post", "shaders/post.vs", "shaders/edison_1_post.fs", fxaa);
+
+        glState.addScene("hospitalScene", post, Duration::seconds(TIME_4));
     }
 }
 
@@ -126,14 +133,16 @@ int main(int argc, char* argv[])
     // @todo move this into GLState? We can return a const reference to window.
     // and perhaps have a unified update() which does getMessages(), music sync update and
     // so on.
-    Window window(width, height, "Jammlab - OJ", fullScreen, showCursor);
+    Window window(width, height, "Inner System Lab - OJ", fullScreen, showCursor);
     GLState glState{};
     buildSceneGraph(glState, width, height);
     glState.initialize();
 
     auto mesh = Mesh::constructCube();
 
-    SolarSystem solarSystem;
+    SolarSystem solarSystem1;
+    SolarSystem solarSystem2;
+    //bool systemReset = false;
 
     Camera camera;
     while (!glState.end() && !window.isClosePressed()) {
@@ -188,11 +197,19 @@ int main(int argc, char* argv[])
         glState << Uniform1f("DEBUG_D2", camera.d2);
         glState << Uniform1f("DEBUG_D3", camera.d3);
 
-        if (glState.elapsedTime().toMilliseconds() > 58 + 0) { // TODO!!!!
-            solarSystem.tick(ojstd::ftoi(glState.relativeSceneTime().toMilliseconds()));
+        //if (glState.elapsedTime().toMilliseconds() > 58 + 0) { // TODO!!!!
+
+        //}
+        bool system2 = glState.elapsedTime().toMilliseconds() > (TIME_1 + TIME_2) * 1000;
+        if (system2) {
+            solarSystem2.tick(ojstd::ftoi(glState.relativeSceneTime().toMilliseconds()));
+            glState << Uniform3fv("planets", solarSystem2.getValues());
+            glState << Uniform1f("marsScale", solarSystem2.getMarsScale());
+        } else {
+            solarSystem1.tick(ojstd::ftoi(glState.relativeSceneTime().toMilliseconds()));
+            glState << Uniform3fv("planets", solarSystem1.getValues());
+            //glState << Uniform1f("marsScale", solarSystem1.getMarsScale()); // will cause mass change also
         }
-        glState << Uniform3fv("planets", solarSystem.getValues());
-        glState << Uniform1f("marsScale", solarSystem.getMarsScale());
 
         glState.update();
 

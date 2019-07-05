@@ -595,6 +595,11 @@ void main()
 	//	f *= 1. - smoothstep(1., 0., tl);
 	//}
 
+	float dis = min(iTime, 25 - iTime);
+	if (dis < 1.0) {
+		col *= dis;
+	}
+
     fragColor = vec4(f * col, 1.0);
 }
 

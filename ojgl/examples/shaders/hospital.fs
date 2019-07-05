@@ -37,8 +37,8 @@ vec3 distort(vec3 p) {
     float l = length(p.xy);
     //a += p.z*0.1;//(p.z - PART_TWIST)*0.2*smoothstep(PART_TWIST + 5.0, PART_TWIST + 10.0, TIME);
     //a -= (p.z - PART_TWIST)*0.2*smoothstep(PART_TWIST + 10.0, PART_TWIST + 15.0, TIME);
-	a += (iTime + p.z * 0.25) * smoothstep(15.0, 20.0, iTime);
-	a += (p.z) * smoothstep(25.0, 27.0, iTime) * 10.0;
+	a += (iTime + p.z * 0.25) * smoothstep(10.0, 15.0, iTime);
+	a += (p.z) * smoothstep(20.0, 22.0, iTime) * 10.0;
 	//a *= ;
     return vec3(cos(a) * l, sin(a) * l, p.z);
 }
@@ -405,7 +405,7 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
                 	c = vec3(mod(floor(p.x) + floor(p.z), 2.0));
                 } else if (m == MAT_ROOM) {
                     if (distort(p).y > 0.0) {
-                        c = vec3(0.1);
+                        c = vec3(1.0);
                     } else {
                         c = vec3(255.0, 93.0, 12.0) / 255.0;
                     }
@@ -415,13 +415,13 @@ vec3 raymarch(vec3 ro, vec3 rd, vec2 uv)
                 	c = vec3(0.5);
                 } else if (m == MAT_CORRIDOR) {
                     if (distort(p).y > 0.0) {
-                        c = vec3(0.1);
+                        c = vec3(1.0);
                     } else {
                         c = vec3(255.0, 93.0, 12.0) / 255.0;
                     }
                 } else if (m == MAT_CORRIDOR_ROT) {
                     if (distort(p).y > 0.0) {
-                        c = vec3(0.1);
+                        c = vec3(1.0);
                     } else {
                         c = vec3(255.0, 93.0, 12.0) / 255.0;
                     }
@@ -524,8 +524,14 @@ void main()
     tot /= (tot + vec3(1.0));
     // gamma
      tot = pow( tot, vec3(0.4545) );
+	
+	float dis = min(iTime, 22 - iTime);
+	if (dis < 1.0) {
+		tot *= dis;
+	}
 
     fragColor = vec4(tot, 1.0);
+
 } 
 
 
