@@ -119,7 +119,7 @@ void SolarSystem::tick(int tick)
 
 float SolarSystem::getMarsScale()
 {
-    const float thres = 1000 * 8;
+    const float thres = 1000 * 7;
     if (current > thres) {
         planets[4].mass = 1.9891E+30;
         float f = (current - thres) / 1000;

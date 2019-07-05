@@ -14,7 +14,7 @@ using namespace ojgl;
 #define TIME_1 58
 #define TIME_2 47
 #define TIME_3 25
-#define TIME_4 23
+#define TIME_4 24
 void buildSceneGraph(GLState& glState, int x, int y)
 {
     glState.clearScenes();
@@ -113,6 +113,7 @@ int main(int argc, char* argv[])
     ShaderReader::preLoad("shaders/edison_1_post.fs", resources::fragment::edison_1_post);
 
     ShaderReader::preLoad("shaders/edison_planets.fs", resources::fragment::edison_planets);
+    ShaderReader::preLoad("shaders/hospital.fs", resources::fragment::hospital);
 
     /*{
         auto edison = Buffer::construct(BufferFormat::Quad, x, y, "intro", "shaders/edison.vs", "shaders/edison_1.fs");
