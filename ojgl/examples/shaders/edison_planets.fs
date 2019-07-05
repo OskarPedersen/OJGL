@@ -11,9 +11,11 @@ uniform float DEBUG_D1;
 uniform float DEBUG_D2;
 uniform float DEBUG_D3;
 
+
+uniform float marsScale;
 uniform vec3 planets[10];
 float[] planetScales = float[10](2.0,	// Earth
-								4.0,	// Sun
+								100.0,	// Sun
 								1.0,	// Mercury
 								1.5,	// Venus
 								1.2,	// Mars
@@ -21,7 +23,19 @@ float[] planetScales = float[10](2.0,	// Earth
 								4.0,	// Saturnus
 								3.0,	// Uranus
 								3.0,	// Neptunus
-								0.01);	// Moon
+								0.1);	// Moon
+
+
+vec3[] planetColors = vec3[10](vec3(0.0, 1.0, 0.0),	// Earth
+								vec3(1.0, 0.8, 0.0),	// Sun
+								vec3(0.6, 0.5, 0.5),	// Mercury
+								vec3(38.0, 100.0, 92.0) / 255.0,	// Venus
+								vec3(196.0, 35.0, 0.0) / 255.0,	// Mars
+								vec3(255.0, 234.0, 165.0) / 255.0,	// Jupiter
+								vec3(198.0, 182.0, 129.0) / 255.0,	// Saturnus
+								vec3(83.0, 92.0, 137.0) / 255.0,	// Uranus
+								vec3(38.0, 53.0, 137.0) / 255.0,	// Neptunus
+								vec3(0.5));	// Moon
 /// start of boiler-plate
 #define NUM_SCENES 3
 float[] sceneLengths = float[NUM_SCENES](15., 15., 20.);
@@ -289,87 +303,6 @@ vec2 un(vec2 a, vec2 b) { return a.x < b.x ? a : b; }
 
 
 
-vec2 fractalBox(in vec3 p)
-{
-	int cs = cScene;
-	float lt= lTime;
-
-
-   float r = lTime*0.3;
-
-   if (cs == 2) {
-		r = lTime*0.1 + 1.;
-   }
-   p.xz *= rot(r);
-   //p.yz *= rot(iTime*0.5);
-
-   if (cs == 2) {
-		moda(p.xy, 15.);
-		pMod1(p.x, 1.);
-   }
-
-   //p.x-=psin(iTime)*2.3;
-   //p.z -= 2.0 * psin(iTime); 
-
-    //   moda(p.zy,  1+DEBUG_D1 / 5);
-   //p.z -= DEBUG_D2 / 5; 
-   
-  // mo(p.xz, vec2(DEBUG_D1/10, DEBUG_D2/10));
-   //p.xy *= rot(sin(iTime)*p.y);
-    float d = sdBox(p,vec3(1.0)) - 0.0;
-   //d = mix(sdSphere(p, 1.0),d, 0.5 + 0.6*psin(iTime));
-    
-   vec2 res = vec2( d, T_BOX);
-
-   float bpm = 133.;
-   float beat = mod(iTotalTime, 60.f / bpm * 4.f);
-   float f = 1.*smoothspike(0.0, 0.45, beat);
-
-   float s = 1.;
-   float tim = mod(fTime + 1.7 - 2.0, 4.0);
-   if (cs > 0) {
-		s = 0.7 + 0.3*smoothstep(1.7, 2.0, tim) - 0.3*smoothstep(3.7, 4.0, tim);
-   }
-   //float s = 0.7 + 0.2*smoothspike(0.1, 0.5, mod(iTime, 1.0));
-
-   for( int m=0; m<3; m++ )
-   {
-      vec3 newp = p;
-      vec3 a = mod( newp * s, 2.0 ) - 1.0;
-      s *= 3.0;
-      vec3 r = abs(1.0 - 3.0*abs(a));
-      float da = max(r.x,r.y);
-      float db = max(r.y,r.z);
-      float dc = max(r.z,r.x);
-      float c = (min(da,min(db,dc))-1.0)/s;
-
-      if( c>d )
-      {
-          d = c;
-          res = vec2( d, T_BOX);
-       }
-   }
-    
-
-   return res;
-}
-
-vec2 walls(vec3 p) {
-    
- 	float d = -sdBox( p - vec3(0.0, 10.0, 0.0), vec3(60.0));
-    return vec2(d, T_WALL);
-}
-
-vec3 ballPos() {
-    int cs = cScene;
-	float py = 1.5 - 6.*(1. - smoothstep(0., 10., fTime));
-
-	float px = 0.;
-	float pz = 0.;
-
- 	return vec3(px, py, pz);    
-}
-
 //vec2 flooring(vec3 p) {
 //return vec2(p.y + 0.5 + 0.02*noise_2(2.*p.xz + 0.5*iTime), T_WALL);
 //  //return vec2(p.y +1.7 + 0.02*noise_2(2.*p.xz + 0.5*iTime), T_WALL);
@@ -525,7 +458,10 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro, inout vec3 lightAu
 	{
 		//if (pl == 1) continue;
         float plf = float(pl);
-        float lightInvSize = 10.0;//52.1 + 20.0*sin(float(pl));
+        float lightInvSize = 5000.0 / planetScales[pl];//52.1 + 20.0*sin(float(pl));
+		if (pl == 4) {
+			lightInvSize /= marsScale;
+		}
         float speed = 1.0 * iTime/float(pl);
         vec3 light = planets[pl]; //0.5*vec3(float(pl) * 2.0 * sin(speed), 0.0, float(pl) * 2.0 * cos(speed));
         vec3 x0 = light;
@@ -539,13 +475,14 @@ vec3 colorize(vec2 res, vec3 p, vec3 dir, int steps, vec3 ro, inout vec3 lightAu
 
         if(tl > 0.0 && ((lightCollision && distance(eye, light) < distance(eye, p)) || !lightCollision)){
             //lightAura = max(lightAura, 1.0/(0.01 + lightInvSize*ldis));
-            const vec3 auraCol = vec3(0.5 + 0.5*sin(plf), 0.5 + 0.5*sin(plf*2.0), 0.5 + 0.5*sin(plf*0.5));
+            //const vec3 auraCol = vec3(0.5 + 0.5*sin(plf), 0.5 + 0.5*sin(plf*2.0), 0.5 + 0.5*sin(plf*0.5));
             //const vec3 auraCol = vec3(1.0, 0.8, 0.1);
-			if (ldis < 0.5) {
+			const vec3 auraCol = normalize(planetColors[pl]);
+			//if (ldis < 0.5) {
 				float fade = 0.5 - ldis * 10.0;
 				fade = max(0.0, fade);
 				lightAura += auraCol*vec3(1.0/(0.01 + lightInvSize*ldis)) * fade;
-			}
+			//}
 			
 			//col = lightAura;
         }
@@ -579,7 +516,7 @@ void main()
 
 
 	//ro = planets[1] + vec3(0.0, 80.0, 0.1); // top down all planets
-	ro = planets[1] + vec3(0.1, 5.0, 0.1); // top down inner planets
+	//ro = planets[1] + vec3(0.1, 5.0, 0.1); // top down inner planets
 	ro = planets[1] + vec3(3.0, 1.0, 2.0);
 
     vec3 tar = planets[1]; //vec3(0.0, 1.0, 0.0);
@@ -599,28 +536,28 @@ void main()
     vec2 res = march(ro, rd, p, steps);
     vec3 col = colorize(res, p, rd, steps, ro, lightAura);
 
-    float ri = reflectiveIndex(res.y);
-    if (ri > 0.0) { 
-        vec3 p2;
-   		rd = reflect(rd, normal(p, rd));
-    	res = march(p + 0.1 * rd, rd, p2, steps);
-    	vec3 newCol = colorize(res, p2, rd, steps, p + 0.1 * rd, lightAura);
-    	col = mix(col, newCol, ri);
-	
-	
-		float ri = reflectiveIndex(res.y);
-		if (ri > 0.0) { 
-			vec3 p3;
-   			rd = reflect(rd, normal(p2, rd));
-    		res = march(p2 + 0.1 * rd, rd, p3, steps);
-    		vec3 newCol = colorize(res, p3, rd, steps, p2 + 0.1 * rd, lightAura);
-    		col = mix(col, newCol, ri);
-		}
-    }
+    //float ri = reflectiveIndex(res.y);
+    //if (ri > 0.0) { 
+    //    vec3 p2;
+   	//	rd = reflect(rd, normal(p, rd));
+    //	res = march(p + 0.1 * rd, rd, p2, steps);
+    //	vec3 newCol = colorize(res, p2, rd, steps, p + 0.1 * rd, lightAura);
+    //	col = mix(col, newCol, ri);
+	//
+	//
+	//	float ri = reflectiveIndex(res.y);
+	//	if (ri > 0.0) { 
+	//		vec3 p3;
+   	//		rd = reflect(rd, normal(p2, rd));
+    //		res = march(p2 + 0.1 * rd, rd, p3, steps);
+    //		vec3 newCol = colorize(res, p3, rd, steps, p2 + 0.1 * rd, lightAura);
+    //		col = mix(col, newCol, ri);
+	//	}
+    //}
 
 	//vec3 col = vec3(0.0);
 	float ref = 1.0;
-	int jumps = 10;
+	int jumps = 5;
 	for (int j = 0; j < jumps; j++) {
 		vec3 p;
 		int steps;

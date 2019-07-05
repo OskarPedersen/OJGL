@@ -179,6 +179,7 @@ int main(int argc, char* argv[])
 
         solarSystem.tick(ojstd::ftoi(glState.relativeSceneTime().toMilliseconds()));
         glState << Uniform3fv("planets", solarSystem.getValues());
+        glState << Uniform1f("marsScale", solarSystem.getMarsScale());
 
         glState.update();
 

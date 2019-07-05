@@ -85,7 +85,7 @@ void SolarSystem::tick(int tick)
         current++;
         const double G = 6.673e-20;
         const double dt = 100.0;
-        for (int rep = 0; rep < 10; rep++) {
+        for (int rep = 0; rep < 20; rep++) {
             Vec3 forces[10] = {};
             for (int i = 0; i < planets.size(); i++) {
                 for (int j = 0; j < planets.size(); j++) {
@@ -111,4 +111,18 @@ void SolarSystem::tick(int tick)
             }
         }
     }
+}
+
+float SolarSystem::getMarsScale()
+{
+    const float thres = 1000 * 3;
+    if (current > thres) {
+        planets[4].mass = 1.9891E+30;
+        float f = (current - thres) / 1000;
+        if (f > 1.0) {
+            f = 1.0;
+        }
+        return 1.0 + f * 200.0;
+    }
+    return 1.0;
 }
