@@ -2,8 +2,15 @@ R""(
 #version 430
 
 in vec2 fragCoord;
-layout(location = 0) out vec4 fragPos;
-layout(location = 1) out vec4 fragNormal;
+layout(location = 0) out vec4 fragPos0;
+layout(location = 1) out vec4 fragNormal0;
+layout(location = 2) out vec4 fragPos1;
+layout(location = 3) out vec4 fragNormal1;
+layout(location = 4) out vec4 fragPos2;
+layout(location = 5) out vec4 fragNormal2;
+layout(location = 6) out vec4 fragPos3;
+layout(location = 7) out vec4 fragNormal3;
+
 
 uniform float iTime;
 uniform vec2 iResolution;
@@ -20,7 +27,7 @@ void moda (inout vec2 p, float rep)
 }
 
 float udRoundBox( vec3 p, vec3 b) {
-  float r = 0.5;
+  float r = 0.0;
   return length(max(abs(p)-b,0.0))-r;
 }
 
@@ -35,66 +42,96 @@ mat2 rot(float a)
     return mat2(cos(a),sin(a),-sin(a),cos(a));
 }
 
-float fractalBox(vec3 p) {
-  float d = sdBox(p, vec3(1.0));
+// Repeat in two dimensions
+vec2 pMod2(inout vec2 p, vec2 size) {
+	vec2 c = floor((p + size*0.5)/size);
+	p = mod(p + size*0.5,size) - size*0.5;
+	return c;
+}
 
-  moda(p.xz, 10.0);
-  moda(p.xy, 10.0);
-  p.yz = rot(iTime)*p.yz;
+// Repeat in three dimensions
+vec3 pMod3(inout vec3 p, vec3 size) {
+	vec3 c = floor((p + size*0.5)/size);
+	p = mod(p + size*0.5, size) - size*0.5;
+	return c;
+}
 
-   float s = 1.0;
-   for( int m=0; m<10; m++ )
-   {
-      vec3 a = mod( p*s, 2.0 )-1.0;
-      s *= 3.0;
-      vec3 r = abs(1.0 - 3.0*abs(a));
+float map (vec3 p) {
+    vec3 q = p;
+	pMod2(q.xz, vec2(4.0));
+	return udRoundBox(q, vec3(1.0));
+}
 
-      float da = max(r.x,r.y);
-      float db = max(r.y,r.z);
-      float dc = max(r.z,r.x);
-      float c = (min(da,min(db,dc))-1.0)/s;
-
-      d = max(d,c);
-   }
-   return d;
+vec3 normal(vec3 p) {
+	vec3 normal;
+    const vec3 ep = vec3(0.01, 0, 0);
+    normal.x = map(p + ep.xyz) - map(p - ep.xyz);
+    normal.y = map(p + ep.yxz) - map(p - ep.yxz);
+    normal.z = map(p + ep.yzx) - map(p - ep.yzx);
+    return normalize(normal);
 }
 
 void main(){
-	const vec2 uv = fragCoord.xy;
-    const vec3 ro = vec3(0.0, 0.0, 2.5);
-    const vec3 rd = normalize(vec3(1.0, uv.y - 0.5, uv.x - 0.5));
-    float t = 0.0;
-    vec3 color = vec3(0.0);
-    
-    for (int i = 0; i < 10000000; i++) {
-    	vec3 p = ro + rd * t;
-        vec3 q = mod(p, 5.0) - 2.5;
-        vec3 r = p / 8.0;
-        float d = fractalBox(q);
-        
-        if (d < 0.01) {
-            color = vec3(0.5 + 0.5 * sin(r * 1.3));
-            
-            const vec3 lpos = ro + vec3(-1.0, 0, 0);
-            const float dis = length(lpos - p);
-            const vec3 invLight = normalize(lpos - p);
-            
-            vec3 normal;
-            const vec3 ep = vec3(0.01, 0, 0);
-            normal.x = fractalBox(q + ep.xyz) - fractalBox(q - ep.xyz);
-            normal.y = fractalBox(q + ep.yxz) - fractalBox(q - ep.yxz);
-            normal.z = fractalBox(q + ep.yzx) - fractalBox(q - ep.yzx);
-            normal = normalize(normal);
-            
-			fragNormal.rgb = normal;
-			fragPos.rgb = p;
-            break;
-        }
-        t += d;
-    }    
+	for (int xx = 0; xx < 2; xx++) {
+		for (int yy = 0; yy < 2; yy++) {
+			float u = (fragCoord.x + (xx - 0.5) / iResolution.x) * 2.0 - 1.0;
+			float v = (fragCoord.y + (yy - 0.5) / iResolution.y) * 2.0 - 1.0;
 
-	fragPos.a = 1.0;
-	fragNormal.a = 1.0;
+			vec3 eye = vec3( 0.0, 3.0, 0.0); 
+			vec3 tar = eye + vec3(1.0, -1.0, 0.0);
+    
+			vec3 lol = vec3(0, 1, 0);
+
+			vec3 dir = normalize(tar - eye);
+			vec3 right = normalize(cross(lol, dir));
+			vec3 up = cross(dir, right);
+
+			vec3 ro = eye;
+			vec3 rd = normalize(dir + right*u + up*v);
+
+
+			float t = 0.0;
+			vec3 color = vec3(0.0);
+    
+			for (int i = 0; i < 1000; i++) {
+    			vec3 p = ro + rd * t;
+				float d = map(p);
+        
+				if (d < 0.01) {
+            
+					const vec3 lpos = ro + vec3(-1.0, 0, 0);
+					const float dis = length(lpos - p);
+					const vec3 invLight = normalize(lpos - p);
+
+					if (xx == 0 && yy == 0) {
+						fragNormal0.rgb = normal(p);
+						fragPos0.rgb = p;
+					} else if (xx == 1 && yy == 0) {
+						fragNormal1.rgb = normal(p);
+						fragPos1.rgb = p;
+					} else if (xx == 0 && yy == 1) {
+						fragNormal2.rgb = normal(p);
+						fragPos2.rgb = p;
+					} else if (xx == 1 && yy == 1) {
+						fragNormal3.rgb = normal(p);
+						fragPos3.rgb = p;
+					}
+					break;
+				}
+				t += d;
+			}    
+		}
+	}
+
+	fragPos0.a = 1.0;
+	fragPos1.a = 1.0;
+	fragPos2.a = 1.0;
+	fragPos3.a = 1.0;
+	fragNormal0.a = 1.0;
+	fragNormal1.a = 1.0;
+	fragNormal2.a = 1.0;
+	fragNormal3.a = 1.0;
+	
 }
 
 )""
