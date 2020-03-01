@@ -72,7 +72,7 @@ float fractalBox(vec3 p) {
 }
 
 vec2 audience(vec3 p) {
-	float s = 5.0;
+	float s = 2.0;
 	float qx = mod(p.x + s * 0.5, s) - s * 0.5;
 	float qz = mod(p.z + s * 0.5, s) - s * 0.5;
 	vec3 q = vec3(qx, p.y, qz);
@@ -86,6 +86,16 @@ vec2 scene(vec3 p) {
 
 	float dTower = sdBox(t - vec3(0, 0, 2), vec3(5, 50, 2));
 	d = min(d, dTower);
+
+	{
+		vec3 q = t;
+		float s = 5.0;
+		q.x = mod(q.x + s/2, s) - s/2;
+		float dPillars = sdBox(q, vec3(1, 10, 1));
+		float dLight = sdBox(q - vec3(0, 8, -1), vec3(0.5, 0.5, 0.5));
+		float dRes = max(dPillars, -dLight);
+		d = min(d, dRes);
+	}
 
 	return vec2(d, MAT_SCENE);
 }
