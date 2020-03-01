@@ -15,6 +15,11 @@ float udRoundBox( vec3 p) {
   return length(max(abs(p)-b,0.0))-r;
 }
 
+float sdCylinder( vec3 p, vec3 c )
+{
+  return length(p.xz-c.xy)-c.z;
+}
+
 float psin(float x) {
 	return (1.0 + sin(x)) * 0.5;
 }
@@ -118,6 +123,48 @@ void main()
 		}
 
 		colorSum += l.col * (0.0 + 1.0*diffuse*str) + vec3(spec*str);
+	}
+
+	{
+		float t = 0.0;
+	
+		vec3 scatteredLight = vec3(0.0);
+		float transmittance = 1.0;
+		const int maxIter = 100;
+		for (int i = 0; i < maxIter; i++) {
+			const vec3 p = ro + rd * t;
+
+			
+			 // *** evaluateLight ***
+			 //float lightDis = length(p - vec3(0, 5, 50));
+			 vec3 ptrans = p - vec3(10, 8, 50);
+			 float lightDis = length(ptrans.xy);//sdCylinder(ptrans.yzx, vec3(0, 10, 0));
+			 float sourceDis = length(ptrans);
+			 float str = 100000.0 /  (sourceDis * sourceDis * sourceDis);
+			 if (lightDis > 0.1) {
+				str *= 1.0 - smoothstep(0.1, 0.2, lightDis);
+			 }
+			 if ( p.z > 50) {
+				str = 0.0;
+			 }
+			 vec3 light = str * vec3(1.0, 0.0, 0.0);// / (lightDis * lightDis * lightDis);
+
+			 float fogAmount = 0.01;
+
+			 float d = max(0.1, lightDis * 0.25);
+
+			 vec3 lightIntegrated = light - light * exp(-fogAmount * d);
+			 scatteredLight += transmittance * lightIntegrated;	
+			 transmittance *= exp(-fogAmount * d);
+
+			if (t > length(pos) || i == maxIter - 1) {
+				colorSum  = transmittance * colorSum + scatteredLight;
+				//colorSum = vec3(1.0, 0.0, 0.0);
+				break;
+			}
+
+			t += d;
+		}
 	}
 
 	// Final color

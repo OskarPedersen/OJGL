@@ -92,7 +92,7 @@ vec2 scene(vec3 p) {
 		float s = 5.0;
 		q.x = mod(q.x + s/2, s) - s/2;
 		float dPillars = sdBox(q, vec3(1, 10, 1));
-		float dLight = sdBox(q - vec3(0, 8, -1), vec3(0.5, 0.5, 0.5));
+		float dLight = length(q - vec3(0, 8, -1)) - 0.5; //sdBox(q - vec3(0, 8, -1), vec3(0.5, 0.5, 0.5));
 		float dRes = max(dPillars, -dLight);
 		d = min(d, dRes);
 	}
