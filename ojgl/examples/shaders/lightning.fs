@@ -6,6 +6,8 @@ out vec4 fragColor;
 
 uniform sampler2D inTexture0;
 uniform sampler2D inTexture1;
+uniform sampler2D inTexture2;
+uniform sampler2D inTexture3;
 uniform float iTime;
 
 
@@ -29,6 +31,9 @@ void main()
 
 	vec3 pos =  texture(inTexture0, uv).rgb;
 	vec3 normal =  texture(inTexture1, uv).rgb;
+
+	vec3 pos2 =  texture(inTexture2, uv).rgb;
+	vec3 normal2 =  texture(inTexture3, uv).rgb;
 
 	const vec3 ro = vec3(0.0, 10.0, 2.5);
     const vec3 rd = normalize(vec3(uv.x - 0.5, uv.y - 0.5 - 0.25, 1.0));
@@ -103,29 +108,42 @@ void main()
 		Light(vec3(-15.0, 8.0, 40.0), vec3(0.0, 1.0, 0.0), 200.0)
 	);
 
+	vec3 normals[] = vec3[](normal, normal2);
+	vec3 poss[] = vec3[](pos, pos2);
+
 	vec3 colorSum = vec3(0.0);
 
-	for (int i = 0; i < lights.length(); i++) {
-		Light l = lights[i];
 
 
-		const float dis = length(l.pos - pos);
-		const vec3 invLight = normalize(l.pos - pos);
-		
-		const float diffuse = max(0.0, dot(invLight, normal));
-		const float s = 10.0;
-		const float k = max(0.0, dot(rd, reflect(invLight, normal)));
-		const float spec =  pow(k, s);
-		float str = l.str/(dis * dis * dis);
-		{
-			float cycle = 0.5;
-			str *= 1.2 - mod(iTime, cycle) / cycle;
+	for (int jump = 0; jump < 2; jump++) {
+		const vec3 cn = normals[jump];
+		const vec3 cp = poss[jump];
+		float refStr = 0.8;
+		if (jump == 1) {
+			refStr = 0.2;
 		}
 
-		colorSum += l.col * (0.0 + 1.0*diffuse*str) + vec3(spec*str);
-	}
+		for (int i = 0; i < lights.length(); i++) {
+			Light l = lights[i];
 
-	{
+
+			const float dis = length(l.pos - cp);
+			const vec3 invLight = normalize(l.pos - cp);
+		
+			const float diffuse = max(0.0, dot(invLight, cn));
+			const float s = 10.0;
+			const float k = max(0.0, dot(rd, reflect(invLight, cn)));
+			const float spec =  pow(k, s);
+			float str = l.str/(dis * dis * dis);
+			{
+				float cycle = 0.5;
+				str *= 1.2 - mod(iTime, cycle) / cycle;
+			}
+
+			
+			colorSum += (l.col * (0.0 + 1.0*diffuse*str) + vec3(spec*str)) * refStr;
+		}
+	
 		float t = 0.0;
 	
 		vec3 scatteredLight = vec3(0.0);
@@ -157,7 +175,7 @@ void main()
 			 scatteredLight += transmittance * lightIntegrated;	
 			 transmittance *= exp(-fogAmount * d);
 
-			if (t > length(pos) || i == maxIter - 1) {
+			if (t > length(cp) || i == maxIter - 1) {
 				colorSum  = transmittance * colorSum + scatteredLight;
 				//colorSum = vec3(1.0, 0.0, 0.0);
 				break;
@@ -165,6 +183,9 @@ void main()
 
 			t += d;
 		}
+	}
+
+	{
 	}
 
 	// Final color

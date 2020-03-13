@@ -201,7 +201,7 @@ void Buffer::loadShader()
 int inline Buffer::numOutTextures()
 {
     // Still quite hard-coded, improve when neccessary
-    return _renderOnce ? 2 : 1;
+    return _renderOnce ? 4 : 1;
 }
 
 Buffer& Buffer::operator<<(const Uniform1t& b)

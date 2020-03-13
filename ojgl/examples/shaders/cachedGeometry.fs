@@ -4,6 +4,8 @@ R""(
 in vec2 fragCoord;
 layout(location = 0) out vec4 fragPos;
 layout(location = 1) out vec4 fragNormal;
+layout(location = 2) out vec4 fragPos2;
+layout(location = 3) out vec4 fragNormal2;
 
 uniform float iTime;
 uniform vec2 iResolution;
@@ -107,37 +109,55 @@ vec2 map(vec3 p) {
 	return res;
 }
 
+
+vec3 calcNormal(vec3 p) {
+	const vec3 ep = vec3(0.01, 0, 0);
+	vec3 normal;
+	normal.x = map(p + ep.xyz).x - map(p - ep.xyz).x;
+	normal.y = map(p + ep.yxz).x - map(p - ep.yxz).x;
+	normal.z = map(p + ep.yzx).x - map(p - ep.yzx).x;
+	normal = normalize(normal);
+
+	return normal;
+}
+
 void main(){
 	const vec2 uv = fragCoord.xy;
-    const vec3 ro = vec3(0.0, 10.0, 2.5);
-    const vec3 rd = normalize(vec3(uv.x - 0.5, uv.y - 0.5 - 0.25, 1.0));
+    vec3 ro = vec3(0.0, 10.0, 2.5);
+    vec3 rd = normalize(vec3(uv.x - 0.5, uv.y - 0.5 - 0.25, 1.0));
 	// TODO: proper target etc
     float t = 0.0;
     vec3 color = vec3(0.0);
-    
-    for (int i = 0; i < 1000; i++) {
-    	vec3 p = ro + rd * t;
-        float d = map(p).x;
+	const float distThresh = 0.01;
+    for(int j = 0; j < 2; j++){
+		for (int i = 0; i < 1000; i++) {
+    		vec3 p = ro + rd * t;
+			float d = map(p).x;
         
-        if (d < 0.01) {
-            color = vec3(1.0, 0.0, 0.0);
+			if (d < distThresh) {
+				if (j == 0) {
+					vec3 normal = calcNormal(p);	
             
-            vec3 normal;
-            const vec3 ep = vec3(0.01, 0, 0);
-            normal.x = map(p + ep.xyz).x - map(p - ep.xyz).x;
-            normal.y = map(p + ep.yxz).x - map(p - ep.yxz).x;
-            normal.z = map(p + ep.yzx).x - map(p - ep.yzx).x;
-            normal = normalize(normal);
-            
-			fragNormal.rgb = normal;
-			fragPos.rgb = p;
-            break;
-        }
-        t += d;
-    }    
+					fragNormal.rgb = normal;
+					fragPos.rgb = p;
+
+					rd = reflect(rd, normal);
+					ro = p + rd * distThresh * 2.0;
+				} else if (j == 1) {
+					fragNormal2.rgb = calcNormal(p);
+					fragPos2.rgb = p;
+				}
+				break;
+			}
+			t += d;
+		}    
+	}
 
 	fragPos.a = 1.0;
 	fragNormal.a = 1.0;
+
+	fragPos2.a = 1.0;
+	fragNormal2.a = 1.0;
 }
 
 )""
