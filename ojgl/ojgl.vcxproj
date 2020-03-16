@@ -291,6 +291,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="examples\shaders\cachedGeometry.fs" />
+    <None Include="examples\shaders\cityCommon.fs" />
+    <None Include="examples\shaders\common\noise.fs" />
+    <None Include="examples\shaders\common\primitives.fs" />
+    <None Include="examples\shaders\common\quad.vs" />
+    <None Include="examples\shaders\common\raymarch_template.fs" />
+    <None Include="examples\shaders\common\raymarch_utils.fs" />
+    <None Include="examples\shaders\common\utils.fs" />
     <None Include="examples\shaders\demo.vs" />
     <None Include="examples\shaders\edison.vs" />
     <None Include="examples\shaders\fxaa.fs" />

@@ -1,6 +1,8 @@
 R""(
 #version 430
 
+#include "shaders/cityCommon.fs"
+
 in vec2 fragCoord;
 out vec4 fragColor;
 
@@ -30,7 +32,17 @@ void main()
 	vec2 uv = fragCoord.xy;
 
 	vec3 pos =  texture(inTexture0, uv).rgb;
+	float material =  texture(inTexture0, uv).a;
 	vec3 normal =  texture(inTexture1, uv).rgb;
+
+	vec3 matColor = vec3(1.0, 0.0, 0.0);
+	if (material == MAT_FLOOR) {
+		matColor = vec3(0.0, 0.0, 1.0);
+	} else if (matColor == MAT_AUDIENCE) {
+		matColor = vec3(0.0, 1.0, 0.0);
+	} else if (matColor == MAT_SCENE) {
+		matColor = vec3(1.0, 1.0, 0.0);
+	}
 
 	vec3 pos2 =  texture(inTexture2, uv).rgb;
 	vec3 normal2 =  texture(inTexture3, uv).rgb;
@@ -101,11 +113,11 @@ void main()
 	};
 
 	Light lights[] =  Light[](
-		Light(vec3(0.0,   8.0, 40.0),   vec3(1.0, 0.0, 0.0), 200.0),
-		Light(vec3(5.0,   8.0, 40.0),   vec3(0.0, 0.0, 1.0),  200.0),
-		Light(vec3(-5.0,  8.0, 40.0),  vec3(0.0, 1.0, 0.0),  200.0),
-		Light(vec3(15.0,  8.0, 40.0),  vec3(0.0, 0.0, 1.0), 200.0),
-		Light(vec3(-15.0, 8.0, 40.0), vec3(0.0, 1.0, 0.0), 200.0)
+		Light(vec3(0.0,   8.0, 40.0),   vec3(1.0, 0.5, 0.5), 200.0),
+		Light(vec3(5.0,   8.0, 40.0),   vec3(0.5, 0.5, 1.0),  200.0),
+		Light(vec3(-5.0,  8.0, 40.0),   vec3(0.5, 1.0, 0.5),  200.0),
+		Light(vec3(15.0,  8.0, 40.0),   vec3(0.5, 0.5, 1.0), 200.0),
+		Light(vec3(-15.0, 8.0, 40.0),   vec3(0.5, 1.0, 0.5), 200.0)
 	);
 
 	vec3 normals[] = vec3[](normal, normal2);
@@ -115,14 +127,13 @@ void main()
 
 
 
+	float refStr = 1.0;
 	for (int jump = 0; jump < 2; jump++) {
 		const vec3 cn = normals[jump];
 		const vec3 cp = poss[jump];
-		float refStr = 0.8;
-		if (jump == 1) {
-			refStr = 0.2;
-		}
+		
 
+		vec3 colorJumpSum = vec3(0.0);
 		for (int i = 0; i < lights.length(); i++) {
 			Light l = lights[i];
 
@@ -141,9 +152,19 @@ void main()
 			}
 
 			
-			colorSum += (l.col * (0.0 + 1.0*diffuse*str) + vec3(spec*str)) * refStr;
+			colorJumpSum += (l.col * matColor*diffuse*str + vec3(spec*str));
 		}
+
+		colorSum += colorJumpSum * refStr;
 	
+		if (jump == 0 && material == MAT_FLOOR) {
+			refStr = 0.8;
+		} else {
+			refStr = 0.0; 
+		}
+
+
+
 		float t = 0.0;
 	
 		vec3 scatteredLight = vec3(0.0);

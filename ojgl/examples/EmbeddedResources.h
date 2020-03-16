@@ -45,6 +45,9 @@ namespace resources {
         ojstd::string lightning{
 #include "shaders/lightning.fs"
         };
+        ojstd::string cityCommon{
+#include "shaders/cityCommon.fs"
+        };
 
     } //namespace fragment
 
