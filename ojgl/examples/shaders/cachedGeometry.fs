@@ -102,10 +102,10 @@ void main(){
     vec3 ro = vec3(0.0, 10.0, 2.5);
     vec3 rd = normalize(vec3(uv.x - 0.5, uv.y - 0.5 - 0.25, 1.0));
 	// TODO: proper target etc
-    float t = 0.0;
-    vec3 color = vec3(0.0);
+
 	const float distThresh = 0.01;
     for(int j = 0; j < 2; j++){
+		float t = 0.0;
 		for (int i = 0; i < 1000; i++) {
     		vec3 p = ro + rd * t;
 			DistanceInfo di = map(p);

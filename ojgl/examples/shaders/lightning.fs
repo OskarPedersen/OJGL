@@ -113,11 +113,11 @@ void main()
 	};
 
 	Light lights[] =  Light[](
-		Light(vec3(0.0,   8.0, 40.0),   vec3(1.0, 0.5, 0.5), 200.0),
-		Light(vec3(5.0,   8.0, 40.0),   vec3(0.5, 0.5, 1.0),  200.0),
-		Light(vec3(-5.0,  8.0, 40.0),   vec3(0.5, 1.0, 0.5),  200.0),
-		Light(vec3(15.0,  8.0, 40.0),   vec3(0.5, 0.5, 1.0), 200.0),
-		Light(vec3(-15.0, 8.0, 40.0),   vec3(0.5, 1.0, 0.5), 200.0)
+		Light(vec3(0.0,   8.0, 40.0),   vec3(1.0, 0.5, 0.5),  5000.0),
+		Light(vec3(5.0,   8.0, 40.0),   vec3(0.5, 0.5, 1.0),  5000.0),
+		Light(vec3(-5.0,  8.0, 40.0),   vec3(0.5, 1.0, 0.5),  5000.0),
+		Light(vec3(15.0,  8.0, 40.0),   vec3(0.5, 0.5, 1.0),  5000.0),
+		Light(vec3(-15.0, 8.0, 40.0),   vec3(0.5, 1.0, 0.5),  5000.0)
 	);
 
 	vec3 normals[] = vec3[](normal, normal2);
@@ -148,62 +148,66 @@ void main()
 			float str = l.str/(dis * dis * dis);
 			{
 				float cycle = 0.5;
-				str *= 1.2 - mod(iTime, cycle) / cycle;
+				str *= 1.5 - mod(iTime, cycle) / cycle;
 			}
 
 			
 			colorJumpSum += (l.col * matColor*diffuse*str + vec3(spec*str));
 		}
 
-		colorSum += colorJumpSum * refStr;
+		colorSum = mix(colorSum, colorJumpSum, refStr);
 	
-		if (jump == 0 && material == MAT_FLOOR) {
-			refStr = 0.8;
+		if (material == MAT_FLOOR) {
+			refStr *= 0.8;
 		} else {
-			refStr = 0.0; 
+			refStr *= 0.0; 
+		}
+
+		if (refStr < 0.05) {
+			break;
 		}
 
 
 
-		float t = 0.0;
-	
-		vec3 scatteredLight = vec3(0.0);
-		float transmittance = 1.0;
-		const int maxIter = 100;
-		for (int i = 0; i < maxIter; i++) {
-			const vec3 p = ro + rd * t;
-
-			
-			 // *** evaluateLight ***
-			 //float lightDis = length(p - vec3(0, 5, 50));
-			 vec3 ptrans = p - vec3(10, 8, 50);
-			 float lightDis = length(ptrans.xy);//sdCylinder(ptrans.yzx, vec3(0, 10, 0));
-			 float sourceDis = length(ptrans);
-			 float str = 100000.0 /  (sourceDis * sourceDis * sourceDis);
-			 if (lightDis > 0.1) {
-				str *= 1.0 - smoothstep(0.1, 0.2, lightDis);
-			 }
-			 if ( p.z > 50) {
-				str = 0.0;
-			 }
-			 vec3 light = str * vec3(1.0, 0.0, 0.0);// / (lightDis * lightDis * lightDis);
-
-			 float fogAmount = 0.01;
-
-			 float d = max(0.1, lightDis * 0.25);
-
-			 vec3 lightIntegrated = light - light * exp(-fogAmount * d);
-			 scatteredLight += transmittance * lightIntegrated;	
-			 transmittance *= exp(-fogAmount * d);
-
-			if (t > length(cp) || i == maxIter - 1) {
-				colorSum  = transmittance * colorSum + scatteredLight;
-				//colorSum = vec3(1.0, 0.0, 0.0);
-				break;
-			}
-
-			t += d;
-		}
+		//float t = 0.0;
+		//
+		//vec3 scatteredLight = vec3(0.0);
+		//float transmittance = 1.0;
+		//const int maxIter = 100;
+		//for (int i = 0; i < maxIter; i++) {
+		//	const vec3 p = ro + rd * t;
+		//
+		//	
+		//	 // *** evaluateLight ***
+		//	 //float lightDis = length(p - vec3(0, 5, 50));
+		//	 vec3 ptrans = p - vec3(10, 8, 50);
+		//	 float lightDis = length(ptrans.xy);//sdCylinder(ptrans.yzx, vec3(0, 10, 0));
+		//	 float sourceDis = length(ptrans);
+		//	 float str = 100000.0 /  (sourceDis * sourceDis * sourceDis);
+		//	 if (lightDis > 0.1) {
+		//		str *= 1.0 - smoothstep(0.1, 0.2, lightDis);
+		//	 }
+		//	 if ( p.z > 50) {
+		//		str = 0.0;
+		//	 }
+		//	 vec3 light = str * vec3(1.0, 0.0, 0.0);// / (lightDis * lightDis * lightDis);
+		//
+		//	 float fogAmount = 0.01;
+		//
+		//	 float d = max(0.1, lightDis * 0.25);
+		//
+		//	 vec3 lightIntegrated = light - light * exp(-fogAmount * d);
+		//	 scatteredLight += transmittance * lightIntegrated;	
+		//	 transmittance *= exp(-fogAmount * d);
+		//
+		//	if (t > length(cp) || i == maxIter - 1) {
+		//		colorSum  = transmittance * colorSum + scatteredLight;
+		//		//colorSum = vec3(1.0, 0.0, 0.0);
+		//		break;
+		//	}
+		//
+		//	t += d;
+		//}
 	}
 
 	{
