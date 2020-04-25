@@ -49,12 +49,12 @@ mat2 rot(float a)
     return mat2(cos(a),sin(a),-sin(a),cos(a));
 }
 
-DistanceInfo audience(vec3 p) {
-	float s = 2.0;
+DistanceInfo city(vec3 p) {
+	float s = 3.0;
 	float qx = mod(p.x + s * 0.5, s) - s * 0.5;
 	float qz = mod(p.z + s * 0.5, s) - s * 0.5;
 	vec3 q = vec3(qx, p.y, qz);
-	return DistanceInfo(sdBox(q, vec3(0.5, 2.0, 0.5)), MAT_AUDIENCE);
+	return DistanceInfo(sdBox(q, vec3(0.5, 8.0, 0.5)), MAT_HOUSE);
 }
 
 DistanceInfo scene(vec3 p) {
@@ -80,8 +80,8 @@ DistanceInfo scene(vec3 p) {
 
 DistanceInfo map(vec3 p) {
 	DistanceInfo res = DistanceInfo(p.y, MAT_FLOOR);
-	res = un(res, audience(p));
-	res = un(res, scene(p));
+	res = un(res, city(p));
+	//res = un(res, scene(p));
 	return res;
 }
 
@@ -99,7 +99,7 @@ vec3 calcNormal(vec3 p) {
 
 void main(){
 	const vec2 uv = fragCoord.xy;
-    vec3 ro = vec3(0.0, 10.0, 2.5);
+    vec3 ro = RO;
     vec3 rd = normalize(vec3(uv.x - 0.5, uv.y - 0.5 - 0.25, 1.0));
 	// TODO: proper target etc
 

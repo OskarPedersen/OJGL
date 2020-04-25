@@ -42,12 +42,14 @@ void main()
 		matColor = vec3(0.0, 1.0, 0.0);
 	} else if (matColor == MAT_SCENE) {
 		matColor = vec3(1.0, 1.0, 0.0);
+	} else if (matColor == MAT_HOUSE) {
+		matColor = vec3(1.0, 1.0, 1.0);
 	}
 
 	vec3 pos2 =  texture(inTexture2, uv).rgb;
 	vec3 normal2 =  texture(inTexture3, uv).rgb;
 
-	const vec3 ro = vec3(0.0, 10.0, 2.5);
+	const vec3 ro = RO;
     const vec3 rd = normalize(vec3(uv.x - 0.5, uv.y - 0.5 - 0.25, 1.0));
 
 	// Additional geometry
@@ -120,6 +122,18 @@ void main()
 		Light(vec3(-15.0, 8.0, 40.0),   vec3(0.5, 1.0, 0.5),  5000.0)
 	);
 
+
+	struct ModLight {
+		vec3 pos;
+		vec3 col;
+		float str;
+	};
+
+
+	ModLight modLights[] =  ModLight[](
+		ModLight(vec3(0.0,   8.0, 40.0),   vec3(1.0, 0.5, 0.5),  5000.0)
+	);
+
 	vec3 normals[] = vec3[](normal, normal2);
 	vec3 poss[] = vec3[](pos, pos2);
 
@@ -134,12 +148,39 @@ void main()
 		
 
 		vec3 colorJumpSum = vec3(0.0);
-		for (int i = 0; i < lights.length(); i++) {
-			Light l = lights[i];
+		// Single lights
+		//for (int i = 0; i < lights.length(); i++) {
+		//	Light l = lights[i];
+		//
+		//
+		//	const float dis = length(l.pos - cp);
+		//	const vec3 invLight = normalize(l.pos - cp);
+		//
+		//	const float diffuse = max(0.0, dot(invLight, cn));
+		//	const float s = 10.0;
+		//	const float k = max(0.0, dot(rd, reflect(invLight, cn)));
+		//	const float spec =  pow(k, s);
+		//	float str = l.str/(dis * dis * dis);
+		//	{
+		//		float cycle = 0.5;
+		//		str *= 1.5 - mod(iTime, cycle) / cycle;
+		//	}
+		//
+		//	
+		//	colorJumpSum += (l.col * matColor*diffuse*str + vec3(spec*str));
+		//}
+
+		// Mod lights
+		for (int i = 0; i < modLights.length(); i++) {
+			ModLight l = modLights[i];
 
 
-			const float dis = length(l.pos - cp);
-			const vec3 invLight = normalize(l.pos - cp);
+			float size = 100.0;
+			vec3 h = vec3(size * 0.5);
+			vec3 mcp = mod(cp + h, size) - h;
+
+			const float dis = length(l.pos - mcp);
+			const vec3 invLight = normalize(l.pos - mcp);
 		
 			const float diffuse = max(0.0, dot(invLight, cn));
 			const float s = 10.0;
@@ -154,6 +195,9 @@ void main()
 			
 			colorJumpSum += (l.col * matColor*diffuse*str + vec3(spec*str));
 		}
+
+
+
 
 		colorSum = mix(colorSum, colorJumpSum, refStr);
 	
