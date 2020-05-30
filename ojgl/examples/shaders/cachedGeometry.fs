@@ -50,7 +50,7 @@ mat2 rot(float a)
 }
 
 DistanceInfo city(vec3 p) {
-	float s = 3.0;
+	float s = 10.0;
 	float qx = mod(p.x + s * 0.5, s) - s * 0.5;
 	float qz = mod(p.z + s * 0.5, s) - s * 0.5;
 	vec3 q = vec3(qx, p.y, qz);
@@ -79,10 +79,7 @@ DistanceInfo scene(vec3 p) {
 }
 
 DistanceInfo map(vec3 p) {
-	DistanceInfo res = DistanceInfo(p.y, MAT_FLOOR);
-	res = un(res, city(p));
-	//res = un(res, scene(p));
-	return res;
+	return city(p);
 }
 
 
@@ -102,6 +99,9 @@ void main(){
     vec3 ro = RO;
     vec3 rd = normalize(vec3(uv.x - 0.5, uv.y - 0.5 - 0.25, 1.0));
 	// TODO: proper target etc
+
+	fragPos.rgb = ro + rd * 99999.0;
+	fragPos2.rgb = ro + rd * 99999.0;
 
 	const float distThresh = 0.01;
     for(int j = 0; j < 2; j++){
