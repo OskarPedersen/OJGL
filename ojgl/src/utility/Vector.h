@@ -46,6 +46,8 @@ struct Vector3 {
 
 template <typename T>
 struct Vector2 {
+    Vector2() = default;
+
     T x = T(0);
     T y = T(0);
 

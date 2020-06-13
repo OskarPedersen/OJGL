@@ -7,6 +7,12 @@ namespace resources {
 
     namespace fragment {
 
+        namespace fibberReborn {
+            ojstd::string tunnel{
+#include "shaders/fibber-reborn/tunnel.fs"
+            };
+        }
+
         ojstd::string post{
 #include "shaders/post.fs"
         };

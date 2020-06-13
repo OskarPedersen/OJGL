@@ -358,6 +358,7 @@
     <None Include="examples\shaders\cachedGeometry.fs" />
     <None Include="examples\shaders\demo.vs" />
     <None Include="examples\shaders\edison.vs" />
+    <None Include="examples\shaders\fibber-reborn\tunnel.fs" />
     <None Include="examples\shaders\fxaa.fs" />
     <None Include="examples\shaders\fxaa.vs" />
     <None Include="examples\shaders\lavaIntro.fs" />

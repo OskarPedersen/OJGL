@@ -53,7 +53,6 @@ ojstd::string replaceIncludes(const ojstd::string& rawShader)
 
     return modifiedShader;
 }
-
 }
 
 void ShaderReader::preLoad(const ojstd::string& path, const ojstd::string& content)
@@ -80,7 +79,10 @@ const ojstd::string& ShaderReader::get(const ojstd::string& path)
 {
 #ifdef _DEBUG
     auto fullPath = _basePath + path;
-    _ASSERT_EXPR(fileExists(fullPath), ojstd::wstringWrapper(fullPath + " not found.").ptr);
+    //_ASSERT_EXPR(fileExists(fullPath), ojstd::wstringWrapper(fullPath + " not found.").ptr);
+    if (!fileExists(fullPath)) {
+        return ShaderReader::_shaders[path].content;
+    }
     if (modified(path)) {
         LOG_INFO("[" << path.c_str() << "]"
                      << " modified");
