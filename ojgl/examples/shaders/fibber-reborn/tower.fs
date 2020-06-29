@@ -25,7 +25,7 @@ DistanceInfo map(in vec3 po)
 	{
 		float s = 15.0;
 		float rou = 0.5;
-		res = DistanceInfo(-udRoundBox(po - vec3(0, s * (1.0 + rou), 0) + noise_3(po * 5.0) * 0.15, vec3(s, s, s), s * rou), WALL_TYPE);
+		res = DistanceInfo(-udRoundBox(po - vec3(0, s * (1.0 + rou), 0) + noise_3(po * 5.0) * 0.015, vec3(s, s, s), s * rou), WALL_TYPE);
 	}
 
 	{
@@ -71,8 +71,16 @@ float calcFogAmount(in vec3 p) {
 }
 
 VolumetricResult evaluateLight(in vec3 p) {
-	float d = length(p - vec3(0, 5.0, 0)) - 0.0;
-	float strength = 10;
+	float d1 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime * 3), sin(iTime), sin(iTime * 2))) - 0.3;
+	float d2 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime), sin(iTime * 2), sin(iTime * 3))) - 0.3;
+	float d3 = udRoundBox(p - vec3(0, 4.0, 0), vec3(0.5), 0.2);
+	float boom = mod(iTime * 5.0, 20.0);
+	float d4 = length(p - vec3(0, 5.0, 0) + vec3(0, -boom, 0)) - 0.3;
+	float d = smink(d1, d2, 1.);
+	d = smink(d, d3, 1.);
+	d = smink(d, d4, 4.);
+
+	float strength = 10 + 20 * 20 - boom * boom;
 	vec3 col = vec3(1.0, 0.1, 0.0);
 	vec3 res = col * strength / (d * d * d);
 	return VolumetricResult(d, res);
@@ -136,7 +144,7 @@ void main()
 		}
 
     }
-
+	color /= (color + vec3(1.0));
     fragColor = vec4(color, 1.0);
 }
 

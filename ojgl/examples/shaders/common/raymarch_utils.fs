@@ -1,6 +1,7 @@
 R""(
 const float epsilon = 2e-2;
-const int maxSteps = 400;
+const float normalEpsilon = 1e-1;
+const int maxSteps = 4000;
 const float maxDistance = 400.0;
 const int invalidType = -1;
 const float minVolumetricDistanceJump = 0.01;
@@ -30,7 +31,7 @@ float calcFogAmount(in vec3 p);
 
 vec3 normal(in vec3 p)
 {
-    vec3 n = vec3(map(vec3(p.x + epsilon, p.y, p.z)).distance, map(vec3(p.x, p.y + epsilon, p.z)).distance, map(vec3(p.x, p.y, p.z + epsilon)).distance);
+    vec3 n = vec3(map(vec3(p.x + normalEpsilon, p.y, p.z)).distance, map(vec3(p.x, p.y + normalEpsilon, p.z)).distance, map(vec3(p.x, p.y, p.z + normalEpsilon)).distance);
     return normalize(n - map(p).distance);
 }
 
