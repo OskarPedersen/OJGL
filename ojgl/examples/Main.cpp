@@ -44,6 +44,7 @@ int main(int argc, char* argv[])
     ShaderReader::preLoad("cachedGeometry.fs", resources::fragment::cachedGeometry);
     ShaderReader::preLoad("lightning.fs", resources::fragment::lightning);
     ShaderReader::preLoad("fibber-reborn/tunnel.fs", resources::fragment::fibberReborn::tunnel);
+    ShaderReader::preLoad("fibber-reborn/tower.fs", resources::fragment::fibberReborn::tower);
 
     // @todo move this into GLState? We can return a const reference to window.
     // and perhaps have a unified update() which does getMessages(), music sync update and
@@ -133,6 +134,11 @@ Vector2i calculateDimensions(float demoAspectRatio, int windowWidth, int windowH
 void buildSceneGraph(GLState& glState, int width, int height)
 {
     glState.clearScenes();
+
+    {
+        auto tower = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tower.fs");
+        glState.addScene("towerScene", tower, Duration::seconds(99999));
+    }
 
     {
         auto tunnel = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tunnel.fs");

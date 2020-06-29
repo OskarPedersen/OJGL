@@ -11,6 +11,10 @@ namespace resources {
             ojstd::string tunnel{
 #include "shaders/fibber-reborn/tunnel.fs"
             };
+
+            ojstd::string tower{
+#include "shaders/fibber-reborn/tower.fs"
+            };
         }
 
         ojstd::string post{
