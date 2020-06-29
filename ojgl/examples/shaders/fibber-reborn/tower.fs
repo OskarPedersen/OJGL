@@ -24,7 +24,8 @@ DistanceInfo map(in vec3 po)
 
 	{
 		float s = 15.0;
-		res = DistanceInfo(-sdBox(po - vec3(0, s, 0), vec3(s)), WALL_TYPE);
+		float rou = 0.5;
+		res = DistanceInfo(-udRoundBox(po - vec3(0, s * (1.0 + rou), 0) + noise_3(po * 5.0) * 0.15, vec3(s, s, s), s * rou), WALL_TYPE);
 	}
 
 	{
@@ -65,9 +66,22 @@ DistanceInfo map(in vec3 po)
     return res;
 }
 
+float calcFogAmount(in vec3 p) {
+	return 0.005;
+}
+
+VolumetricResult evaluateLight(in vec3 p) {
+	float d = length(p - vec3(0, 5.0, 0)) - 0.0;
+	float strength = 10;
+	vec3 col = vec3(1.0, 0.1, 0.0);
+	vec3 res = col * strength / (d * d * d);
+	return VolumetricResult(d, res);
+}
+
 float getReflectiveIndex(int type)
 {
-    return type == WALL_TYPE ? 0.6 : 0.0;
+    //return type == WALL_TYPE ? 0.6 : 0.0;
+	return 0.5;
 }
 
 vec3 getColor(in MarchResult res)
@@ -87,7 +101,7 @@ vec3 getColor(in MarchResult res)
         vec3 invLight = -normalize(vec3(-0.7, -0.2, -0.5));
         vec3 normal = normal(res.position);
         float diffuse = max(0., dot(invLight, normal));
-        return col * diffuse;
+        return res.transmittance * col * diffuse + res.scatteredLight;
     } else {
         return vec3(0.5, 0, 0);
     }
@@ -103,6 +117,26 @@ void main()
 
     MarchResult result = march(eye, rayDirection);
     vec3 color = getColor(result);
+
+
+	float reflectiveIndex = getReflectiveIndex(result.type);
+    if (reflectiveIndex > 0.0) {
+        rayDirection = reflect(rayDirection, normal(result.position));
+        result = march(result.position + 0.1 * rayDirection, rayDirection);
+        vec3 newColor = getColor(result);
+        color = mix(color, newColor, reflectiveIndex);
+
+
+		reflectiveIndex = getReflectiveIndex(result.type);
+		if (reflectiveIndex > 0.0) {
+			rayDirection = reflect(rayDirection, normal(result.position));
+			result = march(result.position + 0.1 * rayDirection, rayDirection);
+			vec3 newColor = getColor(result);
+			color = mix(color, newColor, reflectiveIndex);
+		}
+
+    }
+
     fragColor = vec4(color, 1.0);
 }
 
