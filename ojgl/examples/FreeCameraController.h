@@ -60,7 +60,7 @@ public:
     }
 
 private:
-    Vector3f _position { 0, 0, 2 };
+    Vector3f _position{ 2, 4, 9 };
     float _heading = 0.f;
     float _elevation = 0.f;
     Vector2i _previousCursorPosition;
@@ -68,5 +68,4 @@ private:
     static constexpr float _translationSpeed = 0.025f;
     static constexpr float _rotationSpeed = 0.02f;
 };
-
 }

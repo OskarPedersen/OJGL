@@ -61,8 +61,8 @@ MarchResult march(in vec3 rayOrigin, in vec3 rayDirection)
 
         if (info.distance < epsilon)
             return MarchResult(info.type, p, steps, transmittance, scatteredLight);
-        if (t > maxDistance)
-            return invalidResult;
+        if (t > maxDistance || steps == maxSteps - 2)
+            return MarchResult(invalidType, p, steps, transmittance, scatteredLight);
     }
     return invalidResult;
 }

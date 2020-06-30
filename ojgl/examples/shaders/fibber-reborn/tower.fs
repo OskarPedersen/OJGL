@@ -25,7 +25,7 @@ DistanceInfo map(in vec3 po)
 	{
 		float s = 15.0;
 		float rou = 0.5;
-		res = DistanceInfo(-udRoundBox(po - vec3(0, s * (1.0 + rou), 0) + noise_3(po * 5.0) * 0.015, vec3(s, s, s), s * rou), WALL_TYPE);
+		res = DistanceInfo(-sdRoundBox(po - vec3(0, s * (1.0 + rou), 0) + noise_3(po * 5.0) * 0.015, vec3(s, s, s), s * rou), WALL_TYPE);
 	}
 
 	{
@@ -73,15 +73,16 @@ float calcFogAmount(in vec3 p) {
 VolumetricResult evaluateLight(in vec3 p) {
 	//float d1 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime * 3), sin(iTime), sin(iTime * 2))) - 0.3;
 	//float d2 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime), sin(iTime * 2), sin(iTime * 3))) - 0.3;
-	float d3 = udRoundBox(p - vec3(0, 4.0, 0), vec3(0.5), 0.2);
+	float d3 = sdRoundBox(p - vec3(0, 4.0, 0), vec3(0.5), 0.2);
+	d3 = max(0.001, d3);
 	float boom = mod(iTime * 5.0, 20.0);
 	float d4 = length(p - vec3(0, 5.0, 0) + vec3(0, -boom, 0)) - 0.3;
 	//float d = smink(d1, d2, 1.);
 	//d = smink(d, d3, 1.);
-	float d = smink(d3, d4, 4.);
+	float d = d3;//smink(d3, d4, 4.);
 
-	float strength = 10 + 20 * 20 - boom * boom;
-	vec3 col = vec3(1.0, 0.1, 0.0);
+	float strength = 10;// + 20 * 20 - boom * boom;
+	vec3 col = vec3(1.0, 0.1, 1.0);
 	vec3 res = col * strength / (d * d * d);
 	return VolumetricResult(d, res);
 }
@@ -111,7 +112,8 @@ vec3 getColor(in MarchResult res)
         float diffuse = max(0., dot(invLight, normal));
         return res.transmittance * col * diffuse + res.scatteredLight;
     } else {
-        return vec3(0.5, 0, 0);
+		return vec3(1, 0, 1);
+        //return res.scatteredLight;
     }
 }
 
@@ -125,30 +127,32 @@ void main()
 
     MarchResult result = march(eye, rayDirection);
     vec3 color = getColor(result);
+	vec3 firstPos = result.position;
 
+	//float reflectiveIndex = getReflectiveIndex(result.type);
+    //if (reflectiveIndex > 0.0 && result.type != invalidType) {
+    //    rayDirection = reflect(rayDirection, normal(result.position));
+    //    result = march(result.position + 0.1 * rayDirection, rayDirection);
+    //    vec3 newColor = getColor(result);
+    //    color = mix(color, newColor, reflectiveIndex);
+	//
+	//
+	//	reflectiveIndex = getReflectiveIndex(result.type);
+	//	if (reflectiveIndex > 0.0 && result.type != invalidType) {
+	//		rayDirection = reflect(rayDirection, normal(result.position));
+	//		result = march(result.position + 0.1 * rayDirection, rayDirection);
+	//		vec3 newColor = getColor(result);
+	//		color = mix(color, newColor, reflectiveIndex);
+	//	}
+	//
+    //}
+	
 
-	float reflectiveIndex = getReflectiveIndex(result.type);
-    if (reflectiveIndex > 0.0) {
-        rayDirection = reflect(rayDirection, normal(result.position));
-        result = march(result.position + 0.1 * rayDirection, rayDirection);
-        vec3 newColor = getColor(result);
-        color = mix(color, newColor, reflectiveIndex);
-	
-	
-		reflectiveIndex = getReflectiveIndex(result.type);
-		if (reflectiveIndex > 0.0) {
-			rayDirection = reflect(rayDirection, normal(result.position));
-			result = march(result.position + 0.1 * rayDirection, rayDirection);
-			vec3 newColor = getColor(result);
-			color = mix(color, newColor, reflectiveIndex);
-		}
-	
-    }
-	color /= (color + vec3(1.0));
-
-    float focus = abs(length(result.position - rayOrigin));// - (8.0 - 7.0 * sin(iTime * 1.0))) * 0.1;
+    float focus = abs(length(firstPos - eye) - 15.0) * 0.05;// - (8.0 - 7.0 * sin(iTime * 1.0))) * 0.1;
     focus = min(focus, 1.);
 	fragColor = vec4(color, focus);
+
+	//fragColor.rgb = vec3(1, 0, 1);
 }
 
 )""
