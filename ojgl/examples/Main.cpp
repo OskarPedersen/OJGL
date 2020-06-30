@@ -43,6 +43,13 @@ int main(int argc, char* argv[])
     ShaderReader::preLoad("mesh.fs", resources::fragment::mesh);
     ShaderReader::preLoad("cachedGeometry.fs", resources::fragment::cachedGeometry);
     ShaderReader::preLoad("lightning.fs", resources::fragment::lightning);
+
+    ShaderReader::preLoad("common/noise.fs", resources::common::noise);
+    ShaderReader::preLoad("common/primitives.fs", resources::common::primitives);
+    ShaderReader::preLoad("common/raymarch_utils.fs", resources::common::raymarch_utils);
+    ShaderReader::preLoad("common/utils.fs", resources::common::utils);
+
+
     ShaderReader::preLoad("fibber-reborn/tunnel.fs", resources::fragment::fibberReborn::tunnel);
 
     ShaderReader::preLoad("fibber-reborn/tower.fs", resources::fragment::fibberReborn::tower);

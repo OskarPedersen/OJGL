@@ -5,6 +5,24 @@ namespace ojgl {
 
 namespace resources {
 
+    namespace common {
+        ojstd::string noise{
+#include "shaders/common/noise.fs"
+        };
+
+        ojstd::string primitives{
+#include "shaders/common/primitives.fs"
+        };
+
+        ojstd::string raymarch_utils{
+#include "shaders/common/raymarch_utils.fs"
+        };
+
+        ojstd::string utils{
+#include "shaders/common/utils.fs"
+        };
+    }
+
     namespace fragment {
 
         namespace fibberReborn {
