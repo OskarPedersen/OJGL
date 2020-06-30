@@ -26,8 +26,27 @@ DistanceInfo map(in vec3 po)
 	{
 		float s = 10.0;
 		float rou = 0.5;
-		res = DistanceInfo(-sdRoundBox(po - vec3(0, s * (1.0 + rou), 0) + fbm3_high((po + vec3(-iTime * 0.1, 0.0, -iTime * 0.1)) * 7.0, 0.75, 1.0) * 0.015 + fbm3_high((po + vec3(iTime * 0.1, 0.0, iTime * 0.1)) * 7.0, 0.75, 1.0) * 0.015, vec3(s, s, s), s * rou), WALL_TYPE);
+		float dwall = -sdRoundBox(po - vec3(0, s * (1.0 + rou), 0) + fbm3_high(po * 10.0, 0.75, 1.0) * 0.015, vec3(s, s, s), s * rou);
+		res = DistanceInfo(dwall, WALL_TYPE);
 		
+
+
+		vec3 p = po;
+
+		pModPolar(p.xz, 8.0);
+		//p -=  vec3(5, 0, 0);
+		p.x = mod(p.x, 2.0) - 1.0;
+		//float dcap = sdVerticalCapsule(p, 1.0, 0.2);
+		float dcap = sdTorus(p - vec3(0, 1.5, 0), vec2(0.8, 0.1));
+
+		float d = smink(dwall, dcap, 0.3);
+		int type = WALL_TYPE;
+		if (dcap < dwall) {
+			type = PILLAR;
+		}
+		res = un(res, DistanceInfo(d, type));
+
+
 		//vec3 p = po;
 		//p += + fbm3_high((po + vec3(-iTime * 0.1, 0.0, -iTime * 0.1)) * 7.0, 0.75, 1.0) * 0.015 + fbm3_high((po + vec3(iTime * 0.1, 0.0, iTime * 0.1)) * 7.0, 0.75, 1.0) * 0.015;
 		//float d = po.y;
@@ -43,7 +62,7 @@ DistanceInfo map(in vec3 po)
 		vec3 b = vec3(s * hmod, s * 3.0, s * hmod);
 		float d = sdBox(p + vec3(0, -s, 0), b);
 
-		res = un(res, DistanceInfo(d, TOWER_BASE_BOX));
+		//res = un(res, DistanceInfo(d, TOWER_BASE_BOX));
 
 		{
 			float sideSize = s * 0.5;
@@ -60,22 +79,15 @@ DistanceInfo map(in vec3 po)
 
 			//shiftVec.y += downShift  - s;
 			
-			float d = sdBox(pa + shiftVec, vec3(sideSize, (b.y * 0.67 - downShift ) * 0.7, sideSize));
+			float d2 = sdBox(pa + shiftVec, vec3(sideSize, (b.y * 0.67 - downShift ) * 0.7, sideSize));
 
+			d = smink(d, d2, 0.3);
 
 			res = un(res, DistanceInfo(d, TOWER_BASE_BOX_LEGS));
 		}
 	}
 
-	{
-		vec3 p = po;
-
-		pModPolar(p.xz, 8.0);
-		//p -=  vec3(5, 0, 0);
-		p.x = mod(p.x, 2.0) - 1.0;
-		float d = sdVerticalCapsule(p, 1.0, 0.2);
-		res = un(res, DistanceInfo(d, PILLAR));
-	}
+	
 
     return res;
 }
@@ -131,13 +143,13 @@ vec3 getColor(in MarchResult res)
 		if (res.type == WATER_TYPE) {
 			col = vec3(0, 0, mod(floor(mod(res.position.x, 2.0)) + floor(mod(res.position.z, 2.0)), 2.0) );
 		} else  if (res.type == TOWER_BASE_BOX) {
-			col = vec3(0.5);
+			col = vec3(1.0);
 		} else  if (res.type == TOWER_BASE_BOX_LEGS) {
 			col = vec3(1.0);
 		} else  if (res.type == WALL_TYPE) {
 			col = vec3(0.0);
 		} else  if (res.type == PILLAR) {
-			col = vec3(0.5);
+			col = vec3(1.0, 0.2, 0.2);
 		}
 
         vec3 invLight = -normalize(vec3(-0.7, -0.2, -0.5));
