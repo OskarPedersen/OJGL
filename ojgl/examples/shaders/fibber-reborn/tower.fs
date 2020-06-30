@@ -14,62 +14,54 @@ uniform mat4 iCameraMatrix;
 
 
 const int WALL_TYPE = 3;
-const int WATER_TYPE = 4;
-const int TOWER_BASE_BOX = 5;
-const int TOWER_BASE_BOX_LEGS = 6;
+const int TOWER_TYPE = 5;
 const int PILLAR = 7;
 
 DistanceInfo map(in vec3 po)
 {
-	DistanceInfo res;
-
-	{
-		float s = 10.0;
-		float rou = 0.5;
-		float dwall = -sdRoundBox(po - vec3(0, s * (1.0 + rou), 0) + fbm3_high(po * 10.0, 0.75, 1.0) * 0.015, vec3(s, s, s), s * rou);
-		res = DistanceInfo(dwall, WALL_TYPE);
+	const float s = 10.0;
+	const float rou = 0.5;
+	const float dwall = -sdRoundBox(po - vec3(0, s * (1.0 + rou), 0) + noise_3(po * (po.y > 1.0 ? 5.0 : 15.0)) * 0.03, vec3(s, s, s), s * rou);
+	//DistanceInfo res = DistanceInfo(dwall, WALL_TYPE);
 		
 
 
-		vec3 p = po;
+	vec3 p = po;
 
-		pModPolar(p.xz, 8.0);
-		//p -=  vec3(5, 0, 0);
-		p.x = mod(p.x, 2.0) - 1.0;
-		//float dcap = sdVerticalCapsule(p, 1.0, 0.2);
-		float dcap = sdTorus(p - vec3(0, 1.5, 0), vec2(0.8, 0.1));
+	pModPolar(p.xz, 8.0);
 
-		float d = smink(dwall, dcap, 0.3);
-		int type = WALL_TYPE;
-		if (dcap < dwall) {
-			type = PILLAR;
-		}
-		res = un(res, DistanceInfo(d, type));
+	p.x = mod(p.x, 2.0) - 1.0;
 
+	const float dcap = sdTorus(p - vec3(0, 1.5, 0), vec2(0.8, 0.1));
 
-		//vec3 p = po;
-		//p += + fbm3_high((po + vec3(-iTime * 0.1, 0.0, -iTime * 0.1)) * 7.0, 0.75, 1.0) * 0.015 + fbm3_high((po + vec3(iTime * 0.1, 0.0, iTime * 0.1)) * 7.0, 0.75, 1.0) * 0.015;
-		//float d = po.y;
-		//res = DistanceInfo(d, WALL_TYPE);
-	
+	const float d = smink(dwall, dcap, 0.3);
+	int type = WALL_TYPE;
+	if (dcap < dwall) {
+		type = PILLAR;
 	}
+	DistanceInfo res = DistanceInfo(d, type);
+
+
+
+	
+	
 
 	{
         vec3 p = po;
 
-		float s = 1.0;
-		float hmod = 1.0 - 0.3 *  max(0.0, p.y - s * 3.0);
-		vec3 b = vec3(s * hmod, s * 3.0, s * hmod);
-		float d = sdBox(p + vec3(0, -s, 0), b);
+		const float s = 1.0;
+		const float hmod = 1.0 - 0.3 *  max(0.0, p.y - s * 3.0);
+		const vec3 b = vec3(s * hmod, s * 3.0, s * hmod);
+		p.y -= s;
+		float d = sdBox(p, b);
 
-		//res = un(res, DistanceInfo(d, TOWER_BASE_BOX));
 
 		{
-			float sideSize = s * 0.5;
-			float shift = s  + sideSize;
-			float apx = abs(p.x);
-			float apz = abs(p.z);
-			vec3 pa = vec3(apx, p.y, apz);// + vec3(shift, 0, shift);
+			const float sideSize = s * 0.5;
+			const float shift = s  + sideSize;
+			const float apx = abs(p.x);
+			const float apz = abs(p.z);
+			const vec3 pa = vec3(apx, p.y, apz);
 			vec3 shiftVec = vec3(-shift, -s, 0);
 			float downShift = apx * 0.3;
 			if (apx < apz) {
@@ -77,13 +69,12 @@ DistanceInfo map(in vec3 po)
 				downShift = apz * 0.3;
 			}
 
-			//shiftVec.y += downShift  - s;
 			
-			float d2 = sdBox(pa + shiftVec, vec3(sideSize, (b.y * 0.67 - downShift ) * 0.7, sideSize));
+			const float d2 = sdBox(pa + shiftVec, vec3(sideSize, (b.y * 0.67 - downShift ) * 0.7, sideSize));
 
 			d = smink(d, d2, 0.3);
 
-			res = un(res, DistanceInfo(d, TOWER_BASE_BOX_LEGS));
+			res = un(res, DistanceInfo(d, TOWER_TYPE));
 		}
 	}
 
@@ -93,34 +84,27 @@ DistanceInfo map(in vec3 po)
 }
 
 float calcFogAmount(in vec3 p) {
-	return 0.0005;
+	return 0.002;
 }
 
 VolumetricResult evaluateLight(in vec3 p) {
-	//float d1 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime * 3), sin(iTime), sin(iTime * 2))) - 0.3;
-	//float d2 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime), sin(iTime * 2), sin(iTime * 3))) - 0.3;
+
 	float d3 = sdRoundBox(p - vec3(0, 4.0, 0), vec3(0.5), 0.2);
-	//d3 = max(0.001, d3);
 	float boom = mod(iTime * 5.0, 20.0);
 	float d4 = length(p - vec3(0, 5.0, 0) + vec3(0, -boom, 0)) - 0.3;
 
-	//float d = smink(d1, d2, 1.);
-	//d = smink(d, d3, 1.);
 	float d = smink(d3, d4, 4.);
 	
 
 
-	{
 
-		float c = pModPolar(p.xz, 8.0);
-		if (abs(c + 3.0 - mod(floor(iTime), 8.0)) < 0.01) {
-			//p -=  vec3(5, 0, 0);
-			p.x = mod(p.x, 2.0) - 1.0;
-			float d5 = length(p - vec3(0, 1.5, 0)) - 0.1;
-			d = min(d, d5);
+	float c = pModPolar(p.xz, 8.0);
+	if (abs(c + 3.0 - mod(floor(iTime), 8.0)) < 0.01) {
+		p.x = mod(p.x, 2.0) - 1.0;
+		float d5 = length(p - vec3(0, 1.5, 0)) - 0.1;
+		d = min(d, d5);
 		
-		} 
-	}
+	} 
 
 	d = max(0.001, d);
 
@@ -140,11 +124,7 @@ vec3 getColor(in MarchResult res)
 {
     if (res.type != invalidType) {
 		vec3 col = vec3(1, 0, 1);
-		if (res.type == WATER_TYPE) {
-			col = vec3(0, 0, mod(floor(mod(res.position.x, 2.0)) + floor(mod(res.position.z, 2.0)), 2.0) );
-		} else  if (res.type == TOWER_BASE_BOX) {
-			col = vec3(1.0);
-		} else  if (res.type == TOWER_BASE_BOX_LEGS) {
+		if (res.type == TOWER_TYPE) {
 			col = vec3(1.0);
 		} else  if (res.type == WALL_TYPE) {
 			col = vec3(0.0);

@@ -4,8 +4,8 @@ const float normalEpsilon = 1e-2;
 const int maxSteps = 4000;
 const float maxDistance = 400.0;
 const int invalidType = -1;
-const float minVolumetricDistanceJump = 0.01;
-const float volumetricDistanceModifier = 0.25;
+const float minVolumetricDistanceJump = 0.02;
+const float volumetricDistanceModifier = 0.75;
 
 struct DistanceInfo {
     float distance;

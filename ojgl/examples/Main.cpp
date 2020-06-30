@@ -149,7 +149,7 @@ void buildSceneGraph(GLState& glState, int width, int height)
         blur2->setInputs(blur1);
 
         auto towerPost = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tower_final.fs");
-        towerPost->setInputs(tower, blur1, blur2);
+        towerPost->setInputs(blur2);
 
         glState.addScene("towerScene", towerPost, Duration::seconds(99999));
     }
