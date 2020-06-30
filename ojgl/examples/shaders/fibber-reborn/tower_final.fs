@@ -21,7 +21,7 @@ void main()
 	//fragColor.a = 1.0;
 	//fragColor.r = texture(iChannel0, uv).a;
 
-	fragColor.rgb /= (fragColor.rgb + vec3(1.0));
+	//fragColor.rgb /= (fragColor.rgb + vec3(1.0));
 
 	
 }

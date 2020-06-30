@@ -16,7 +16,7 @@ void main()
     float samples = 20.;
     float totalWeight = 0.;
     float focus = texture(inTexture0, uv).a;
-    float dist = focus * 0.01;
+    float dist = focus * 0.005;
     for (float i = 0.; i < samples; i++) {
         float f = (i - samples / 2.) / (samples / 2.);
         float weight = 1. - pow(abs(f), 4.);

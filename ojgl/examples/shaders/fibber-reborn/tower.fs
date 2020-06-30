@@ -23,9 +23,9 @@ DistanceInfo map(in vec3 po)
 	DistanceInfo res;
 
 	{
-		float s = 15.0;
+		float s = 10.0;
 		float rou = 0.5;
-		res = DistanceInfo(-sdRoundBox(po - vec3(0, s * (1.0 + rou), 0) + noise_3(po * 5.0) * 0.015, vec3(s, s, s), s * rou), WALL_TYPE);
+		res = DistanceInfo(-sdRoundBox(po - vec3(0, s * (1.0 + rou), 0) + fbm3_high(po * 10.0, 0.75, 1.0) * 0.015, vec3(s, s, s), s * rou), WALL_TYPE);
 	}
 
 	{
@@ -81,8 +81,8 @@ VolumetricResult evaluateLight(in vec3 p) {
 	//d = smink(d, d3, 1.);
 	float d = d3;//smink(d3, d4, 4.);
 
-	float strength = 10;// + 20 * 20 - boom * boom;
-	vec3 col = vec3(1.0, 0.1, 1.0);
+	float strength = 100;// + 20 * 20 - boom * boom;
+	vec3 col = vec3(1.0, 0.05, 0.05);
 	vec3 res = col * strength / (d * d * d);
 	return VolumetricResult(d, res);
 }
@@ -102,9 +102,9 @@ vec3 getColor(in MarchResult res)
 		} else  if (res.type == TOWER_BASE_BOX) {
 			col = vec3(0.5);
 		} else  if (res.type == TOWER_BASE_BOX_LEGS) {
-			col = vec3(0.5, 0.5, 0.0);
+			col = vec3(1.0);
 		} else  if (res.type == WALL_TYPE) {
-			col = vec3(0.0, 0.1, 0.0);
+			col = vec3(0.0, 0.0, 0.0);
 		}
 
         vec3 invLight = -normalize(vec3(-0.7, -0.2, -0.5));
@@ -129,27 +129,29 @@ void main()
     vec3 color = getColor(result);
 	vec3 firstPos = result.position;
 
-	//float reflectiveIndex = getReflectiveIndex(result.type);
-    //if (reflectiveIndex > 0.0 && result.type != invalidType) {
-    //    rayDirection = reflect(rayDirection, normal(result.position));
-    //    result = march(result.position + 0.1 * rayDirection, rayDirection);
-    //    vec3 newColor = getColor(result);
-    //    color = mix(color, newColor, reflectiveIndex);
-	//
-	//
-	//	reflectiveIndex = getReflectiveIndex(result.type);
-	//	if (reflectiveIndex > 0.0 && result.type != invalidType) {
-	//		rayDirection = reflect(rayDirection, normal(result.position));
-	//		result = march(result.position + 0.1 * rayDirection, rayDirection);
-	//		vec3 newColor = getColor(result);
-	//		color = mix(color, newColor, reflectiveIndex);
-	//	}
-	//
-    //}
+	float reflectiveIndex = getReflectiveIndex(result.type);
+    if (reflectiveIndex > 0.0 && result.type != invalidType) {
+        rayDirection = reflect(rayDirection, normal(result.position));
+        result = march(result.position + 0.1 * rayDirection, rayDirection);
+        vec3 newColor = getColor(result);
+        color = mix(color, newColor, reflectiveIndex);
+	
+	
+		reflectiveIndex = getReflectiveIndex(result.type);
+		if (reflectiveIndex > 0.0 && result.type != invalidType) {
+			rayDirection = reflect(rayDirection, normal(result.position));
+			result = march(result.position + 0.1 * rayDirection, rayDirection);
+			vec3 newColor = getColor(result);
+			color = mix(color, newColor, reflectiveIndex);
+		}
+	
+    }
 	
 
-    float focus = abs(length(firstPos - eye) - 15.0) * 0.05;// - (8.0 - 7.0 * sin(iTime * 1.0))) * 0.1;
+    float focus = abs(length(firstPos - eye) - 15.0) * 0.5;// - (8.0 - 7.0 * sin(iTime * 1.0))) * 0.1;
     focus = min(focus, 1.);
+
+	color /= (color + vec3(1.0));
 	fragColor = vec4(color, focus);
 
 	//fragColor.rgb = vec3(1, 0, 1);
