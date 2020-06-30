@@ -12,6 +12,13 @@ float sdCappedCylinder(vec3 p, vec2 h)
     vec2 d = abs(vec2(length(p.xz), p.y)) - h;
     return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
 }
+
+float sdVerticalCapsule( vec3 p, float h, float r )
+{
+  p.y -= clamp( p.y, 0.0, h );
+  return length( p ) - r;
+}
+
 float sdSphere(vec3 p, float s)
 {
     return length(p) - s;
@@ -31,6 +38,8 @@ float udRoundBox( vec3 p, vec3 b, float r )
 {
   return length(max(abs(p)-b,0.0))-r;
 }
+
+
 
 float smink( float a, float b, float k )
 {

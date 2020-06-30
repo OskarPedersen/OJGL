@@ -17,6 +17,7 @@ const int WALL_TYPE = 3;
 const int WATER_TYPE = 4;
 const int TOWER_BASE_BOX = 5;
 const int TOWER_BASE_BOX_LEGS = 6;
+const int PILLAR = 7;
 
 DistanceInfo map(in vec3 po)
 {
@@ -25,7 +26,13 @@ DistanceInfo map(in vec3 po)
 	{
 		float s = 10.0;
 		float rou = 0.5;
-		res = DistanceInfo(-sdRoundBox(po - vec3(0, s * (1.0 + rou), 0) + fbm3_high(po * 10.0, 0.75, 1.0) * 0.015, vec3(s, s, s), s * rou), WALL_TYPE);
+		res = DistanceInfo(-sdRoundBox(po - vec3(0, s * (1.0 + rou), 0) + fbm3_high((po + vec3(-iTime * 0.1, 0.0, -iTime * 0.1)) * 7.0, 0.75, 1.0) * 0.015 + fbm3_high((po + vec3(iTime * 0.1, 0.0, iTime * 0.1)) * 7.0, 0.75, 1.0) * 0.015, vec3(s, s, s), s * rou), WALL_TYPE);
+		
+		//vec3 p = po;
+		//p += + fbm3_high((po + vec3(-iTime * 0.1, 0.0, -iTime * 0.1)) * 7.0, 0.75, 1.0) * 0.015 + fbm3_high((po + vec3(iTime * 0.1, 0.0, iTime * 0.1)) * 7.0, 0.75, 1.0) * 0.015;
+		//float d = po.y;
+		//res = DistanceInfo(d, WALL_TYPE);
+	
 	}
 
 	{
@@ -58,28 +65,52 @@ DistanceInfo map(in vec3 po)
 
 			res = un(res, DistanceInfo(d, TOWER_BASE_BOX_LEGS));
 		}
+	}
 
+	{
+		vec3 p = po;
 
-
+		pModPolar(p.xz, 8.0);
+		//p -=  vec3(5, 0, 0);
+		p.x = mod(p.x, 2.0) - 1.0;
+		float d = sdVerticalCapsule(p, 1.0, 0.2);
+		res = un(res, DistanceInfo(d, PILLAR));
 	}
 
     return res;
 }
 
 float calcFogAmount(in vec3 p) {
-	return 0.005;
+	return 0.0005;
 }
 
 VolumetricResult evaluateLight(in vec3 p) {
 	//float d1 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime * 3), sin(iTime), sin(iTime * 2))) - 0.3;
 	//float d2 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime), sin(iTime * 2), sin(iTime * 3))) - 0.3;
 	float d3 = sdRoundBox(p - vec3(0, 4.0, 0), vec3(0.5), 0.2);
-	d3 = max(0.001, d3);
+	//d3 = max(0.001, d3);
 	float boom = mod(iTime * 5.0, 20.0);
 	float d4 = length(p - vec3(0, 5.0, 0) + vec3(0, -boom, 0)) - 0.3;
+
 	//float d = smink(d1, d2, 1.);
 	//d = smink(d, d3, 1.);
-	float d = d3;//smink(d3, d4, 4.);
+	float d = smink(d3, d4, 4.);
+	
+
+
+	{
+
+		float c = pModPolar(p.xz, 8.0);
+		if (abs(c + 3.0 - mod(floor(iTime), 8.0)) < 0.01) {
+			//p -=  vec3(5, 0, 0);
+			p.x = mod(p.x, 2.0) - 1.0;
+			float d5 = length(p - vec3(0, 1.5, 0)) - 0.1;
+			d = min(d, d5);
+		
+		} 
+	}
+
+	d = max(0.001, d);
 
 	float strength = 100;// + 20 * 20 - boom * boom;
 	vec3 col = vec3(1.0, 0.05, 0.05);
@@ -104,13 +135,16 @@ vec3 getColor(in MarchResult res)
 		} else  if (res.type == TOWER_BASE_BOX_LEGS) {
 			col = vec3(1.0);
 		} else  if (res.type == WALL_TYPE) {
-			col = vec3(0.0, 0.0, 0.0);
+			col = vec3(0.0);
+		} else  if (res.type == PILLAR) {
+			col = vec3(0.5);
 		}
 
         vec3 invLight = -normalize(vec3(-0.7, -0.2, -0.5));
         vec3 normal = normal(res.position);
         float diffuse = max(0., dot(invLight, normal));
         return res.transmittance * col * diffuse + res.scatteredLight;
+		//return res.scatteredLight;
     } else {
 		return vec3(1, 0, 1);
         //return res.scatteredLight;
@@ -148,7 +182,7 @@ void main()
     }
 	
 
-    float focus = abs(length(firstPos - eye) - 15.0) * 0.5;// - (8.0 - 7.0 * sin(iTime * 1.0))) * 0.1;
+    float focus = abs(length(firstPos - eye) - 15.0) * 0.05 + 0.1;// - (8.0 - 7.0 * sin(iTime * 1.0))) * 0.1;
     focus = min(focus, 1.);
 
 	color /= (color + vec3(1.0));
