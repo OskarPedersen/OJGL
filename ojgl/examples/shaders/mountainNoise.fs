@@ -35,6 +35,27 @@ float noiseOctave(in vec2 p, int octaves, float persistence)
 	}
 	return n / maxValue; 
 }
+float hash11(float p)
+{
+    return fract(sin(p * 727.1) * 435.545);
+}
+float hash12(vec2 p)
+{
+    float h = dot(p, vec2(127.1, 311.7));
+    return fract(sin(h) * 437.545);
+}
+vec3 hash31(float p)
+{
+    vec3 h = vec3(127.231, 491.7, 718.423) * p;
+    return fract(sin(h) * 435.543);
+}
+float noise_2(in vec2 p)
+{
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash12(i + vec2(0.0, 0.0)), hash12(i + vec2(1.0, 0.0)), u.x), mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y);
+}
 
 void main()
 {
@@ -51,7 +72,9 @@ void main()
     }
 
     // Output to screen
-    fragColor = vec4(vec3(noiseOctave(uv * 10.0, 20, 0.6)),1.0);
+    //fragColor = vec4(vec3(noiseOctave(uv * 10.0, 20, 0.6)),1.0);
+
+	fragColor = vec4(vec3(noise_2(uv)),1.0);
 }
 
 )""

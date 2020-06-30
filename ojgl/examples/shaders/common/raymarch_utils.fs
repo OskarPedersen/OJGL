@@ -37,32 +37,35 @@ vec3 normal(in vec3 p)
 
 DistanceInfo un(DistanceInfo a, DistanceInfo b) { return a.distance < b.distance ? a : b; }
 
-MarchResult march(in vec3 rayOrigin, in vec3 rayDirection)
+MarchResult march(in vec3 p, in vec3 rayDirection)
 {
-    float t = 0.0;
+    //float t = 0.0;
 
 	vec3 scatteredLight = vec3(0.0);
 	float transmittance = 1.0;
 
     MarchResult invalidResult = { invalidType, vec3(0.0), 0, 0, vec3(0.0) };
     for (int steps = 0; steps < maxSteps; ++steps) {
-        vec3 p = rayOrigin + t * rayDirection;
+        //vec3 p = rayOrigin + t * rayDirection;
+		
         DistanceInfo info = map(p);
 
 		float fogAmount = calcFogAmount(p);
 		VolumetricResult vr = evaluateLight(p);
 		float d = min(info.distance, max(minVolumetricDistanceJump, vr.distance * volumetricDistanceModifier));
+		
 		vec3 lightIntegrated = vr.color - vr.color * exp(-fogAmount * d);
 		// d = min(d, max(0.01, lightColDis.w * 0.25));
         scatteredLight += transmittance * lightIntegrated;	
         transmittance *= exp(-fogAmount * d);
 
-        t += d;
+        //t += d;
+		p += d * rayDirection;
 
         if (info.distance < epsilon)
             return MarchResult(info.type, p, steps, transmittance, scatteredLight);
-        if (t > maxDistance || steps == maxSteps - 2)
-            return MarchResult(invalidType, p, steps, transmittance, scatteredLight);
+        //if (t > maxDistance || steps == maxSteps - 2)
+        //    return MarchResult(invalidType, p, steps, transmittance, scatteredLight);
     }
     return invalidResult;
 }

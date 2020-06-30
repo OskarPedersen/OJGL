@@ -8,6 +8,8 @@ R""(
 in vec2 fragCoord;
 out vec4 fragColor;
 
+uniform sampler2D inTexture0;
+
 uniform float iTime;
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
@@ -21,9 +23,14 @@ DistanceInfo map(in vec3 po)
 {
 	const float s = 10.0;
 	const float rou = 0.5;
-	const float dwall = -sdRoundBox(po - vec3(0, s * (1.0 + rou), 0) + noise_3(po * (po.y > 1.0 ? 5.0 : 15.0)) * 0.03, vec3(s, s, s), s * rou);
-	//DistanceInfo res = DistanceInfo(dwall, WALL_TYPE);
-		
+	float dwall = -sdRoundBox(po - vec3(0, s * (1.0 + rou) + 1.0, 0) + noise_3(po * (po.y > 1.0 ? 5.0 : 15.0)) * 0.03, vec3(s, s, s), s * rou);
+	
+	vec2 uv = po.xz;
+	//float dwall = -sdRoundBox(po - vec3(0, s * (1.0 + rou) + 1.0, 0) + texture(inTexture0, uv).r, vec3(s, s, s), s * rou);
+	//float dwall = -sdRoundBox(po - vec3(0, s * (1.0 + rou) + 1.0, 0), vec3(s, s, s), s * rou);
+	//if (dwall < 0.03) {
+	//	dwall = -sdRoundBox(po - vec3(0, s * (1.0 + rou) + 1.0, 0) + noise_3(po * (po.y > 1.0 ? 5.0 : 15.0)) * 0.03, vec3(s, s, s), s * rou);
+	//}
 
 
 	vec3 p = po;
@@ -83,6 +90,8 @@ DistanceInfo map(in vec3 po)
     return res;
 }
 
+
+
 float calcFogAmount(in vec3 p) {
 	return 0.002;
 }
@@ -122,7 +131,7 @@ float getReflectiveIndex(int type)
 
 vec3 getColor(in MarchResult res)
 {
-    if (res.type != invalidType) {
+    //if (res.type != invalidType) {
 		vec3 col = vec3(1, 0, 1);
 		if (res.type == TOWER_TYPE) {
 			col = vec3(1.0);
@@ -137,10 +146,9 @@ vec3 getColor(in MarchResult res)
         float diffuse = max(0., dot(invLight, normal));
         return res.transmittance * col * diffuse + res.scatteredLight;
 		//return res.scatteredLight;
-    } else {
-		return vec3(1, 0, 1);
-        //return res.scatteredLight;
-    }
+    //} else {
+	//	return vec3(1, 0, 1);
+    //}
 }
 
 void main()
@@ -155,23 +163,24 @@ void main()
     vec3 color = getColor(result);
 	vec3 firstPos = result.position;
 
-	float reflectiveIndex = getReflectiveIndex(result.type);
-    if (reflectiveIndex > 0.0 && result.type != invalidType) {
+	const float reflectiveIndex = 0.5;
+
+	//float reflectiveIndex = getReflectiveIndex(result.type);
+    //if (reflectiveIndex > 0.0 && result.type != invalidType) {
         rayDirection = reflect(rayDirection, normal(result.position));
         result = march(result.position + 0.1 * rayDirection, rayDirection);
         vec3 newColor = getColor(result);
         color = mix(color, newColor, reflectiveIndex);
 	
 	
-		reflectiveIndex = getReflectiveIndex(result.type);
-		if (reflectiveIndex > 0.0 && result.type != invalidType) {
+		//reflectiveIndex = getReflectiveIndex(result.type);
+		//if (reflectiveIndex > 0.0 && result.type != invalidType) {
 			rayDirection = reflect(rayDirection, normal(result.position));
 			result = march(result.position + 0.1 * rayDirection, rayDirection);
-			vec3 newColor = getColor(result);
+			newColor = getColor(result);
 			color = mix(color, newColor, reflectiveIndex);
-		}
-	
-    }
+		//}
+    //}
 	
 
     float focus = abs(length(firstPos - eye) - 15.0) * 0.05 + 0.1;// - (8.0 - 7.0 * sin(iTime * 1.0))) * 0.1;
