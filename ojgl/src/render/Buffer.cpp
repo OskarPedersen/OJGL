@@ -241,7 +241,7 @@ void Buffer::loadShader()
         LOG_ERROR("Shader program is not valid!");
         int len;
         char log[200];
-        glGetShaderInfoLog(fragID, 200, &len, log);
+        glGetShaderInfoLog(fragID, 200, &len, log); // Should it be glGetProgramInfoLog(_programID, 200, &len, log); instead?
         LOG_ERROR(log);
     }
 

@@ -71,14 +71,14 @@ float calcFogAmount(in vec3 p) {
 }
 
 VolumetricResult evaluateLight(in vec3 p) {
-	float d1 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime * 3), sin(iTime), sin(iTime * 2))) - 0.3;
-	float d2 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime), sin(iTime * 2), sin(iTime * 3))) - 0.3;
+	//float d1 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime * 3), sin(iTime), sin(iTime * 2))) - 0.3;
+	//float d2 = length(p - vec3(0, 5.0, 0) + 5.0 * vec3(sin(iTime), sin(iTime * 2), sin(iTime * 3))) - 0.3;
 	float d3 = udRoundBox(p - vec3(0, 4.0, 0), vec3(0.5), 0.2);
 	float boom = mod(iTime * 5.0, 20.0);
 	float d4 = length(p - vec3(0, 5.0, 0) + vec3(0, -boom, 0)) - 0.3;
-	float d = smink(d1, d2, 1.);
-	d = smink(d, d3, 1.);
-	d = smink(d, d4, 4.);
+	//float d = smink(d1, d2, 1.);
+	//d = smink(d, d3, 1.);
+	float d = smink(d3, d4, 4.);
 
 	float strength = 10 + 20 * 20 - boom * boom;
 	vec3 col = vec3(1.0, 0.1, 0.0);
@@ -133,8 +133,8 @@ void main()
         result = march(result.position + 0.1 * rayDirection, rayDirection);
         vec3 newColor = getColor(result);
         color = mix(color, newColor, reflectiveIndex);
-
-
+	
+	
 		reflectiveIndex = getReflectiveIndex(result.type);
 		if (reflectiveIndex > 0.0) {
 			rayDirection = reflect(rayDirection, normal(result.position));
@@ -142,10 +142,13 @@ void main()
 			vec3 newColor = getColor(result);
 			color = mix(color, newColor, reflectiveIndex);
 		}
-
+	
     }
 	color /= (color + vec3(1.0));
-    fragColor = vec4(color, 1.0);
+
+    float focus = abs(length(result.position - rayOrigin));// - (8.0 - 7.0 * sin(iTime * 1.0))) * 0.1;
+    focus = min(focus, 1.);
+	fragColor = vec4(color, focus);
 }
 
 )""

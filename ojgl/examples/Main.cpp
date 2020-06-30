@@ -21,10 +21,10 @@ int main(int argc, char* argv[])
 
     OJ_UNUSED(argc);
     OJ_UNUSED(argv);
-    int width = 1920;//popupData.width;
+    int width = 1920; //popupData.width;
     int height = 1080; // popupData.height;
     bool fullScreen = false;
-    bool showCursor = true;// !fullScreen;
+    bool showCursor = true; // !fullScreen;
 
     ShaderReader::setBasePath("examples/shaders/");
     ShaderReader::preLoad("edison.vs", resources::vertex::edison);
@@ -44,7 +44,11 @@ int main(int argc, char* argv[])
     ShaderReader::preLoad("cachedGeometry.fs", resources::fragment::cachedGeometry);
     ShaderReader::preLoad("lightning.fs", resources::fragment::lightning);
     ShaderReader::preLoad("fibber-reborn/tunnel.fs", resources::fragment::fibberReborn::tunnel);
+
     ShaderReader::preLoad("fibber-reborn/tower.fs", resources::fragment::fibberReborn::tower);
+    ShaderReader::preLoad("fibber-reborn/tower_first_blur.fs", resources::fragment::fibberReborn::towerFirstBlur);
+    ShaderReader::preLoad("fibber-reborn/tower_second_blur.fs", resources::fragment::fibberReborn::towerSecondBlur);
+    ShaderReader::preLoad("fibber-reborn/tower_final.fs", resources::fragment::fibberReborn::towerFinal);
 
     // @todo move this into GLState? We can return a const reference to window.
     // and perhaps have a unified update() which does getMessages(), music sync update and
@@ -137,13 +141,23 @@ void buildSceneGraph(GLState& glState, int width, int height)
 
     {
         auto tower = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tower.fs");
+
+        auto blur1 = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tower_first_blur.fs");
+        blur1->setInputs(tower);
+
+        auto blur2 = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tower_second_blur.fs");
+        blur2->setInputs(blur1);
+
+        auto towerPost = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tower_final.fs");
+        towerPost->setInputs(blur2);
+
         glState.addScene("towerScene", tower, Duration::seconds(99999));
     }
 
-    {
+    /*{
         auto tunnel = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tunnel.fs");
         glState.addScene("tunnelScene", tunnel, Duration::seconds(99999));
-    }
+    }*/
 }
 
 extern "C" int _tmain(int argc, char** argv)
