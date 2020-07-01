@@ -49,7 +49,6 @@ int main(int argc, char* argv[])
     ShaderReader::preLoad("common/raymarch_utils.fs", resources::common::raymarch_utils);
     ShaderReader::preLoad("common/utils.fs", resources::common::utils);
 
-
     ShaderReader::preLoad("fibber-reborn/tunnel.fs", resources::fragment::fibberReborn::tunnel);
 
     ShaderReader::preLoad("fibber-reborn/tower.fs", resources::fragment::fibberReborn::tower);
@@ -63,7 +62,7 @@ int main(int argc, char* argv[])
     Window window(width, height, "Eldur - OJ", fullScreen, showCursor);
     GLState glState(resources::songs::song);
 
-    auto[sceneWidth, sceneHeight] = calculateDimensions(16.0f / 9.0f, width, height);
+    auto[sceneWidth, sceneHeight] = calculateDimensions(21.0f / 9.0f, width, height);
     Vector2i viewportOffset((width - sceneWidth) / 2, (height - sceneHeight) / 2);
 
     buildSceneGraph(glState, sceneWidth, sceneHeight);
