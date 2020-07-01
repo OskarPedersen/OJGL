@@ -45,8 +45,12 @@ DistanceInfo map(in vec3 po)
 
 	p.x = mod(p.x, 2.0) - 1.0;
 
-	const float dcap = sdTorus(p - vec3(0, 1.5, 0), vec2(0.8, 0.1));
-
+	float yy = 0.0;
+	if (iTime < PART_1_INTRO) {
+		yy = sin(iTime * 0.5) * 0.05;
+	}
+	const float dcap = sdTorus(p - vec3(0, 1.5 + yy, 0), vec2(0.8, 0.1));
+	
 	const float d = smink(dwall, dcap, 0.3);
 	int type = WALL_TYPE;
 	if (dcap < dwall) {
@@ -136,6 +140,9 @@ VolumetricResult evaluateLight(in vec3 p) {
 
 	float light = 10.0;
 	if (iTime < PART_1_INTRO) {
+		//float r = 0.3;
+		//p.x += sin(iTime * 2.0 + cx) * r;
+		//p.z += cos(iTime * 2.0 + cx) * r;
 		if (cx + iTime > 10.0) {
 			float tt = cx + iTime - 10.0;
 			tt = min(1.0, tt);
@@ -232,7 +239,7 @@ void main()
 
 	if (iTime < PART_1_INTRO) {
 		float cs = 0.0;
-		eye = vec3(2 - iTime * cs, 4.3, 2 - iTime* cs); 
+		eye = vec3(2, 4.3, 2); 
 		tar = eye + vec3(1, -0.5, 1);
 	} else  if (iTime < PART_2_SPIN_INTRO) {
 		float t = iTime - PART_1_INTRO;
