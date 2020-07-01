@@ -19,7 +19,7 @@ void main()
 	fragColor.g = texture(inTexture0, uv + dir * a * 0.01*l).g;
 	fragColor.b = texture(inTexture0,  uv + dir * a * 0.02*l).b;
 
-	fragColor.rgb = texture(inTexture0, uv).rgb;
+	//fragColor.rgb = texture(inTexture0, uv).rgb;
 	
 }
 

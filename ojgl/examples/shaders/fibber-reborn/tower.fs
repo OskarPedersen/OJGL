@@ -22,7 +22,8 @@ const int PILLAR = 7;
 
 #define PART_1_INTRO 8
 #define PART_2_SPIN_INTRO (PART_1_INTRO + 15.0)
-#define PART_3_CLOSE_LIGHT (PART_2_SPIN_INTRO + 15.0)
+#define PART_3_CLOSE_LIGHT (PART_2_SPIN_INTRO + 17.0)
+#define PART_4_NORMAL (PART_3_CLOSE_LIGHT + 13.0)
 
 DistanceInfo map(in vec3 po)
 {
@@ -105,15 +106,24 @@ VolumetricResult evaluateLight(in vec3 p) {
 
 	float d = 9999999;
 	bool midLight = false;
-	if (iTime > PART_2_SPIN_INTRO + 11) {
+	float start = PART_2_SPIN_INTRO + 11;
+	if (iTime > start) {
 		midLight = true;
 	}
 	
 	if (midLight) {
-		float d3 = sdRoundBox(p - vec3(0, 4.0, 0), vec3(0.5), 0.2);
+		float scale = smoothstep(start, start + 1.0, iTime);
+		
+		float d3 = sdRoundBox(p - vec3(0, 4.0, 0), vec3(0.4) * scale, 0.1 * scale);
 		float boom = mod(iTime * 5.0, 20.0);
-		float d4 = length(p - vec3(0, 5.0, 0) + vec3(0, -boom, 0)) - 0.3;
-
+		float r = 0.6;
+		if (iTime > PART_4_NORMAL - 3.0) {
+			float tt = iTime - PART_4_NORMAL + 4.0;
+			r *= (tt*tt);
+			//r = 1.0;
+		} 
+		float d4 = length(p - vec3(0, 5.0, 0) + vec3(0, -boom, 0)) - r;
+		
 		 d = smink(d3, d4, 4.);
 	}
 
@@ -122,7 +132,7 @@ VolumetricResult evaluateLight(in vec3 p) {
 	float c = pModPolar(p.xz, 8.0);
 	float radSiz = 2.0;
 	float cx = floor(p.x / radSiz);
-	p.x = mod(p.x, radSiz) - radSiz * 0.5;
+	p.x = mod(p.x, radSiz) - radSiz * 0.5; 
 
 	bool light = false;
 	if (iTime < PART_1_INTRO) {
@@ -204,8 +214,18 @@ void main()
 		//tar = vec3(0.0, 5.0, 0.0);
 	} else if (iTime < PART_3_CLOSE_LIGHT) {
 		float t = iTime - PART_2_SPIN_INTRO;
-		eye = vec3( 3, 2 + t * 0.2, 5 );
-		tar = eye + vec3(0.0, -0.1, -  1.0);
+		eye = vec3( 3, 2 + t * 0.2, -5);
+		tar = eye + vec3(0.0, -0.1, 1.0);
+	} else if (iTime < PART_4_NORMAL) {
+		float t = iTime - PART_3_CLOSE_LIGHT;
+		eye = vec3(2 - t * 0.1, 8, -14 + t);
+		tar = vec3(0, 4.0, 0);
+		float swithcTime = 7.7; 
+		if (t > swithcTime) {
+			float t2 = t - swithcTime;
+			eye.y += t2 * 5.0;
+			tar.y += t2 * 5.0;
+		}
 	}
 
 	vec3 dir = normalize(tar - eye);
