@@ -52,7 +52,7 @@ MarchResult march(in vec3 p, in vec3 rayDirection)
 
 		float fogAmount = calcFogAmount(p);
 		VolumetricResult vr = evaluateLight(p);
-		float d = min(info.distance, max(minVolumetricDistanceJump, vr.distance * volumetricDistanceModifier));
+		float d = min(info.distance * 0.9, max(minVolumetricDistanceJump, vr.distance * volumetricDistanceModifier));
 		
 		vec3 lightIntegrated = vr.color - vr.color * exp(-fogAmount * d);
 		// d = min(d, max(0.01, lightColDis.w * 0.25));

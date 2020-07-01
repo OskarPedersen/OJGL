@@ -95,8 +95,6 @@ DistanceInfo map(in vec3 po)
 		}
 	}
 
-	
-
     return res;
 }
 
