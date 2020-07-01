@@ -137,7 +137,9 @@ VolumetricResult evaluateLight(in vec3 p) {
 	float light = 10.0;
 	if (iTime < PART_1_INTRO) {
 		if (cx + iTime > 10.0) {
-			light = -0.1;
+			float tt = cx + iTime - 10.0;
+			tt = min(1.0, tt);
+			light = 0.9 - tt;//-0.1;
 		}
 	} else if (iTime < PART_2_SPIN_INTRO) {
 		//if (abs(c + 3.0 - mod(floor(iTime), 8.0)) < 0.01) {
@@ -159,14 +161,19 @@ VolumetricResult evaluateLight(in vec3 p) {
 			//}
 			//light = -0.5 ;
 			float ttt = mod(iTime, 1.0); 
-			if (ttt < 0.25) {
+			if (ttt < 0.25) { 
 				light = (ttt) * 4.0 - 0.1; 
 			}
 		}
 	} else if (iTime < PART_3_CLOSE_LIGHT) {
 		float t = iTime - PART_2_SPIN_INTRO;
-		if (floor(cx + t) == 10.0) {
-			light = -0.1;
+		//if (floor(cx + t) == 10.0) {
+		//	light = -0.1;
+		//}
+		if (cx + t > 10.0) {
+			float tt = cx + t - 10.0;
+			tt = min(1.0, tt);
+			light = 0.9 - tt;//-0.1;
 		}
 	}
 
@@ -225,8 +232,8 @@ void main()
 
 	if (iTime < PART_1_INTRO) {
 		float cs = 0.0;
-		eye = vec3(3 - iTime * cs, 1.2, 3 - iTime* cs); 
-		tar = eye + vec3(1, 0, 1);
+		eye = vec3(2 - iTime * cs, 4.3, 2 - iTime* cs); 
+		tar = eye + vec3(1, -0.5, 1);
 	} else  if (iTime < PART_2_SPIN_INTRO) {
 		float t = iTime - PART_1_INTRO;
 		eye = vec3(5.0, 20.0, -5  +  t);
@@ -280,7 +287,23 @@ void main()
 	
 
     float focus = abs(length(firstPos - eye) - 15.0) * 0.05 + 0.1;// - (8.0 - 7.0 * sin(iTime * 1.0))) * 0.1;
-    focus = min(focus, 1.);
+
+	 if (iTime < PART_1_INTRO) {
+        focus = 0.1;
+    } else  if (iTime < PART_2_SPIN_INTRO) {
+        focus = abs(length(firstPos - eye) - 18.3) * 0.3;
+    } else if (iTime < PART_3_CLOSE_LIGHT) {
+        focus = abs(length(firstPos - eye) - 5.3) * 0.3;
+		//float t = iTime - PART_2_SPIN_INTRO;
+		//if (t > 5.0) {
+		//	focus = abs(length(firstPos - eye) -15.0) * 0.1;
+		//}
+    } else if (iTime < PART_4_NORMAL) {
+        float t = iTime - PART_3_CLOSE_LIGHT;
+        focus = abs(length(firstPos - eye) - 14. + t) * 0.1;
+    }
+
+       focus = min(focus, 1.);
 
 	color = mix(vec3(0.0), color, iTime * 0.5);
 
