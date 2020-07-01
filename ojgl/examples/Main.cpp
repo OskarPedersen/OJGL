@@ -157,7 +157,7 @@ void buildSceneGraph(GLState& glState, int width, int height)
         auto towerPost = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tower_final.fs");
         towerPost->setInputs(blur2);
 
-        glState.addScene("towerScene", towerPost, Duration::seconds(99999));
+        glState.addScene("towerScene", towerPost, Duration::seconds(8 + 15 + 17 + 12));
     }
 
     /*{

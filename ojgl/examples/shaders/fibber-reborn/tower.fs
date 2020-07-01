@@ -184,7 +184,7 @@ VolumetricResult evaluateLight(in vec3 p) {
 	//}
 	d = max(0.001, d);
 
-	float strength = 100;// + 20 * 20 - boom * boom;
+	float strength = 500;// + 20 * 20 - boom * boom;
 	vec3 col = vec3(1.0, 0.05, 0.05);
 	vec3 res = col * strength / (d * d * d);
 	return VolumetricResult(d, res);
@@ -211,7 +211,7 @@ vec3 getColor(in MarchResult res)
         vec3 invLight = -normalize(vec3(-0.7, -0.2, -0.5));
         vec3 normal = normal(res.position);
         float diffuse = max(0., dot(invLight, normal));
-        return res.transmittance * col * diffuse + res.scatteredLight;
+        return res.transmittance * col * diffuse * 5.0 + res.scatteredLight;
 		//return res.scatteredLight;
     //} else {
 	//	return vec3(1, 0, 1);
@@ -305,9 +305,13 @@ void main()
 
        focus = min(focus, 1.);
 
-	color = mix(vec3(0.0), color, iTime * 0.5);
+
 
 	color /= (color + vec3(1.0));
+
+	color = mix(vec3(0.0), color, min(1.0, iTime * 0.5)); // fade in
+	//color = mix(color, vec3(0.0), max(0.0, min(1.0, iTime - (8 + 15 + 17 + 11)))); // fade out
+	
 	fragColor = vec4(color, focus);
 
 	//fragColor.rgb = vec3(1, 0, 1);
