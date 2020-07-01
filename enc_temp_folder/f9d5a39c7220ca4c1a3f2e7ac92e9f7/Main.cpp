@@ -146,7 +146,11 @@ void buildSceneGraph(GLState& glState, int width, int height)
     glState.clearScenes();
 
     {
+        auto mountainNoise = Buffer::construct(width, height, "edison.vs", "mountainNoise.fs");
+        mountainNoise->setRenderOnce(true);
+
         auto tower = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tower.fs");
+        tower->setInputs(mountainNoise);
 
         auto blur1 = Buffer::construct(width, height, "edison.vs", "fibber-reborn/tower_first_blur.fs");
         blur1->setInputs(tower);

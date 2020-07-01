@@ -134,27 +134,47 @@ VolumetricResult evaluateLight(in vec3 p) {
 	float cx = floor(p.x / radSiz);
 	p.x = mod(p.x, radSiz) - radSiz * 0.5; 
 
-	bool light = false;
+	float light = 10.0;
 	if (iTime < PART_1_INTRO) {
 		if (cx + iTime > 10.0) {
-			light = true;
+			light = -0.1;
 		}
 	} else if (iTime < PART_2_SPIN_INTRO) {
-		if (abs(c + 3.0 - mod(floor(iTime), 8.0)) < 0.01) {
-			light = true;
+		//if (abs(c + 3.0 - mod(floor(iTime), 8.0)) < 0.01) {
+		//	light = -0.1;
+		//}
+		//float dism = c + 3.0 - mod(floor(iTime), 8.0);
+		float dism = mod(c + 1.0  - mod(floor(iTime), 8.0), 8.0);
+		if (abs(dism) < 0.01) {
+			light = -0.1;
+		} else if (dism < 1.5) {
+				float ttt = mod(iTime, 1.0); 
+				if (ttt > 0.75) {
+					light = -(ttt - 0.75) * 4.0 + 0.9; 
+				}
+		} else if (dism > 6.5) {
+			//float ttt = mod(iTime, 1.0); 
+			//if (ttt > 0.75) {
+			//	light = (ttt - 0.75) * 4.0 - 0.9; 
+			//}
+			//light = -0.5 ;
+			float ttt = mod(iTime, 1.0); 
+			if (ttt < 0.25) {
+				light = (ttt) * 4.0 - 0.1; 
+			}
 		}
 	} else if (iTime < PART_3_CLOSE_LIGHT) {
 		float t = iTime - PART_2_SPIN_INTRO;
 		if (floor(cx + t) == 10.0) {
-			light = true;
+			light = -0.1;
 		}
 	}
 
-	if (light) {
+	//if (light) {
 		
-		float d5 = length(p - vec3(0, 1.5, 0)) - 0.1;
+		float d5 = length(p - vec3(0, 1.5, 0)) + light;
 		d = min(d, d5);
-	}
+	//}
 	d = max(0.001, d);
 
 	float strength = 100;// + 20 * 20 - boom * boom;
