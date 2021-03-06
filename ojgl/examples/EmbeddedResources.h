@@ -193,8 +193,12 @@ namespace ojgl::resources {
           {
 #include "shaders/innersystemlab/hospital.fs"
             , "innersystemlab/hospital.fs"
-          }
+          },
 
+          {
+#include "shaders/edison2021/scene1.fs"
+            , "edison2021/scene1.fs"
+          }
   };
 // clang-format on
 }

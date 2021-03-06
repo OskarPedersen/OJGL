@@ -137,6 +137,7 @@ Buffer& Buffer::setViewportOffset(const Vector2i& viewportOffset)
 
 Buffer& Buffer::setUniformCallback(const ojstd::function<UniformVector(float)>& uniformCallback)
 {
+    _ASSERT(!_uniformCallback);
     _uniformCallback = uniformCallback;
     return *this;
 }

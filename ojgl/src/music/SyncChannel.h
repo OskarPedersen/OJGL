@@ -12,6 +12,7 @@ public:
     void tick(Duration currentTime);
     Duration getTimeToNext(int relativeNote) const;
     Duration getTimeSinceLast(int relativeNote) const;
+    Duration getTimeSinceAnyLast() const;
     int getTotalHitsPerNote(int relativeNote) const;
     int getTotalHits() const;
     int numNotes { -1 };

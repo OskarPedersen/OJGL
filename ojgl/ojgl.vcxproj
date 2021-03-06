@@ -305,6 +305,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="examples\demos\Edison2021.cpp" />
     <ClCompile Include="examples\demos\DodensTriumf.cpp" />
     <ClCompile Include="examples\demos\Eldur.cpp" />
     <ClCompile Include="examples\demos\QED.cpp" />
@@ -331,6 +332,7 @@
     <ClCompile Include="src\winapi\gl_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="examples\demos\Edison2021.h" />
     <ClInclude Include="examples\demos\DodensTriumf.h" />
     <ClInclude Include="examples\demos\Eldur.h" />
     <ClInclude Include="examples\demos\QED.h" />
@@ -374,6 +376,7 @@
     <None Include="examples\shaders\dodenstriumf\post.fs" />
     <None Include="examples\shaders\dodenstriumf\roomScene.fs" />
     <None Include="examples\shaders\dodenstriumf\roomScenePost.fs" />
+    <None Include="examples\shaders\edison2021\scene1.fs" />
     <None Include="examples\shaders\experiments\cachedGeometry.fs" />
     <None Include="examples\shaders\common\noise.fs" />
     <None Include="examples\shaders\common\primitives.fs" />
@@ -409,6 +412,7 @@
     <None Include="examples\shaders\QED\sphere.vs" />
     <None Include="examples\shaders\QED\tower.fs" />
     <None Include="examples\songs\dodenstriumf_song.inc" />
+    <None Include="examples\songs\edison2021.inc" />
     <None Include="examples\songs\eldur_song.inc" />
     <None Include="examples\songs\innersystemlab_song.inc" />
     <None Include="examples\songs\qed_song.inc" />

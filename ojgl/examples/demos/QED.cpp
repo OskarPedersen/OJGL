@@ -346,7 +346,7 @@ ojstd::string QED::getTitle() const
 }
 
 static const unsigned char song[] = {
-#include "songs/qed_song.inc"
+#include "songs/edison2021.inc"
 };
 
 const unsigned char* QED::getSong() const {
