@@ -30,7 +30,7 @@ void SyncChannel::tick(Duration currentTime)
             _lastTimePerNote[note] = _currentTime;
             _totalHitsPerNote[note]++;
             s.erase(s.begin());
-            LOG_INFO("Channel" << channel << " , note" << note);
+            //LOG_INFO("Channel" << channel << " , note" << note);
         }
     }
 }
@@ -42,6 +42,17 @@ Duration SyncChannel::getTimeToNext(int relativeNote) const
         return Duration::maximum();
     }
     return times[0] - _currentTime;
+}
+
+Duration SyncChannel::getTimeToAnyNext() const
+{
+  Duration min = Duration::maximum();
+
+  for (int i = 0; i < numNotes; i++) {
+    min = ojstd::min(min, getTimeToNext(i));
+  }
+
+  return min;
 }
 
 Duration SyncChannel::getTimeSinceLast(int relativeNote) const

@@ -198,6 +198,16 @@ namespace ojgl::resources {
           {
 #include "shaders/edison2021/scene1.fs"
             , "edison2021/scene1.fs"
+          },
+
+          {
+#include "shaders/edison2021/scene2.fs"
+            , "edison2021/scene2.fs"
+          },
+
+          {
+#include "shaders/edison2021/scene2post.fs"
+            , "edison2021/scene2post.fs"
           }
   };
 // clang-format on

@@ -11,6 +11,7 @@ public:
     void pushNote(int absoluteNote, Duration time);
     void tick(Duration currentTime);
     Duration getTimeToNext(int relativeNote) const;
+    Duration getTimeToAnyNext() const;
     Duration getTimeSinceLast(int relativeNote) const;
     Duration getTimeSinceAnyLast() const;
     int getTotalHitsPerNote(int relativeNote) const;

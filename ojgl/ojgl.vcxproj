@@ -377,6 +377,8 @@
     <None Include="examples\shaders\dodenstriumf\roomScene.fs" />
     <None Include="examples\shaders\dodenstriumf\roomScenePost.fs" />
     <None Include="examples\shaders\edison2021\scene1.fs" />
+    <None Include="examples\shaders\edison2021\scene2.fs" />
+    <None Include="examples\shaders\edison2021\scene2post.fs" />
     <None Include="examples\shaders\experiments\cachedGeometry.fs" />
     <None Include="examples\shaders\common\noise.fs" />
     <None Include="examples\shaders\common\primitives.fs" />
