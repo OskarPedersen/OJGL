@@ -113,6 +113,9 @@ vec3 march(in vec3 rayOrigin, in vec3 rayDirection, out int type)
 
                 resultColor = mix(resultColor, color, reflectionModifier);
                 reflectionModifier *= getReflectiveIndex(info.type);
+                if (reflectionModifier < 0.01) {
+                    return color;
+                }
                 break;
  #endif
             }
@@ -149,7 +152,7 @@ const int pillarType = 3;
 
 DistanceInfo map(in vec3 p)
 {
-    DistanceInfo walls = { -sdBox(p, vec3(20.0, 3.0, 20.0)), wallType };
+    DistanceInfo walls = { min(sdBox(p, vec3(1.0)), -sdBox(p, vec3(20.0, 3.0, 20.0))), wallType };
 
     float h = CHANNEL_0_SINCE * 3.0;
 
@@ -158,8 +161,8 @@ DistanceInfo map(in vec3 p)
     //DistanceInfo pillar = { sdCappedCylinder(vec3(q.x, p.y, q.y) - vec3(0, -h + 3.0, 0), vec2(0.05, 0.1 + h)), pillarType };
 
     pMod1(p.z, 1.0);
-    float d1 = sdCappedCylinder(rotateAngle(vec3(0, 0, 1), 2 * CHANNEL_0_TO) * (p.yxz) - vec3(0, 2.5, 0), vec2(0.1, 2.5));
-    float d2 = sdCappedCylinder(rotateAngle(vec3(0, 0, 1), -2 * CHANNEL_0_TO) * (p.yxz) - vec3(0, 2.5, 0), vec2(0.1, 2.5));
+    float d1 = sdCappedCylinder(rotateAngle(vec3(0, 0, 1), 2 * CHANNEL_0_TO) * (p.yxz) - vec3(0, 2.5, 0), vec2(0.02, 2.5));
+    float d2 = sdCappedCylinder(rotateAngle(vec3(0, 0, 1), -2 * CHANNEL_0_TO) * (p.yxz) - vec3(0, 2.5, 0), vec2(0.05, 2.5));
     DistanceInfo pillar = {smink(d1, d2, 0.5), pillarType};
 
     return un(pillar, walls);
@@ -167,7 +170,7 @@ DistanceInfo map(in vec3 p)
 
 float getReflectiveIndex(int type)
 {
-    return type == wallType ? 0.6 : 0.3;
+    return type == wallType ? 0.6 : 0.0;
 }
 
 vec3 getColor(in MarchResult result)
@@ -176,7 +179,7 @@ vec3 getColor(in MarchResult result)
     /*if (result.type == pillarType) {
         return vec3(0, 100, 0);
     } else */if (result.type != invalidType) {
-        vec3 ambient = vec3(0.1, 0.1, 0.1 + 0.5 * sin(result.type + 1));
+        vec3 ambient = vec3(0.1, 0.1, 0.1 + 0.5 * sin(result.type + 1)) * 10.0;
         vec3 invLight = normalize(lightPosition - result.position);
         vec3 normal = normal(result.position);
         float shadow = 1.0; //shadowFunction(result.position, lightPosition, 32);
@@ -215,14 +218,17 @@ void main()
     int type = 0;
     vec3 color = march(rayOrigin, rayDirection, type);
 
-    // Tone mapping
-    color /= (color + vec3(1.0));
 
-    fragColor = vec4(pow(color, vec3(0.4545)), 1.0);
+
 
     if (type == pillarType) {
+        fragColor.rgb = color;
         fragColor.a =  1.0;
     } else {
+        // Tone mapping
+        color /= (color + vec3(1.0));
+
+        fragColor = vec4(pow(color, vec3(0.4545)), 1.0);
         fragColor.a =  0.0;
     }
 

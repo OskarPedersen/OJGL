@@ -25,8 +25,15 @@ ojstd::vector<Scene> Edison2021::buildSceneGraph(const Vector2i& sceneSize) cons
 
     {
       auto raymarch = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2021/scene2.fs");
+
+      auto edge = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2021/scene2edge.fs");
+      edge->setInputs(raymarch);
+
+      auto blur = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2021/scene2blur.fs");
+      blur->setInputs(edge);
+
       auto post = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2021/scene2post.fs");
-      post->setInputs(raymarch);
+      post->setInputs(raymarch, blur);
 
       raymarch->setUniformCallback([](float relativeSceneTime) {
         Buffer::UniformVector vector;

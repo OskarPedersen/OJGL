@@ -16,6 +16,7 @@
 #include "utility/OJstd.h"
 #include "utility/ShaderReader.h"
 
+#define RENDERDOC
 #ifdef RENDERDOC
 #include "renderdoc_app.h"
 #include <windows.h>
