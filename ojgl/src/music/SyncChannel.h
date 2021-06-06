@@ -16,6 +16,7 @@ public:
     Duration getTimeSinceAnyLast() const;
     int getTotalHitsPerNote(int relativeNote) const;
     int getTotalHits() const;
+    int getLastNote() const;
     int numNotes { -1 };
     int channel { -1 };
 

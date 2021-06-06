@@ -138,6 +138,7 @@ vec3 march(in vec3 rayOrigin, in vec3 rayDirection, out int type)
 
 uniform float CHANNEL_0_SINCE;
 uniform float CHANNEL_0_TO;
+uniform float CHANNEL_0_LAST_NOTE;
 
 in vec2 fragCoord;
 out vec4 fragColor;
@@ -152,7 +153,7 @@ const int pillarType = 3;
 
 DistanceInfo map(in vec3 p)
 {
-    DistanceInfo walls = { min(sdBox(p, vec3(1.0)), -sdBox(p, vec3(20.0, 3.0, 20.0))), wallType };
+    DistanceInfo res = { min(sdBox(p, vec3(1.0)), -sdBox(p, vec3(20.0, 3.0, 20.0))), wallType };
 
     float h = CHANNEL_0_SINCE * 3.0;
 
@@ -160,12 +161,22 @@ DistanceInfo map(in vec3 p)
     //pMod2(q, vec2(3.0, 5.0));
     //DistanceInfo pillar = { sdCappedCylinder(vec3(q.x, p.y, q.y) - vec3(0, -h + 3.0, 0), vec2(0.05, 0.1 + h)), pillarType };
 
+    {
+        vec3 q = p;
+        q.x += 10 + CHANNEL_0_LAST_NOTE;
+        pMod1(q.z, 1.0);
+
+        float r = 0.1 - CHANNEL_0_SINCE;
+        float d = sdCappedCylinder(q, vec2(r, 10.5));
+        res = un(res, DistanceInfo(d, pillarType));
+    }
+
     pMod1(p.z, 1.0);
     float d1 = sdCappedCylinder(rotateAngle(vec3(0, 0, 1), 2 * CHANNEL_0_TO) * (p.yxz) - vec3(0, 2.5, 0), vec2(0.02, 2.5));
     float d2 = sdCappedCylinder(rotateAngle(vec3(0, 0, 1), -2 * CHANNEL_0_TO) * (p.yxz) - vec3(0, 2.5, 0), vec2(0.05, 2.5));
     DistanceInfo pillar = {smink(d1, d2, 0.5), pillarType};
 
-    return un(pillar, walls);
+    return un(pillar, res);
 }
 
 float getReflectiveIndex(int type)

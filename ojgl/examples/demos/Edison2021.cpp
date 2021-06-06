@@ -45,6 +45,7 @@ ojstd::vector<Scene> Edison2021::buildSceneGraph(const Vector2i& sceneSize) cons
         vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_0_TOTAL", music->syncChannels()[0].getTotalHits()));
         vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_0_SINCE", music->syncChannels()[0].getTimeSinceAnyLast().toSeconds()));
         vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_0_TO", music->syncChannels()[0].getTimeToAnyNext().toSeconds()));
+        vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_0_LAST_NOTE", music->syncChannels()[0].getLastNote()));
         return vector;
       });
 

@@ -83,4 +83,17 @@ int SyncChannel::getTotalHits() const
 {
     return ojstd::accumulate(_totalHitsPerNote.begin(), _totalHitsPerNote.end(), 0);
 }
+
+int SyncChannel::getLastNote() const {
+    Duration min = Duration::maximum();
+    int last = 0;
+    for (int i = 0; i < numNotes; i++) {
+       Duration since = ojstd::min(min, getTimeSinceLast(i));
+       if (since < min) {
+           min = since;
+           last = i;
+       }
+    }
+    return last;
+}
 } //namespace ojgl
