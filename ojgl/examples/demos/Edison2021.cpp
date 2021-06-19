@@ -50,6 +50,20 @@ ojstd::vector<Scene> Edison2021::buildSceneGraph(const Vector2i& sceneSize) cons
     }
 
     {
+        auto raymarch = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2021/ship.fs");
+        raymarch->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
+            Buffer::UniformVector vector;
+            vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));
+            return vector;
+        });
+
+        auto fxaa = Buffer::construct(sceneSize.x, sceneSize.y, "common/fxaa.vs", "common/fxaa.fs");
+        fxaa->setInputs(raymarch);
+
+        scenes.emplace_back(fxaa, Duration::seconds(9999), "pipesScene");
+    }
+
+    {
         auto raymarch = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2021/pipes.fs");
         raymarch->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
             Buffer::UniformVector vector;
