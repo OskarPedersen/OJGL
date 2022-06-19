@@ -32,12 +32,15 @@ vec3 shipPos = vec3(0, 0, 3);
 VolumetricResult evaluateLight(in vec3 p)
 {
     vec3 rp = p - shipPos;
+    vec3 orp = rp;
 
-    float d = length(rp - vec3(0, 0.5, 0));
+    rp.xz *= rot(iTime);
 
+    float d = sdCylinder(rp - vec3(0, 0.5, 0), 0.03 + rp.z * 0.2);
+    float ds = length(rp - vec3(0, 0.5, 0));
     float strength = 500;
 	vec3 col = vec3(1.0, 0.05, 0.05);
-	vec3 res = col * strength / (d * d * d);
+	vec3 res = col * strength / (d * d);
 
 	return VolumetricResult(d, res);
 }
@@ -72,7 +75,8 @@ DistanceInfo map(in vec3 p, bool isMarch)
 
 
     // water
-    float wd = p.y + 0.05;
+    float wn = noise_2(p.xz * 10 - vec2(iTime, iTime*0.2));
+    float wd = p.y + 0.05 + wn * 0.1;
     DistanceInfo waterDI = {wd, waterType, vec3(1, 2, 3)};
 
     return un(shipDI, waterDI);
