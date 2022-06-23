@@ -5,7 +5,7 @@ const float S_normalEpsilon = 1e-2;
 const int S_maxSteps = 150;
 const float S_maxDistance = 220.0;
 const float S_distanceMultiplier = 0.7;
-const float S_minVolumetricJumpDistance = 0.02;
+const float S_minVolumetricJumpDistance = 0.005;
 const float S_volumetricDistanceMultiplier = 0.75;
 const int S_reflectionJumps = 3;
 
@@ -26,32 +26,15 @@ uniform mat4 iCameraMatrix;
 
 const int shipType = 1;
 const int waterType = 2;
+const int skyType = 3;
 
 vec3 shipPos = vec3(0, 0, 3);
 
-VolumetricResult evaluateLight(in vec3 p)
-{
-    vec3 rp = p - shipPos;
-    vec3 orp = rp;
-
-    rp.xz *= rot(iTime);
-
-    float d = sdCylinder(rp - vec3(0, 0.5, 0), 0.03 + rp.z * 0.2);
-    float ds = length(rp - vec3(0, 0.5, 0));
-    float strength = 500;
-	vec3 col = vec3(1.0, 0.05, 0.05);
-	vec3 res = col * strength / (d * d);
-
-	return VolumetricResult(d, res);
+bool isGhost() {
+    return mod(iTime, 2) > 1;
 }
 
-float getFogAmount(in vec3 p)
-{
-    return 0.001;
-}
-
-DistanceInfo map(in vec3 p, bool isMarch)
-{
+float shipDistance(in vec3 p) {
     vec3 rp = p - shipPos;
     float len = 0.7;
     float height = 0.1;
@@ -70,38 +53,91 @@ DistanceInfo map(in vec3 p, bool isMarch)
     float d2 = sdRoundBox(rp - vec3(0.1, height, 0), vec3(0.3, 0.2, width), 0.0);
 
     d = min(d, d2);
-    DistanceInfo shipDI = DistanceInfo(d, shipType, vec3(1, 2, 3));
+
+    // antenna
+    float w = 0.02 + 0.5 - p.y * 0.2 - 0.4;
+    float d3 = sdRoundBox(rp - vec3(0, 0.22, 0), vec3(w, 0.3, w), 0.0);
+
+    d = smink(d, d3, 0.05);
+
+    return d;
+}
+
+VolumetricResult evaluateLight(in vec3 p)
+{
+    vec3 rp = p - shipPos;
+    vec3 orp = rp;
+
+    rp.xz *= rot(iTime);
+
+    float d = sdCappedCylinder(rp.xzy - vec3(0, 0, 0.55), vec2(0.01, 0.2));
+
+    if (isGhost()) {
+        d = shipDistance(p);
+    }
+
+
+
+    float ds = length(rp - vec3(0, 0.5, 0));
+    float strength = 500;
+	vec3 col = vec3(0.05, 1.0, 0.05);
+	vec3 res = col * strength / (d * d);
+
+	return VolumetricResult(d, res);
+}
+
+float getFogAmount(in vec3 p)
+{
+    return 0.00005;
+}
+
+DistanceInfo map(in vec3 p, bool isMarch)
+{
+    DistanceInfo shipDI = DistanceInfo(shipDistance(p), shipType, vec3(1, 2, 3));
 
 
 
     // water
-    float wn = noise_2(p.xz * 10 - vec2(iTime, iTime*0.2));
-    float wd = p.y + 0.05 + wn * 0.1;
+    float wn = exp2(noise_2(p.xz * 10 - vec2(iTime, iTime*0.2)) + noise_2(p.xz * 5 - vec2(iTime * 0.2, iTime)));
+    float wd = p.y + 0.05 + wn * 0.05;
     DistanceInfo waterDI = {wd, waterType, vec3(1, 2, 3)};
 
-    return un(shipDI, waterDI);
+    DistanceInfo res = waterDI; //
+    if (!isGhost()) {
+        res = un(shipDI, waterDI);
+    }
+
+    // sky
+    float sd = abs(p.y - 7.0);
+    res = un(DistanceInfo(sd, skyType, vec3(1, 2, 3)), res);
+
+
+    return res;
 }
 
 float getReflectiveIndex(int type)
 {
     if(type == shipType)
-        return 0.2;
+        return 0.5;
     if(type == waterType)
-        return 0.6;
+        return 0.9;
     return 0.0;
 }
 
 vec3 getColor(in MarchResult result)
 {
-    vec3 col = vec3(1, 0, 0);
+    vec3 col = vec3(1, 1, 1);
     if (result.type == waterType) {
+        col = vec3(0, 0, 1);
+    }
+    else if (result.type == skyType) {
         col = vec3(0, 0, 1);
     }
 
     vec3 invLight = -normalize(vec3(0.7, -0.2, 0.5));
     vec3 normal = normal(result.position);
     float diffuse = max(0., dot(invLight, normal));
-    return result.scatteredLight +  result.transmittance * col * diffuse * 5.0;
+    return result.scatteredLight +  result.transmittance * col * diffuse * 1.0;
 }
 
 
