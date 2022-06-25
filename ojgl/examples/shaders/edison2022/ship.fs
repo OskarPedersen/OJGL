@@ -30,7 +30,7 @@ const int waterType = 3;
 const int skyType = 4;
 
 bool isGhost() {
-    return false; //mod(iTime, 2) > 1;
+    return true; //mod(iTime, 2) > 1;
 }
 
 bool isSinking() {
@@ -70,24 +70,29 @@ float shipDistance(in vec3 p) {
     return d;
 }
 
-VolumetricResult evaluateLight(in vec3 p)
-{
+VolumetricResult volumetricUn(in VolumetricResult vr1, in VolumetricResult vr2) {
+    return VolumetricResult(min(vr1.distance, vr2.distance), vr1.color + vr2.color);
+}
+
+vec3 lightHouseColor = vec3(0.1, 0.2, 1.0);
+
+vec3 missilePos() {
+    return vec3(0, 0.6, 0) + vec3(0.1, 0, mod(iTime, 5) - 1);
+}
+
+VolumetricResult missile(in vec3 p) {
+    //vec3 rp = shipPos(p);
+    float d = length(p - missilePos());
+    float strength = 20;
+    vec3 res = vec3(0.3, 1.0, 0.3) * strength / (d * d);
+
+    return VolumetricResult(d, res);
+}
+
+VolumetricResult lightHouseLight(in vec3 p) {
     vec3 rp = shipPos(p);
-    vec3 orp = rp;
-
-   // rp.xz *= rot(iTime * (isGhost() ? 30.0 : 1.0));
-
-    //float d = sdCappedCylinder(rp.xzy - vec3(0, 0, 0.55), vec2(0.01, 0.2));
 
     float d = length(rp - vec3(0, 0.55, 0)) - 0.05;
-
-    if (isGhost()) {
-        d = min(d, shipDistance(p));
-    }
-
-
-    //d = max(0.07, d);
-
     float ds = length(rp - vec3(0, 0.5, 0));
     float strength = 1500;// - 1500*sin(5*d + 3*sin(d) - 5*iTime);
 
@@ -95,22 +100,50 @@ VolumetricResult evaluateLight(in vec3 p)
     vec3 posDir = normalize(p - vec3(0, 0.55, 3));
 	float f = clamp(dot(lightDir, posDir), 0, 1);
     f = pow(f, 500);
-    vec3 col = vec3(0.05, 1.0, 0.05);
-	vec3 res = col * f * strength / (d * d);
+    //vec3 col = vec3(0.05, 1.0, 0.05);
+	vec3 res = lightHouseColor * f * strength / (d * d);
+
+    return VolumetricResult(d, res);
+}
+
+VolumetricResult topLight(in vec3 p) {
+    float d = length(p - vec3(0, 0.55, 3)) - 0.03;
+    float strength = 20;
+    //vec3 col = vec3(0.05, 1.0, 0.05);
+    vec3 res = lightHouseColor * strength / (d * d);
+
+    return VolumetricResult(d, res);
+}
+
+VolumetricResult evaluateLight(in vec3 p)
+{
+
+   // rp.xz *= rot(iTime * (isGhost() ? 30.0 : 1.0));
+
+    //float d = sdCappedCylinder(rp.xzy - vec3(0, 0, 0.55), vec2(0.01, 0.2));
+
+    //d = max(0.07, d);
 
 
-    // ship lamps
-    {
-        float d2 = length(p - vec3(0, 0.55, 3)) - 0.03;
+
+    VolumetricResult res = lightHouseLight(p);
+
+    res = volumetricUn(res, topLight(p));
+
+    if (isGhost()) {
+        float d = shipDistance(p);
+        d = max(d, 0.02);
         float strength = 20;
-        vec3 col = vec3(0.05, 1.0, 0.05);
-        vec3 res2 = col * strength / (d2 * d2);
-
-        d = min(d, d2);
-        res += res2;
+        vec3 col = lightHouseColor * strength / (d * d);
+        res = volumetricUn(res, VolumetricResult(d, col));
     }
 
-	return VolumetricResult(d, res);
+    VolumetricResult mis = missile(p);
+
+    res.distance = smink(res.distance, mis.distance, 0.1);
+    res.color = res.color + mis.color;
+
+	return res;
 }
 
 float getFogAmount(in vec3 p)
@@ -130,13 +163,13 @@ DistanceInfo map(in vec3 p, bool isMarch)
     DistanceInfo waterDI = {wd, waterType, vec3(1, 2, 3)};
 
     DistanceInfo res = waterDI;
-    if (!isGhost()) {
+    //if (!isGhost()) {
         if (isSinking()) {
             res = sunk(shipDI, waterDI, 0.1);
         } else {
             res = un(shipDI, waterDI);
         }
-    }
+    //}
 
     // sky
     float sd = abs(p.y - 7.0);
@@ -180,6 +213,69 @@ vec3 getColor(in MarchResult result)
 }
 
 
+vec3 march2(in vec3 rayOrigin, in vec3 rayDirection)
+{
+    float t = 0.0;
+    vec3 scatteredLight = vec3(0.0);
+    float transmittance = 1.0;
+    float reflectionModifier = 1.0;
+    vec3 resultColor = vec3(0.0);
+    int jump = 0;
+#if S_REFLECTIONS
+    for (; jump < S_reflectionJumps; jump++) {
+#endif
+        for (int steps = 0; steps < S_maxSteps; ++steps) {
+            //rayDirection.x +
+            vec3 p = rayOrigin + t * rayDirection;
+            float d = length(p - missilePos());
+            vec3 toMissile = normalize(p - missilePos());
+            rayDirection += toMissile * 0.1 / (500.1 +  100*d * d * d);
+            rayDirection = normalize(rayDirection);
+
+            DistanceInfo info = map(p, true);
+            float jumpDistance = info.distance * S_distanceMultiplier;
+
+#if S_VOLUMETRIC
+            float fogAmount = getFogAmount(p);
+            VolumetricResult vr = evaluateLight(p);
+
+            float volumetricJumpDistance = max(S_minVolumetricJumpDistance, vr.distance * S_volumetricDistanceMultiplier);
+            jumpDistance = min(jumpDistance, volumetricJumpDistance);
+            vec3 lightIntegrated = vr.color - vr.color * exp(-fogAmount * jumpDistance);
+            scatteredLight += transmittance * lightIntegrated;
+            transmittance *= exp(-fogAmount * jumpDistance);
+#endif
+
+            t += jumpDistance;
+            if (info.distance < S_distanceEpsilon) {
+                vec3 color = getColor(MarchResult(info.type, p, steps, transmittance, scatteredLight, jump, rayDirection, info.color));
+#if !S_REFLECTIONS
+                return color;
+#else
+                t = 0.0;
+                rayDirection = reflect(rayDirection, normal(p));
+                rayOrigin = p + 0.1 * rayDirection;
+
+                resultColor = mix(resultColor, color, reflectionModifier);
+                reflectionModifier *= getReflectiveIndex(info.type);
+                break;
+ #endif
+            }
+
+            if (t > S_maxDistance || steps == S_maxDistance - 1) {
+                vec3 color = getColor(MarchResult(invalidType, p, steps, transmittance, scatteredLight, jump, rayDirection, info.color));
+                resultColor = mix(resultColor, color, reflectionModifier);
+                return resultColor;
+            }
+        }
+#if S_REFLECTIONS
+    }
+#endif
+
+    return resultColor;
+}
+
+
 void main()
 {
     float u = (fragCoord.x - 0.5);
@@ -195,7 +291,7 @@ void main()
     vec3 rd = normalize(dir + right*u + up*v);
 
 
-    vec3 color = march(eye, rd);
+    vec3 color = march2(eye, rd);
 
     // Tone mapping
     color /= (color + vec3(1.0));
