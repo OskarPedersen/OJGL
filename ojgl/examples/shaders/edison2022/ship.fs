@@ -28,14 +28,20 @@ const int shipType = 1;
 const int waterType = 2;
 const int skyType = 3;
 
-vec3 shipPos = vec3(0, 0, 3);
-
 bool isGhost() {
     return mod(iTime, 2) > 1;
 }
 
+bool isSinking() {
+    return true;
+}
+
+vec3 shipPos(in vec3 p) {
+    return p - vec3(0, 0, 3) + (isSinking() ? vec3(0, mod(iTime * 0.5, 1), 0) : vec3(0));
+}
+
 float shipDistance(in vec3 p) {
-    vec3 rp = p - shipPos;
+    vec3 rp = shipPos(p);
     float len = 0.7;
     float height = 0.1;
     float width = 0.2 + rp.y * 0.5;
@@ -55,7 +61,7 @@ float shipDistance(in vec3 p) {
     d = min(d, d2);
 
     // antenna
-    float w = 0.02 + 0.5 - p.y * 0.2 - 0.4;
+    float w = 0.02 + 0.5 - rp.y * 0.2 - 0.4;
     float d3 = sdRoundBox(rp - vec3(0, 0.22, 0), vec3(w, 0.3, w), 0.0);
 
     d = smink(d, d3, 0.05);
@@ -65,15 +71,15 @@ float shipDistance(in vec3 p) {
 
 VolumetricResult evaluateLight(in vec3 p)
 {
-    vec3 rp = p - shipPos;
+    vec3 rp = shipPos(p);
     vec3 orp = rp;
 
-    rp.xz *= rot(iTime);
+    rp.xz *= rot(iTime * (isGhost() ? 30.0 : 1.0));
 
     float d = sdCappedCylinder(rp.xzy - vec3(0, 0, 0.55), vec2(0.01, 0.2));
 
     if (isGhost()) {
-        d = shipDistance(p);
+        d = min(d, shipDistance(p));
     }
 
 
@@ -102,9 +108,13 @@ DistanceInfo map(in vec3 p, bool isMarch)
     float wd = p.y + 0.05 + wn * 0.05;
     DistanceInfo waterDI = {wd, waterType, vec3(1, 2, 3)};
 
-    DistanceInfo res = waterDI; //
+    DistanceInfo res = waterDI;
     if (!isGhost()) {
-        res = un(shipDI, waterDI);
+        if (isSinking()) {
+            res = sunk(shipDI, waterDI, 0.1);
+        } else {
+            res = un(shipDI, waterDI);
+        }
     }
 
     // sky
