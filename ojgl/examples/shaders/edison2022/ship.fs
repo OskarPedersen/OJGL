@@ -76,6 +76,18 @@ VolumetricResult volumetricUn(in VolumetricResult vr1, in VolumetricResult vr2) 
 
 vec3 lightHouseColor = vec3(0.1, 0.2, 1.0);
 
+VolumetricResult waterLights(in vec3 p) {
+    p.x -= iTime * 0.3;
+    float index = pMod1(p.x, 1.0);
+    p.z -= 3;
+    p.z = abs(p.z) - 1;
+    float d = length(p);
+    float strength = 1.5;
+    vec3 res = lightHouseColor * strength / (d * d);
+
+    return VolumetricResult(d, res);
+}
+
 vec3 missilePos() {
     return vec3(0, 0.6, 0) + vec3(0.1, 0, mod(iTime, 5) - 1);
 }
@@ -138,6 +150,8 @@ VolumetricResult evaluateLight(in vec3 p)
         res = volumetricUn(res, VolumetricResult(d, col));
     }
 
+    res = volumetricUn(res, waterLights(p));
+
     VolumetricResult mis = missile(p);
 
     res.distance = smink(res.distance, mis.distance, 0.1);
@@ -158,7 +172,7 @@ DistanceInfo map(in vec3 p, bool isMarch)
 
 
     // water
-    float wn = 0.05*sin(5*p.x + 3*p.z) + 0.06*(noise_2(p.xz * 10 - vec2(iTime, iTime*0.2)) + noise_2(p.xz * 5 - vec2(iTime * 0.2, iTime)));
+    float wn = 0.03*(noise_2(p.xz * 10 - vec2(3*iTime, 0.3*iTime)) + noise_2(p.xz * 5 - vec2(3*iTime,  -0.3*iTime)));
     float wd = p.y + 0.05 + wn * 0.05;
     DistanceInfo waterDI = {wd, waterType, vec3(1, 2, 3)};
 
