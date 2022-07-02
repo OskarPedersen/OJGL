@@ -31,17 +31,19 @@ const int skyType = 4;
 
 #define PART_1_INTRO 10
 #define PART_2_CHANNEL (PART_1_INTRO + 20)
-#define PART_3_MISSILE (PART_2_CHANNEL + 20)
-#define PART_4 (PART_3_MISSILE + 99)
+#define PART_3_MISSILE (PART_2_CHANNEL + 10)
+#define PART_4_SINKING (PART_3_MISSILE + 20)
 
 const float PART_3_speed = 3.0;
 const float PART_3_travelEndPoint = 13.5;
 const float PART_3_SPIN_START = PART_3_travelEndPoint / PART_3_speed;
 
+const float PART_4_SINK_START = PART_3_MISSILE + 5.0;
+
 bool isGhost() {
     if (iTime < PART_2_CHANNEL) {
         return true;
-    } else if (iTime < PART_4) {
+    } else if (iTime < PART_4_SINKING) {
         const float time = iTime - PART_2_CHANNEL;
 
         if (time > PART_3_SPIN_START) {
@@ -67,11 +69,11 @@ float shipLightStrengthModifier() {
 }
 
 bool isSinking() {
-    return false;
+    return iTime > PART_4_SINK_START;
 }
 
 vec3 shipPos(in vec3 p) {
-    return p - vec3(0, 0, 3) + (isSinking() ? vec3(0, mod(iTime * 0.5, 1), 0) : vec3(0));
+    return p - vec3(0, 0, 3) + (isSinking() ? vec3(0, 0.1 * (iTime - PART_4_SINK_START), 0) : vec3(0));
 }
 
 float shipDistance(in vec3 p) {
@@ -110,7 +112,11 @@ VolumetricResult volumetricUn(in VolumetricResult vr1, in VolumetricResult vr2) 
 vec3 lightHouseColor = vec3(0.1, 0.2, 1.0);
 
 VolumetricResult waterLights(in vec3 p) {
-    p.x -= iTime * 0.3;
+    const float speed = 0.3;
+    const float fullspeedDis = speed * PART_3_MISSILE;
+    const float slowDis = 1.0;
+
+    p.x -= min(fullspeedDis, iTime * speed) + max(0.0, 1.0 - pow(1.4, -(iTime - PART_3_MISSILE)));
     float index = pMod1(p.x, 1.0);
     p.z -= 3;
     p.z = abs(p.z) - 1;
@@ -128,7 +134,10 @@ vec3 missilePos() {
     const float travel = PART_3_speed * time;
     pos.z += min(PART_3_travelEndPoint, travel);
 
-    if (travel > PART_3_travelEndPoint) {
+    const float flyAwayStartTime = (PART_3_travelEndPoint / PART_3_speed) + 3 * (2 * PI) / PART_3_speed;
+    if (time > flyAwayStartTime) {
+        pos.z += (time - flyAwayStartTime) * PART_3_speed;
+    } else if (travel > PART_3_travelEndPoint) {
         float orbitTime = time - PART_3_travelEndPoint / PART_3_speed;
         pos.x += sin(-orbitTime * PART_3_speed + radians(90)) - 1;
         pos.z += cos(-orbitTime * PART_3_speed + radians(90));
@@ -207,7 +216,7 @@ VolumetricResult evaluateLight(in vec3 p)
     //res.distance = smink(res.distance, mis.distance, 0.1);
     //res.color = res.color + mis.color;
 
-    if (iTime > PART_2_CHANNEL && iTime < PART_3_MISSILE) {
+    if (iTime > PART_2_CHANNEL) {
         res = volumetricUn(res, missile(p));
     }
 
@@ -362,6 +371,9 @@ void main()
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
         tar =  vec3(0, 0, 3);
     } else if (iTime < PART_3_MISSILE) {
+        eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
+        tar =  vec3(0, 0, 3);
+    } else if (iTime < PART_4_SINKING) {
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
         tar =  vec3(0, 0, 3);
     } else {
