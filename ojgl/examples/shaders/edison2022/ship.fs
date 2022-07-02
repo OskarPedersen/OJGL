@@ -29,6 +29,10 @@ const int shipTypeTop = 2;
 const int waterType = 3;
 const int skyType = 4;
 
+#define PART_1_INTRO 10
+#define PART_2_CHANNEL (PART_1_INTRO + 20)
+#define PART_3_MISSILE (PART_2_CHANNEL + 20)
+
 bool isGhost() {
     return true; //mod(iTime, 2) > 1;
 }
@@ -89,7 +93,23 @@ VolumetricResult waterLights(in vec3 p) {
 }
 
 vec3 missilePos() {
-    return vec3(0, 0.6, 0) + vec3(0.1, 0, mod(iTime, 5) - 1);
+    const float time = iTime - PART_2_CHANNEL;
+
+    vec3 pos = vec3(0, 0.6, -10);
+    const float speed = 3.0;
+    const float travel = time * speed;
+    const float travelEndPoint = 13.5;
+    pos.z += min(travelEndPoint, travel);
+
+    if (travel > travelEndPoint) {
+        float orbitTime = time - travelEndPoint / speed;
+        pos.x += sin(orbitTime);
+        pos.z += cos(orbitTime);
+    }
+
+    return pos;
+
+    //return vec3(0, 0.6, 0) + vec3(0.1, 0, mod(iTime, 5) - 1);
 }
 
 VolumetricResult missile(in vec3 p) {
@@ -152,10 +172,13 @@ VolumetricResult evaluateLight(in vec3 p)
 
     res = volumetricUn(res, waterLights(p));
 
-    VolumetricResult mis = missile(p);
+    //VolumetricResult mis = missile(p);
+    //res.distance = smink(res.distance, mis.distance, 0.1);
+    //res.color = res.color + mis.color;
 
-    res.distance = smink(res.distance, mis.distance, 0.1);
-    res.color = res.color + mis.color;
+    if (iTime > PART_2_CHANNEL && iTime < PART_3_MISSILE) {
+        res = volumetricUn(res, missile(p));
+    }
 
 	return res;
 }
@@ -239,12 +262,14 @@ vec3 march2(in vec3 rayOrigin, in vec3 rayDirection)
     for (; jump < S_reflectionJumps; jump++) {
 #endif
         for (int steps = 0; steps < S_maxSteps; ++steps) {
-            //rayDirection.x +
             vec3 p = rayOrigin + t * rayDirection;
-            float d = length(p - missilePos());
-            vec3 toMissile = normalize(p - missilePos());
-            rayDirection += toMissile * 0.1 / (500.1 +  100*d * d * d);
-            rayDirection = normalize(rayDirection);
+
+            if (iTime > PART_2_CHANNEL && iTime < PART_3_MISSILE) {
+                float d = length(p - missilePos());
+                vec3 toMissile = normalize(p - missilePos());
+                rayDirection += toMissile * 0.1 / (500.1 +  100*d * d * d);
+                rayDirection = normalize(rayDirection);
+            }
 
             DistanceInfo info = map(p, true);
             float jumpDistance = info.distance * S_distanceMultiplier;
@@ -293,19 +318,33 @@ vec3 march2(in vec3 rayOrigin, in vec3 rayDirection)
 void main()
 {
     float u = (fragCoord.x - 0.5);
-    float v = (fragCoord.y - 0.5) * iResolution.y / iResolution.x;
+    float v = (fragCoord.y - 0.5) * iResolution.y / iResolution. x;
 
+    vec3 color = vec3(-1);
+    vec3 eye = vec3(-1);
+    vec3 tar = vec3(-1);
 
-    vec3 eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
-    vec3 tar =  vec3(0, 0, 3);
+    if (iTime < PART_1_INTRO) {
+        eye = vec3(-3, 2 + iTime * 0.5, 2.999);
+        tar =  vec3(-3, 0, 3);
+    } else if (iTime < PART_2_CHANNEL) {
+        eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
+        tar =  vec3(0, 0, 3);
+    } else if (iTime < PART_3_MISSILE) {
+        eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
+        tar =  vec3(0, 0, 3);
+    } else {
+        //eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
+        //tar =  vec3(0, 0, 3);
+    }
+
     vec3 dir = normalize(tar - eye);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
  	vec3 up = cross(dir, right);
 
     vec3 rd = normalize(dir + right*u + up*v);
 
-
-    vec3 color = march2(eye, rd);
+    color = march2(eye, rd);
 
     // Tone mapping
     color /= (color + vec3(1.0));
