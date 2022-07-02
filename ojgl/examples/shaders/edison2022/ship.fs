@@ -32,9 +32,38 @@ const int skyType = 4;
 #define PART_1_INTRO 10
 #define PART_2_CHANNEL (PART_1_INTRO + 20)
 #define PART_3_MISSILE (PART_2_CHANNEL + 20)
+#define PART_4 (PART_3_MISSILE + 99)
+
+const float PART_3_speed = 3.0;
+const float PART_3_travelEndPoint = 13.5;
+const float PART_3_SPIN_START = PART_3_travelEndPoint / PART_3_speed;
 
 bool isGhost() {
-    return true; //mod(iTime, 2) > 1;
+    if (iTime < PART_2_CHANNEL) {
+        return true;
+    } else if (iTime < PART_4) {
+        const float time = iTime - PART_2_CHANNEL;
+
+        if (time > PART_3_SPIN_START) {
+            return hash11(floor(time * 8.0)) > 0.5;
+        } else {
+            return true;
+        }
+    }
+    return false; //mod(iTime, 2) > 1;
+}
+
+float shipLightStrengthModifier() {
+        const float time = iTime - PART_2_CHANNEL;
+        if (time > PART_3_SPIN_START) {
+            if (!isGhost()) {
+                return 0.0;
+            } else {
+                return 1.0 - smoothstep(PART_3_SPIN_START, PART_3_SPIN_START + 5.0, time);
+            }
+        } else {
+            return 1.0;
+        }
 }
 
 bool isSinking() {
@@ -95,16 +124,14 @@ VolumetricResult waterLights(in vec3 p) {
 vec3 missilePos() {
     const float time = iTime - PART_2_CHANNEL;
 
-    vec3 pos = vec3(0, 0.6, -10);
-    const float speed = 3.0;
-    const float travel = time * speed;
-    const float travelEndPoint = 13.5;
-    pos.z += min(travelEndPoint, travel);
+    vec3 pos = vec3(0.5, 0.6, -10);
+    const float travel = PART_3_speed * time;
+    pos.z += min(PART_3_travelEndPoint, travel);
 
-    if (travel > travelEndPoint) {
-        float orbitTime = time - travelEndPoint / speed;
-        pos.x += sin(orbitTime);
-        pos.z += cos(orbitTime);
+    if (travel > PART_3_travelEndPoint) {
+        float orbitTime = time - PART_3_travelEndPoint / PART_3_speed;
+        pos.x += sin(-orbitTime * PART_3_speed + radians(90)) - 1;
+        pos.z += cos(-orbitTime * PART_3_speed + radians(90));
     }
 
     return pos;
@@ -126,7 +153,7 @@ VolumetricResult lightHouseLight(in vec3 p) {
 
     float d = length(rp - vec3(0, 0.55, 0)) - 0.05;
     float ds = length(rp - vec3(0, 0.5, 0));
-    float strength = 1500;// - 1500*sin(5*d + 3*sin(d) - 5*iTime);
+    float strength = 1500 * shipLightStrengthModifier();// - 1500*sin(5*d + 3*sin(d) - 5*iTime);
 
     vec3 lightDir = normalize(vec3(sin(iTime), 0, cos(iTime)));
     vec3 posDir = normalize(p - vec3(0, 0.55, 3));
@@ -140,7 +167,7 @@ VolumetricResult lightHouseLight(in vec3 p) {
 
 VolumetricResult topLight(in vec3 p) {
     float d = length(p - vec3(0, 0.55, 3)) - 0.03;
-    float strength = 20;
+    float strength = 20 * shipLightStrengthModifier();
     //vec3 col = vec3(0.05, 1.0, 0.05);
     vec3 res = lightHouseColor * strength / (d * d);
 
@@ -158,19 +185,23 @@ VolumetricResult evaluateLight(in vec3 p)
 
 
 
-    VolumetricResult res = lightHouseLight(p);
+    VolumetricResult res = waterLights(p);
 
-    res = volumetricUn(res, topLight(p));
 
-    if (isGhost()) {
+
+    //if (isGhost()) {
         float d = shipDistance(p);
         d = max(d, 0.02);
-        float strength = 20;
+        float strength = 20 * shipLightStrengthModifier();
+
         vec3 col = lightHouseColor * strength / (d * d);
         res = volumetricUn(res, VolumetricResult(d, col));
-    }
 
-    res = volumetricUn(res, waterLights(p));
+        res = volumetricUn(res, lightHouseLight(p));
+        res = volumetricUn(res, topLight(p));
+    //}
+
+
 
     //VolumetricResult mis = missile(p);
     //res.distance = smink(res.distance, mis.distance, 0.1);
