@@ -121,7 +121,7 @@ VolumetricResult waterLights(in vec3 p) {
     p.z -= 3;
     p.z = abs(p.z) - 1;
     float d = length(p);
-    float strength = 1.5;
+    float strength = 3.5;
     vec3 res = lightHouseColor * strength / (d * d);
 
     return VolumetricResult(d, res);
@@ -154,7 +154,9 @@ VolumetricResult missile(in vec3 p) {
     float strength = 20;
     vec3 res = vec3(0.4, 1.0, 0.4) * strength / (d * d);
 
-    return VolumetricResult(d, res);
+    VolumetricResult vr = { d, res };
+
+    return vr;
 }
 
 VolumetricResult lightHouseLight(in vec3 p) {
@@ -225,7 +227,7 @@ VolumetricResult evaluateLight(in vec3 p)
 
 float getFogAmount(in vec3 p)
 {
-    return 0.0004;
+    return 0.0001;
 }
 
 DistanceInfo map(in vec3 p, bool isMarch)
@@ -235,8 +237,8 @@ DistanceInfo map(in vec3 p, bool isMarch)
 
 
     // water
-    float wn = 0.03*(noise_2(p.xz * 10 - vec2(3*iTime, 0.3*iTime)) + noise_2(p.xz * 5 - vec2(3*iTime,  -0.3*iTime)));
-    float wd = p.y + 0.05 + wn * 0.05;
+    float wn = 0.03*(noise_2(p.xz * 20 - vec2(1*iTime, 0.1*iTime)) + noise_2(p.xz * 15 + vec2(1*iTime,  0.1*iTime)));
+    float wd = p.y - 0.15 + pow(wn, 0.03) * 0.3;
     DistanceInfo waterDI = {wd, waterType, vec3(1, 2, 3)};
 
     DistanceInfo res = waterDI;
@@ -266,7 +268,14 @@ float getReflectiveIndex(int type)
     return 0.0;
 }
 
-vec3 getColor(in MarchResult result)
+float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
+{
+	//float nrm = (s + 8.0) / (3.1415 * 8.0);
+	float k = max(0.0, dot(viewdir, reflect(light, normal)));
+    return  pow(k, s);
+}
+
+vec3 getColor(in MarchResult result, vec3 eye)
 {
     vec3 col = vec3(1, 1, 1);
     if (result.type == waterType) {
@@ -281,10 +290,21 @@ vec3 getColor(in MarchResult result)
        col = vec3(1);
     }
 
-    vec3 invLight = -normalize(vec3(0.7, -0.2, 0.5));
+    vec3 lightPos = vec3(0, 2, 3);
+    vec3 invLight = normalize(lightPos - result.position);
     vec3 normal = normal(result.position);
     float diffuse = max(0., dot(invLight, normal));
-    return result.scatteredLight +  result.transmittance * col * diffuse * 0.0;
+
+    float spec = 0.0;
+    if (isGhost()) {
+        spec = specular(normal, -invLight, normalize(eye - result.position), 20000.0);
+        const float dis = length(lightPos - result.position);
+        const float specStr = 100.0 / (dis * dis);
+        spec *= specStr * shipLightStrengthModifier();
+    }
+
+    return result.scatteredLight +  result.transmittance * vec3(spec);
+    //return result.scatteredLight +  result.transmittance * col * diffuse * 0.0 + vec3(spec);
 }
 
 struct FullMarchResult {
@@ -334,7 +354,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
 
             t += jumpDistance;
             if (info.distance < S_distanceEpsilon) {
-                vec3 color = getColor(MarchResult(info.type, p, steps, transmittance, scatteredLight, jump, rayDirection, info.color));
+                vec3 color = getColor(MarchResult(info.type, p, steps, transmittance, scatteredLight, jump, rayDirection, info.color), rayOrigin);
 #if !S_REFLECTIONS
                 return color;
 #else
@@ -349,7 +369,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
             }
 
             if (t > S_maxDistance || steps == S_maxDistance - 1) {
-                vec3 color = getColor(MarchResult(invalidType, p, steps, transmittance, scatteredLight, jump, rayDirection, info.color));
+                vec3 color = getColor(MarchResult(invalidType, p, steps, transmittance, scatteredLight, jump, rayDirection, info.color), rayOrigin);
                 resultColor = mix(resultColor, color, reflectionModifier);
                 return FullMarchResult(resultColor, firstJumpPos);
             }
