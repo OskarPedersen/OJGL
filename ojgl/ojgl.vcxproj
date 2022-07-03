@@ -408,6 +408,7 @@
     <None Include="examples\shaders\edison2022\raymarch_settings.fs" />
     <None Include="examples\shaders\edison2022\seed.fs" />
     <None Include="examples\shaders\edison2022\ship.fs" />
+    <None Include="examples\shaders\edison2022\ship_chrom_ab.fs" />
     <None Include="examples\shaders\experiments\cachedGeometry.fs" />
     <None Include="examples\shaders\common\noise.fs" />
     <None Include="examples\shaders\common\primitives.fs" />

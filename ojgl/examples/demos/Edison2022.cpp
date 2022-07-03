@@ -48,12 +48,25 @@ ojstd::vector<Scene> Edison2022::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        auto fxaa = Buffer::construct(sceneSize.x, sceneSize.y, "common/fxaa.vs", "common/fxaa.fs");
-        fxaa->setInputs(raymarch);
+        //auto fxaa = Buffer::construct(sceneSize.x, sceneSize.y, "common/fxaa.vs", "common/fxaa.fs");
+        //fxaa->setInputs(raymarch);
 
-        auto chrom = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2022/chrom_ab.fs");
-        chrom->setInputs(fxaa);
-        scenes.emplace_back(fxaa, Duration::seconds(999999), "sceneShip");
+        auto blur1 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "QED/blur1.fs");
+        blur1->setInputs(raymarch);
+        blur1->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
+            return { ojstd::make_shared<Uniform2f>("blurDir", 1.f, 0.f) };
+        });
+
+        auto blur2 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "QED/blur1.fs");
+        blur2->setInputs(blur1);
+        blur2->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
+            return { ojstd::make_shared<Uniform2f>("blurDir", 0.f, 1.f) };
+        });
+
+        auto chrom = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2022/ship_chrom_ab.fs");
+        chrom->setInputs(blur2);
+
+        scenes.emplace_back(chrom, Duration::seconds(999999), "sceneShip");
     }
 
     {

@@ -152,7 +152,7 @@ VolumetricResult missile(in vec3 p) {
     //vec3 rp = shipPos(p);
     float d = length(p - missilePos());
     float strength = 20;
-    vec3 res = vec3(0.3, 1.0, 0.3) * strength / (d * d);
+    vec3 res = vec3(0.4, 1.0, 0.4) * strength / (d * d);
 
     return VolumetricResult(d, res);
 }
@@ -289,20 +289,29 @@ vec3 getColor(in MarchResult result)
     return result.scatteredLight +  result.transmittance * col * diffuse * 0.0;
 }
 
+struct FullMarchResult {
+    vec3 col;
+    vec3 firstJumpPos;
+};
 
-vec3 march2(in vec3 rayOrigin, in vec3 rayDirection)
+FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
 {
     float t = 0.0;
     vec3 scatteredLight = vec3(0.0);
     float transmittance = 1.0;
     float reflectionModifier = 1.0;
     vec3 resultColor = vec3(0.0);
+    vec3 firstJumpPos = vec3(0.0);
     int jump = 0;
 #if S_REFLECTIONS
     for (; jump < S_reflectionJumps; jump++) {
 #endif
         for (int steps = 0; steps < S_maxSteps; ++steps) {
             vec3 p = rayOrigin + t * rayDirection;
+
+            if (jump == 0) {
+                firstJumpPos = p;
+            }
 
             if (iTime > PART_2_CHANNEL && iTime < PART_3_MISSILE) {
                 float d = length(p - missilePos());
@@ -344,14 +353,14 @@ vec3 march2(in vec3 rayOrigin, in vec3 rayDirection)
             if (t > S_maxDistance || steps == S_maxDistance - 1) {
                 vec3 color = getColor(MarchResult(invalidType, p, steps, transmittance, scatteredLight, jump, rayDirection, info.color));
                 resultColor = mix(resultColor, color, reflectionModifier);
-                return resultColor;
+                return FullMarchResult(resultColor, firstJumpPos);
             }
         }
 #if S_REFLECTIONS
     }
 #endif
 
-    return resultColor;
+    return FullMarchResult(resultColor, firstJumpPos);
 }
 
 
@@ -360,22 +369,23 @@ void main()
     float u = (fragCoord.x - 0.5);
     float v = (fragCoord.y - 0.5) * iResolution.y / iResolution. x;
 
-    vec3 color = vec3(-1);
     vec3 eye = vec3(-1);
     vec3 tar = vec3(-1);
 
+    float focus = 0.0;
+
     if (iTime < PART_1_INTRO) {
         eye = vec3(-3, 2 + iTime * 0.5, 2.999);
-        tar =  vec3(-3, 0, 3);
+        tar = vec3(-3, 0, 3);
     } else if (iTime < PART_2_CHANNEL) {
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
-        tar =  vec3(0, 0, 3);
+        tar = vec3(0, 0, 3);
     } else if (iTime < PART_3_MISSILE) {
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
-        tar =  vec3(0, 0, 3);
+        tar = vec3(0, 0, 3);
     } else if (iTime < PART_4_SINKING) {
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
-        tar =  vec3(0, 0, 3);
+        tar = vec3(0, 0, 3);
     } else {
         //eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
         //tar =  vec3(0, 0, 3);
@@ -387,12 +397,30 @@ void main()
 
     vec3 rd = normalize(dir + right*u + up*v);
 
-    color = march2(eye, rd);
+    FullMarchResult res = march2(eye, rd);
+    vec3 color = res.col;
+    const vec3 firstJumpPos = res.firstJumpPos;
+
+    if (iTime < PART_1_INTRO) {
+
+    } else if (iTime < PART_2_CHANNEL) {
+        const float lenToShip = length(eye - vec3(0, 0, 3));
+        focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
+    } else if (iTime < PART_3_MISSILE) {
+        const float lenToShip = length(eye - vec3(0, 0, 3));
+        focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
+    } else if (iTime < PART_4_SINKING) {
+        const float lenToShip = length(eye - vec3(0, 0, 3));
+        focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
+    } else {
+
+    }
+
 
     // Tone mapping
     color /= (color + vec3(1.0));
 
-    fragColor = vec4(pow(color, vec3(0.5)), 1.0);
+    fragColor = vec4(pow(color, vec3(0.5)), focus);
 }
 
 )""
