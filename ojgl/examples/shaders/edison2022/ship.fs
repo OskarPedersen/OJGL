@@ -29,10 +29,10 @@ const int shipTypeTop = 2;
 const int waterType = 3;
 const int skyType = 4;
 
-#define PART_1_INTRO 10
-#define PART_2_CHANNEL (PART_1_INTRO + 20)
+#define PART_1_INTRO 12
+#define PART_2_CHANNEL (PART_1_INTRO + 10)
 #define PART_3_MISSILE (PART_2_CHANNEL + 10)
-#define PART_4_SINKING (PART_3_MISSILE + 20)
+#define PART_4_SINKING (PART_3_MISSILE + 15)
 
 const float PART_3_speed = 3.0;
 const float PART_3_travelEndPoint = 13.5;
@@ -162,12 +162,12 @@ VolumetricResult lightHouseLight(in vec3 p) {
 
     float d = length(rp - vec3(0, 0.55, 0)) - 0.05;
     float ds = length(rp - vec3(0, 0.5, 0));
-    float strength = 1500 * shipLightStrengthModifier();// - 1500*sin(5*d + 3*sin(d) - 5*iTime);
+    float strength = 25000 * shipLightStrengthModifier();// - 1500*sin(5*d + 3*sin(d) - 5*iTime);
 
     vec3 lightDir = normalize(vec3(sin(iTime), 0, cos(iTime)));
     vec3 posDir = normalize(p - vec3(0, 0.55, 3));
 	float f = clamp(dot(lightDir, posDir), 0, 1);
-    f = pow(f, 500);
+    f = pow(f, 1000);
     //vec3 col = vec3(0.05, 1.0, 0.05);
 	vec3 res = lightHouseColor * f * strength / (d * d);
 
@@ -249,8 +249,8 @@ DistanceInfo map(in vec3 p, bool isMarch)
     //}
 
     // sky
-    float sd = abs(p.y - 7.0);
-    res = un(DistanceInfo(sd, skyType, vec3(1, 2, 3)), res);
+    //float sd = abs(p.y - 7.0);
+    //res = un(DistanceInfo(sd, skyType, vec3(1, 2, 3)), res);
 
 
     return res;
@@ -258,10 +258,8 @@ DistanceInfo map(in vec3 p, bool isMarch)
 
 float getReflectiveIndex(int type)
 {
-    if(type == shipTypeBottom) {
-        return 0.03;
-    } else if (type == shipTypeTop) {
-        return 0.03;
+    if(type == shipTypeBottom || type == shipTypeTop) {
+        return isGhost() ? 0.5 : 0.5;
     }
     if(type == waterType)
         return 0.5;
