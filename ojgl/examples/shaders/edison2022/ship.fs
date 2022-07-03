@@ -150,9 +150,21 @@ vec3 missilePos() {
 
 VolumetricResult missile(in vec3 p) {
     //vec3 rp = shipPos(p);
-    float d = length(p - missilePos());
+    float d = length(p - missilePos()) - 0.3;
     float strength = 20;
     vec3 res = vec3(0.4, 1.0, 0.4) * strength / (d * d);
+
+
+
+    // pipe
+    float pd = sdCylinder(p - vec3(0.5, 0.6, 0), .01);
+    float td = sdTorus(p - vec3(0.5 - 1, 0.6, -10 + PART_3_travelEndPoint), vec2(1.0, 0.01));
+
+    d = max(d, min(pd, td));
+    strength = 20;
+    res = vec3(0.4, 1.0, 0.4) * strength / (d * d);
+
+    //vr = volumetricUn(vr, VolumetricResult(d, res));
 
     VolumetricResult vr = { d, res };
 
@@ -237,8 +249,8 @@ DistanceInfo map(in vec3 p, bool isMarch)
 
 
     // water
-    float wn = 0.03*(noise_2(p.xz * 20 - vec2(1*iTime, 0.1*iTime)) + noise_2(p.xz * 15 + vec2(1*iTime,  0.1*iTime)));
-    float wd = p.y - 0.15 + pow(wn, 0.03) * 0.3;
+    float wn = 0.03*(noise_2(p.xz * 20 - vec2(5.0*iTime, 2.1*iTime)) + noise_2(p.xz * 15 - vec2(4.0*iTime,  -2.1*iTime)));
+    float wd = p.y + 0.0 + pow(wn, 0.1) * 0.1;
     DistanceInfo waterDI = {wd, waterType, vec3(1, 2, 3)};
 
     DistanceInfo res = waterDI;
@@ -265,7 +277,7 @@ float getReflectiveIndex(int type)
     }
     if(type == waterType)
         return 0.5;
-    return 0.0;
+    return 0.5;
 }
 
 float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
@@ -290,20 +302,32 @@ vec3 getColor(in MarchResult result, vec3 eye)
        col = vec3(1);
     }
 
-    vec3 lightPos = vec3(0, 2, 3);
-    vec3 invLight = normalize(lightPos - result.position);
-    vec3 normal = normal(result.position);
-    float diffuse = max(0., dot(invLight, normal));
 
-    float spec = 0.0;
+    vec3 normal = normal(result.position);
+    //float diffuse = max(0., dot(invLight, normal));
+
+    float specTotal = 0.0;
     if (isGhost()) {
-        spec = specular(normal, -invLight, normalize(eye - result.position), 20000.0);
+        vec3 lightPos = vec3(0, 2, 3);
+        vec3 invLight = normalize(lightPos - result.position);
+
+        float spec = specular(normal, -invLight, normalize(eye - result.position), 2000.0);
         const float dis = length(lightPos - result.position);
-        const float specStr = 100.0 / (dis * dis);
-        spec *= specStr * shipLightStrengthModifier();
+        const float specStr = 30.0 / (dis * dis);
+        specTotal += spec * specStr * shipLightStrengthModifier();
     }
 
-    return result.scatteredLight +  result.transmittance * vec3(spec);
+
+    // missile spec
+    vec3 lightPos = missilePos();
+    vec3 invLight = normalize(lightPos - result.position);
+
+    float spec = specular(normal, -invLight, normalize(eye - result.position), 2000.0);
+    const float dis = length(lightPos - result.position);
+    const float specStr = 3.0 / (dis * dis);
+    specTotal += spec * specStr;
+
+    return result.scatteredLight +  result.transmittance * vec3(specTotal);
     //return result.scatteredLight +  result.transmittance * col * diffuse * 0.0 + vec3(spec);
 }
 

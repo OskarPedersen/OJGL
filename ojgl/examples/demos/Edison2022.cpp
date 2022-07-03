@@ -66,7 +66,7 @@ ojstd::vector<Scene> Edison2022::buildSceneGraph(const Vector2i& sceneSize) cons
         auto chrom = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2022/ship_chrom_ab.fs");
         chrom->setInputs(blur2);
 
-        scenes.emplace_back(raymarch, Duration::seconds(999999), "sceneShip");
+        scenes.emplace_back(chrom, Duration::seconds(999999), "sceneShip");
     }
 
     {
