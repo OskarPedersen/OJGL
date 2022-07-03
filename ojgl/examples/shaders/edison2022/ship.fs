@@ -333,7 +333,7 @@ vec3 march2(in vec3 rayOrigin, in vec3 rayDirection)
 #else
                 t = 0.0;
                 rayDirection = reflect(rayDirection, normal(p));
-                rayOrigin = p + 0.1 * rayDirection;
+                rayOrigin = p + 0.02 * rayDirection;
 
                 resultColor = mix(resultColor, color, reflectionModifier);
                 reflectionModifier *= getReflectiveIndex(info.type);
