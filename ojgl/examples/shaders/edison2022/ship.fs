@@ -127,6 +127,8 @@ VolumetricResult waterLights(in vec3 p) {
     return VolumetricResult(d, res);
 }
 
+const float PART_3_flyAwayStartTime = (PART_3_travelEndPoint / PART_3_speed) + 3 * (2 * PI) / PART_3_speed;
+
 vec3 missilePos() {
     const float time = iTime - PART_2_CHANNEL;
 
@@ -134,9 +136,8 @@ vec3 missilePos() {
     const float travel = PART_3_speed * time;
     pos.z += min(PART_3_travelEndPoint, travel);
 
-    const float flyAwayStartTime = (PART_3_travelEndPoint / PART_3_speed) + 3 * (2 * PI) / PART_3_speed;
-    if (time > flyAwayStartTime) {
-        pos.z += (time - flyAwayStartTime) * PART_3_speed;
+    if (time > PART_3_flyAwayStartTime) {
+        pos.z += (time - PART_3_flyAwayStartTime) * PART_3_speed;
     } else if (travel > PART_3_travelEndPoint) {
         float orbitTime = time - PART_3_travelEndPoint / PART_3_speed;
         pos.x += sin(-orbitTime * PART_3_speed + radians(90)) - 1;
@@ -157,10 +158,31 @@ VolumetricResult missile(in vec3 p) {
 
 
     // pipe
-    float pd = sdCylinder(p - vec3(0.5, 0.6, 0), .01);
+    //float pd = sdCylinder(p - vec3(0.5, 0.6, 0), .01);
+
+    //float pd = sdCappedCylinder((p - vec3(0.5, 0.6, 0)).xzy, vec2(0.01, 3.5));
+    //float pd = sdCappedCylinder((p - vec3(0.5, 0.6, 10 + 3.5)).xzy, vec2(0.01, 10));
+
+    float pd = 9999999.0;
     float td = sdTorus(p - vec3(0.5 - 1, 0.6, -10 + PART_3_travelEndPoint), vec2(1.0, 0.01));
 
-    d = max(d, min(pd, td));
+    //td = max(p.z - 3.5, td);
+    //td = max(-(p.z - 3.5), td);
+
+    //d = max(d, min(pd, td));
+
+    const float time = iTime - PART_2_CHANNEL;
+    if (time < PART_3_SPIN_START + 1.0) {
+        // first cylinder + half torus
+        pd = sdCappedCylinder((p - vec3(0.5, 0.6, 0)).xzy, vec2(0.01, 3.5));
+        td = max(-(p.z - 3.5), td);
+    } else if (time > PART_3_flyAwayStartTime) {
+        // second cylinder + other half of the torus
+        pd = sdCappedCylinder((p - vec3(0.5, 0.6, 10 + 3.5)).xzy, vec2(0.01, 10));
+        td = max(p.z - 3.5, td);
+    }
+
+    d = max(d, min(td, pd));
     strength = 20;
     res = vec3(0.4, 1.0, 0.4) * strength / (d * d);
 
