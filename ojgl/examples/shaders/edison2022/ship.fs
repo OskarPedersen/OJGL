@@ -32,7 +32,7 @@ const int skyType = 4;
 #define PART_1_INTRO 12
 #define PART_2_CHANNEL (PART_1_INTRO + 10)
 #define PART_3_MISSILE (PART_2_CHANNEL + 10)
-#define PART_4_SINKING (PART_3_MISSILE + 15)
+#define PART_4_SINKING (PART_3_MISSILE + 17)
 
 const float PART_3_speed = 3.0;
 const float PART_3_travelEndPoint = 13.5;
@@ -120,8 +120,10 @@ VolumetricResult waterLights(in vec3 p) {
     float index = pMod1(p.x, 1.0);
     p.z -= 3;
     p.z = abs(p.z) - 1;
-    float d = length(p);
-    float strength = 3.5;
+    //float d = length(p);
+    const float t = iTime - PART_4_SINK_START - 7.0;
+    float d = sdCappedCylinder(p + vec3(0, max(0, t * 0.1), 0), vec2(0.001, 0.05));
+    float strength = 20.5;
     vec3 res = lightHouseColor * strength / (d * d);
 
     return VolumetricResult(d, res);
