@@ -441,8 +441,8 @@ void main()
     float focus = 0.0;
 
     if (iTime < PART_1_INTRO) {
-        eye = vec3(-3, 2 + iTime * 0.5, 2.999);
-        tar = vec3(-3, 0, 3);
+        eye = vec3(-2.5, 2 + iTime * 0.5, 2.999);
+        tar = vec3(-2.5, 0, 3);
     } else if (iTime < PART_2_CHANNEL) {
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
         tar = vec3(0, 0, 3);
@@ -488,6 +488,15 @@ void main()
     color /= (color + vec3(1.0));
 
     fragColor = vec4(pow(color, vec3(0.5)), focus);
+
+    const float fadeDuration = 1.0;
+    // fade in
+    fragColor.rgb *= min(1.0, iTime / fadeDuration);
+
+    // fade out
+    if (iTime > PART_4_SINKING - fadeDuration) {
+        fragColor.rgb *= 1.0 - (iTime - PART_4_SINKING + fadeDuration) / fadeDuration;
+    }
 }
 
 )""
