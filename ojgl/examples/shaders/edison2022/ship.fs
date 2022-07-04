@@ -426,7 +426,8 @@ void main()
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
         tar = vec3(0, 0, 3);
     } else if (iTime < PART_4_SINKING) {
-        eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
+        const float t = iTime - PART_3_MISSILE;
+        eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5 + t * 0.5);
         tar = vec3(0, 0, 3);
     } else {
         //eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
