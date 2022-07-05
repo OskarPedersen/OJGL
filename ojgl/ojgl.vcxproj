@@ -444,6 +444,7 @@
     <None Include="examples\shaders\QED\sphere.vs" />
     <None Include="examples\shaders\QED\tower.fs" />
     <None Include="examples\songs\dodenstriumf_song.inc" />
+    <None Include="examples\songs\edison_2022_song.inc" />
     <None Include="examples\songs\eldur_song.inc" />
     <None Include="examples\songs\innersystemlab_song.inc" />
     <None Include="examples\songs\qed_song.inc" />

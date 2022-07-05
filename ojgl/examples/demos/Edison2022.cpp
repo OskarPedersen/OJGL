@@ -6,6 +6,15 @@
 
 using namespace ojgl;
 
+static const unsigned char song[] = {
+#include "songs/edison_2022_song.inc"
+};
+
+const unsigned char* Edison2022::getSong() const
+{
+    return song;
+}
+
 ojstd::shared_ptr<Texture> Edison2022::getText(const ojstd::string& text) const
 {
     if (!this->_textures.contains(text))
