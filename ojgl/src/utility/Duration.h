@@ -36,6 +36,9 @@ public:
     static Duration seconds(long s) { return Duration(s * 1000); }
     static Duration milliseconds(long ms) { return Duration(ms); }
     static Duration maximum();
+    static Duration min(const Duration& d1, const Duration& d2) {
+        return d1 < d2 ? d1 : d2;
+    }
 
 private:
     long _duration;

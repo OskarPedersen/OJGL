@@ -24,9 +24,13 @@ uniform float iTime;
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 
-uniform float CHANNEL_0_SINCE;
-uniform float CHANNEL_1_SINCE;
-uniform float CHANNEL_2_SINCE;
+uniform float CHANNEL_2_SINCE; // 63 drum beat hi hat
+uniform float CHANNEL_3_SINCE; // ambient synth
+uniform float CHANNEL_4_SINCE; // kick drum
+uniform float CHANNEL_8_SINCE; // drum beat snare
+uniform float CHANNEL_9_SINCE; // drum beat crash
+uniform float CHANNEL_6_SINCE; // 6 melody synth
+
 
 const int shipTypeBottom = 1;
 const int shipTypeTop = 2;
@@ -126,7 +130,8 @@ VolumetricResult waterLights(in vec3 p) {
     p.z = abs(p.z) - 1;
     //float d = length(p);
     const float t = iTime - PART_4_SINK_START - 7.0;
-    float d = sdCappedCylinder(p + vec3(0, max(0, t * 0.1), 0), vec2(0.001, 0.05));
+    const float height = 0.075 - min(0.05, CHANNEL_2_SINCE * 0.5);
+    float d = sdCappedCylinder(p + vec3(0, max(0, t * 0.1) + 0.05, 0), vec2(0.001, height));
     float strength = 20.5;
     vec3 res = lightHouseColor * strength / (d * d);
 
@@ -267,7 +272,7 @@ VolumetricResult evaluateLight(in vec3 p)
 
 float getFogAmount(in vec3 p)
 {
-    return 0.0001 + CHANNEL_0_SINCE;
+    return 0.0001;
 }
 
 DistanceInfo map(in vec3 p, bool isMarch)

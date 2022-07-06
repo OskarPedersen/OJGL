@@ -51,6 +51,16 @@ Duration SyncChannel::getTimeSinceLast(int relativeNote) const
     return _currentTime - _lastTimePerNote[relativeNote];
 }
 
+Duration SyncChannel::getTimeSinceAnyNote() const
+{
+    Duration min = Duration::maximum();
+    for (int i = 0; i < _lastTimePerNote.size(); i++) {
+        min = Duration::min(min, _currentTime - _lastTimePerNote[i]);
+    }
+
+    return min;
+}
+
 int SyncChannel::getTotalHitsPerNote(int relativeNote) const
 {
     return _totalHitsPerNote[relativeNote];
