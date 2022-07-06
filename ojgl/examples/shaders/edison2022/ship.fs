@@ -24,6 +24,10 @@ uniform float iTime;
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 
+uniform float CHANNEL_0_SINCE;
+uniform float CHANNEL_1_SINCE;
+uniform float CHANNEL_2_SINCE;
+
 const int shipTypeBottom = 1;
 const int shipTypeTop = 2;
 const int waterType = 3;
@@ -263,7 +267,7 @@ VolumetricResult evaluateLight(in vec3 p)
 
 float getFogAmount(in vec3 p)
 {
-    return 0.0001;
+    return 0.0001 + CHANNEL_0_SINCE;
 }
 
 DistanceInfo map(in vec3 p, bool isMarch)

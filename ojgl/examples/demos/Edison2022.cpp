@@ -3,6 +3,7 @@
 #include "TextRenderer.hpp"
 #include "utility/Log.h"
 #include "utility/Spline3.h"
+#include "music/Music.h"
 
 using namespace ojgl;
 
@@ -54,6 +55,13 @@ ojstd::vector<Scene> Edison2022::buildSceneGraph(const Vector2i& sceneSize) cons
         raymarch->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
             Buffer::UniformVector vector;
             vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));
+
+            auto music = Music::instance();
+
+            vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_0_SINCE", music->syncChannels()[0].getTimeSinceLast(0).toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_1_SINCE", music->syncChannels()[1].getTimeSinceLast(0).toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_2_SINCE", music->syncChannels()[2].getTimeSinceLast(0).toSeconds()));
+
             return vector;
         });
 
