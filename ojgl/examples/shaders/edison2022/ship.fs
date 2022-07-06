@@ -30,6 +30,7 @@ uniform float CHANNEL_4_SINCE; // kick drum
 uniform float CHANNEL_8_SINCE; // drum beat snare
 uniform float CHANNEL_9_SINCE; // drum beat crash
 uniform float CHANNEL_6_SINCE; // 6 melody synth
+uniform float CHANNEL_6_TOTAL;
 
 
 const int shipTypeBottom = 1;
@@ -140,8 +141,10 @@ VolumetricResult waterLights(in vec3 p) {
 
 const float PART_3_flyAwayStartTime = (PART_3_travelEndPoint / PART_3_speed) + 3 * (2 * PI) / PART_3_speed;
 
+//#define MISSILE_TIME (iTime - PART_2_CHANNEL) //
+#define MISSILE_TIME (0.75 * (CHANNEL_6_TOTAL * 0.5  + 0.6 * pow(CHANNEL_6_SINCE, 0.5)))
 vec3 missilePos() {
-    const float time = iTime - PART_2_CHANNEL;
+    const float time = MISSILE_TIME;//iTime - PART_2_CHANNEL;
 
     vec3 pos = vec3(0.5, 0.6, -10);
     const float travel = PART_3_speed * time;
@@ -149,6 +152,7 @@ vec3 missilePos() {
 
     if (time > PART_3_flyAwayStartTime) {
         pos.z += (time - PART_3_flyAwayStartTime) * PART_3_speed;
+
     } else if (travel > PART_3_travelEndPoint) {
         float orbitTime = time - PART_3_travelEndPoint / PART_3_speed;
         pos.x += sin(-orbitTime * PART_3_speed + radians(90)) - 1;
@@ -174,22 +178,24 @@ VolumetricResult missile(in vec3 p) {
     //float pd = sdCappedCylinder((p - vec3(0.5, 0.6, 0)).xzy, vec2(0.01, 3.5));
     //float pd = sdCappedCylinder((p - vec3(0.5, 0.6, 10 + 3.5)).xzy, vec2(0.01, 10));
 
+    const float r = 0.01;
+
     float pd = 9999999.0;
-    float td = sdTorus(p - vec3(0.5 - 1, 0.6, -10 + PART_3_travelEndPoint), vec2(1.0, 0.01));
+    float td = sdTorus(p - vec3(0.5 - 1, 0.6, -10 + PART_3_travelEndPoint), vec2(1.0, r));
 
     //td = max(p.z - 3.5, td);
     //td = max(-(p.z - 3.5), td);
 
     //d = max(d, min(pd, td));
 
-    const float time = iTime - PART_2_CHANNEL;
+    const float time = MISSILE_TIME;//iTime - PART_2_CHANNEL;
     if (time < PART_3_SPIN_START + 1.0) {
         // first cylinder + half torus
-        pd = sdCappedCylinder((p - vec3(0.5, 0.6, 0)).xzy, vec2(0.01, 3.5));
+        pd = sdCappedCylinder((p - vec3(0.5, 0.6, 0)).xzy, vec2(r, 3.5));
         td = max(-(p.z - 3.5), td);
     } else if (time > PART_3_flyAwayStartTime) {
         // second cylinder + other half of the torus
-        pd = sdCappedCylinder((p - vec3(0.5, 0.6, 10 + 3.5)).xzy, vec2(0.01, 10));
+        pd = sdCappedCylinder((p - vec3(0.5, 0.6, 10 + 3.5)).xzy, vec2(r, 10));
         td = max(p.z - 3.5, td);
     }
 
