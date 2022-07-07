@@ -5,12 +5,14 @@ out vec4 fragColor;
 
 uniform sampler2D inTexture0;
 
+uniform float CHANNEL_4_SINCE; // kick drum
+
 void main()
 {
 	vec2 uv = fragCoord.xy;
 
     vec2 dir = normalize(uv - vec2(0.5));
-    float l = length(vec2(0.5) - uv);
+    float l = length(vec2(0.5) - uv) * (0.1 + 1.0 - pow(CHANNEL_4_SINCE, 0.1)) * 5.0;
 
     //uv.x = uv.x + dir.x * l * l * l * .5;
 
