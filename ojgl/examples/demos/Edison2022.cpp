@@ -58,13 +58,14 @@ ojstd::vector<Scene> Edison2022::buildSceneGraph(const Vector2i& sceneSize) cons
 
             auto music = Music::instance();
 
-            vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_2_SINCE", music->syncChannels()[2].getTimeSinceAnyNote().toSeconds()));
-            vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_3_SINCE", music->syncChannels()[3].getTimeSinceAnyNote().toSeconds()));
-            vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_4_SINCE", music->syncChannels()[4].getTimeSinceAnyNote().toSeconds()));
-            vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_8_SINCE", music->syncChannels()[8].getTimeSinceAnyNote().toSeconds()));
-            vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_9_SINCE", music->syncChannels()[9].getTimeSinceAnyNote().toSeconds()));
-            vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_6_SINCE", music->syncChannels()[6].getTimeSinceAnyNote().toSeconds()));
-             vector.push_back(ojstd::make_shared<Uniform1f>("CHANNEL_6_TOTAL", music->syncChannels()[6].getTotalHits()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_2_SINCE", music->syncChannels()[2].getTimeSinceAnyNote().toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_3_SINCE", music->syncChannels()[3].getTimeSinceAnyNote().toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_4_SINCE", music->syncChannels()[4].getTimeSinceAnyNote().toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_4_TOTAL", music->syncChannels()[4].getTotalHits()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_8_SINCE", music->syncChannels()[8].getTimeSinceAnyNote().toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_9_SINCE", music->syncChannels()[9].getTimeSinceAnyNote().toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_6_SINCE", music->syncChannels()[6].getTimeSinceAnyNote().toSeconds()));
+             vector.push_back(ojstd::make_shared<Uniform1f>("C_6_TOTAL", music->syncChannels()[6].getTotalHits()));
 
             return vector;
         });

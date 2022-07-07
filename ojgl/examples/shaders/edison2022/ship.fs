@@ -24,13 +24,14 @@ uniform float iTime;
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 
-uniform float CHANNEL_2_SINCE; // 63 drum beat hi hat
-uniform float CHANNEL_3_SINCE; // ambient synth
-uniform float CHANNEL_4_SINCE; // kick drum
-uniform float CHANNEL_8_SINCE; // drum beat snare
-uniform float CHANNEL_9_SINCE; // drum beat crash
-uniform float CHANNEL_6_SINCE; // 6 melody synth
-uniform float CHANNEL_6_TOTAL;
+uniform float C_2_SINCE; // 63 drum beat hi hat
+uniform float C_3_SINCE; // ambient synth
+uniform float C_4_SINCE; // kick drum
+uniform float C_4_TOTAL; // kick drum
+uniform float C_8_SINCE; // drum beat snare
+uniform float C_9_SINCE; // drum beat crash
+uniform float C_6_SINCE; // 6 melody synth
+uniform float C_6_TOTAL;
 
 
 const int shipTypeBottom = 1;
@@ -131,7 +132,7 @@ VolumetricResult waterLights(in vec3 p) {
     p.z = abs(p.z) - 1;
     //float d = length(p);
     const float t = iTime - PART_4_SINK_START - 7.0;
-    const float height = 0.075 - min(0.05, CHANNEL_2_SINCE * 0.5);
+    const float height = 0.075 - min(0.05, C_2_SINCE * 0.5);
     float d = sdCappedCylinder(p + vec3(0, max(0, t * 0.1) + 0.05, 0), vec2(0.001, height));
     float strength = 20.5;
     vec3 res = lightHouseColor * strength / (d * d);
@@ -142,7 +143,7 @@ VolumetricResult waterLights(in vec3 p) {
 const float PART_3_flyAwayStartTime = (PART_3_travelEndPoint / PART_3_speed) + 3 * (2 * PI) / PART_3_speed;
 
 //#define MISSILE_TIME (iTime - PART_2_CHANNEL) //
-#define MISSILE_TIME (0.75 * (CHANNEL_6_TOTAL * 0.5  + 0.5 * pow(CHANNEL_6_SINCE, 0.3)))
+#define MISSILE_TIME (0.75 * (C_6_TOTAL * 0.5  + 0.5 * pow(C_6_SINCE, 0.3)))
 vec3 missilePos(float timeOffset = 0.0) {
     const float time = MISSILE_TIME + timeOffset;//iTime - PART_2_CHANNEL;
 
@@ -205,7 +206,7 @@ VolumetricResult missile(in vec3 p) {
 
     d = max(d, min(td, pd));
     d = min(d, length(p - missilePos(0.17) - headOffset) - 0.05);
-    strength = 0 + 30.0 - pow(CHANNEL_6_SINCE, 0.8) * 30.0;
+    strength = 0 + 30.0 - pow(C_6_SINCE, 0.8) * 30.0;
     strength = max(0.0, strength);
     res = vec3(0.4, 1.0, 0.4) * strength / (d * d);
 
@@ -284,6 +285,18 @@ VolumetricResult evaluateLight(in vec3 p)
         res = volumetricUn(res, missile(p));
     }
 
+    {
+        vec2 i = pMod2(p.xz, vec2(1.0));
+        if (noise_2(i + vec2(C_4_TOTAL, 0)) > 0.7) {
+            float d = sdCappedCylinder(p - vec3(0, 0.2, 0), vec2(0.01, 0.5));
+            float strength = 10.0 * (1.0 - smoothstep(0.2, 0.2 + 0.5, p.y));
+            vec3 col = vec3(0.4, 1.0, 0.4) * strength / (d * d);
+
+            res.distance = min(res.distance, d);
+            res.color = res.color + col;
+        }
+    }
+
 	return res;
 }
 
@@ -317,6 +330,9 @@ DistanceInfo map(in vec3 p, bool isMarch)
     //res = un(DistanceInfo(sd, skyType, vec3(1, 2, 3)), res);
 
 
+    pMod2(p.xz, vec2(1.0));
+    float d = sdCappedCylinder(p, vec2(0.05 + (0.05 - p.y) * 0.2, 0.2));
+    res.distance = smink(res.distance, d, 0.03);
     return res;
 }
 
@@ -339,18 +355,7 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 
 vec3 getColor(in MarchResult result, vec3 eye)
 {
-    //vec3 col = vec3(1, 1, 1);
-    //if (result.type == waterType) {
-    //    col = vec3(0, 0, 1);
-    //}
-    //else if (result.type == skyType) {
-    //    col = vec3(0, 0, 1);
-    //}
-    //else if(result.type == shipTypeBottom) {
-    //    col = vec3(1);
-    //} else if (result.type == shipTypeTop) {
-    //   col = vec3(1);
-    //}
+
 
 
     vec3 normal = normal(result.position);
@@ -494,25 +499,10 @@ void main()
     vec3 color = res.col;
     const vec3 firstJumpPos = res.firstJumpPos;
 
-    //if (iTime < PART_1_INTRO) {
-    //
-    //} else if (iTime < PART_2_CHANNEL) {
-    //    const float lenToShip = length(eye - vec3(0, 0, 3));
-    //    focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
-    //} else if (iTime < PART_3_MISSILE) {
-    //    const float lenToShip = length(eye - vec3(0, 0, 3));
-    //    focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
-    //} else if (iTime < PART_4_SINKING) {
-    //    const float lenToShip = length(eye - vec3(0, 0, 3));
-    //    focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
-    //} else {
-    //
-    //}
     if (iTime > PART_1_INTRO) {
         const float lenToShip = length(eye - vec3(0, 0, 3));
         focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
     }
-
 
     // Tone mapping
     color /= (color + vec3(1.0));
