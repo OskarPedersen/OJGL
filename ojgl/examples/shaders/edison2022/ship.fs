@@ -4,9 +4,9 @@ const float S_distanceEpsilon = 1e-2;
 const float S_normalEpsilon = 1e-2;
 const int S_maxSteps = 150;
 const float S_maxDistance = 200.0;
-const float S_distanceMultiplier = 0.7;
+const float S_distanceMultiplier = 1.0;
 const float S_minVolumetricJumpDistance = 0.005;
-const float S_volumetricDistanceMultiplier = 0.1;//0.75;
+const float S_volumetricDistanceMultiplier = 0.5;//0.75;
 const int S_reflectionJumps = 3;
 
 #define S_VOLUMETRIC 1
@@ -87,8 +87,8 @@ vec3 shipPos(in vec3 p) {
 
 float shipDistance(in vec3 p) {
     vec3 rp = shipPos(p);
-    float len = 0.7;
-    float height = 0.1;
+    const float len = 0.7;
+    const float height = 0.1;
     float width = 0.2 + rp.y * 0.5;
     if (rp.x < -0.1) {
         width += rp.x + 0.1;
@@ -101,13 +101,13 @@ float shipDistance(in vec3 p) {
         width -= rp.y - 0.2;
     }
 
-    float d2 = sdRoundBox(rp - vec3(0.1, height, 0), vec3(0.3, 0.2, width), 0.0);
+    const float d2 = sdRoundBox(rp - vec3(0.1, height, 0), vec3(0.3, 0.2, width), 0.0);
 
     d = min(d, d2);
 
     // antenna
-    float w = 0.02 + 0.5 - rp.y * 0.2 - 0.4;
-    float d3 = sdRoundBox(rp - vec3(0, 0.22, 0), vec3(w, 0.3, w), 0.0);
+    const float w = 0.02 + 0.5 - rp.y * 0.2 - 0.4;
+    const float d3 = sdRoundBox(rp - vec3(0, 0.22, 0), vec3(w, 0.3, w), 0.0);
 
     d = smink(d, d3, 0.05);
 
@@ -118,7 +118,7 @@ VolumetricResult volumetricUn(in VolumetricResult vr1, in VolumetricResult vr2) 
     return VolumetricResult(min(vr1.distance, vr2.distance), vr1.color + vr2.color);
 }
 
-vec3 lightHouseColor = vec3(0.1, 0.2, 1.0);
+#define lightHouseColor vec3(0.1, 0.2, 1.0)
 
 VolumetricResult waterLights(in vec3 p) {
     const float speed = 0.3;
@@ -215,6 +215,9 @@ VolumetricResult lightHouseLight(in vec3 p) {
     vec3 rp = shipPos(p);
 
     float d = length(rp - vec3(0, 0.55, 0)) - 0.05;
+    vec3 boundCylPos = (rp - vec3(0, 0.55, 0));
+    boundCylPos.xz *= rot(-iTime);
+    float boundD = sdCappedCylinder(boundCylPos.xzy - vec3(0, 5.0, 0), vec2(0.0, 5.0));
     float ds = length(rp - vec3(0, 0.5, 0));
     float strength = 25000 * shipLightStrengthModifier();// - 1500*sin(5*d + 3*sin(d) - 5*iTime);
 
@@ -222,15 +225,17 @@ VolumetricResult lightHouseLight(in vec3 p) {
     vec3 posDir = normalize(p - vec3(0, 0.55, 3));
 	float f = clamp(dot(lightDir, posDir), 0, 1);
     f = pow(f, 1000);
+    //d = boundD; f = 1.0;
     //vec3 col = vec3(0.05, 1.0, 0.05);
 	vec3 res = lightHouseColor * f * strength / (d * d);
 
-    return VolumetricResult(d, res);
+
+    return VolumetricResult(boundD, res);
 }
 
 VolumetricResult topLight(in vec3 p) {
     float d = length(p - vec3(0, 0.55, 3)) - 0.03;
-    float strength = 20 * shipLightStrengthModifier();
+    float strength = 50 * shipLightStrengthModifier();
     //vec3 col = vec3(0.05, 1.0, 0.05);
     vec3 res = lightHouseColor * strength / (d * d);
 
@@ -310,15 +315,15 @@ DistanceInfo map(in vec3 p, bool isMarch)
     return res;
 }
 
-float getReflectiveIndex(int type)
-{
-    if(type == shipTypeBottom || type == shipTypeTop) {
-        return isGhost() ? 0.5 : 0.5;
-    }
-    if(type == waterType)
-        return 0.5;
-    return 0.5;
-}
+//float getReflectiveIndex(int type)
+//{
+//    if(type == shipTypeBottom || type == shipTypeTop) {
+//        return isGhost() ? 0.5 : 0.5;
+//    }
+//    if(type == waterType)
+//        return 0.5;
+//    return 0.5;
+//}
 
 float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 {
@@ -329,18 +334,18 @@ float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 
 vec3 getColor(in MarchResult result, vec3 eye)
 {
-    vec3 col = vec3(1, 1, 1);
-    if (result.type == waterType) {
-        col = vec3(0, 0, 1);
-    }
-    else if (result.type == skyType) {
-        col = vec3(0, 0, 1);
-    }
-    else if(result.type == shipTypeBottom) {
-        col = vec3(1);
-    } else if (result.type == shipTypeTop) {
-       col = vec3(1);
-    }
+    //vec3 col = vec3(1, 1, 1);
+    //if (result.type == waterType) {
+    //    col = vec3(0, 0, 1);
+    //}
+    //else if (result.type == skyType) {
+    //    col = vec3(0, 0, 1);
+    //}
+    //else if(result.type == shipTypeBottom) {
+    //    col = vec3(1);
+    //} else if (result.type == shipTypeTop) {
+    //   col = vec3(1);
+    //}
 
 
     vec3 normal = normal(result.position);
@@ -388,7 +393,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
 #if S_REFLECTIONS
     for (; jump < S_reflectionJumps; jump++) {
 #endif
-        for (int steps = 0; steps < S_maxSteps; ++steps) {
+        for (int steps = 0; steps < S_maxSteps * (jump == 0 ? 1.0 : 0.5); ++steps) {
             vec3 p = rayOrigin + t * rayDirection;
 
             if (jump == 0) {
@@ -427,7 +432,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
                 rayOrigin = p + 0.02 * rayDirection;
 
                 resultColor = mix(resultColor, color, reflectionModifier);
-                reflectionModifier *= getReflectiveIndex(info.type);
+                reflectionModifier *= 0.5; //getReflectiveIndex(info.type);
                 break;
  #endif
             }
@@ -484,19 +489,23 @@ void main()
     vec3 color = res.col;
     const vec3 firstJumpPos = res.firstJumpPos;
 
-    if (iTime < PART_1_INTRO) {
-
-    } else if (iTime < PART_2_CHANNEL) {
+    //if (iTime < PART_1_INTRO) {
+    //
+    //} else if (iTime < PART_2_CHANNEL) {
+    //    const float lenToShip = length(eye - vec3(0, 0, 3));
+    //    focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
+    //} else if (iTime < PART_3_MISSILE) {
+    //    const float lenToShip = length(eye - vec3(0, 0, 3));
+    //    focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
+    //} else if (iTime < PART_4_SINKING) {
+    //    const float lenToShip = length(eye - vec3(0, 0, 3));
+    //    focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
+    //} else {
+    //
+    //}
+    if (iTime > PART_1_INTRO) {
         const float lenToShip = length(eye - vec3(0, 0, 3));
         focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
-    } else if (iTime < PART_3_MISSILE) {
-        const float lenToShip = length(eye - vec3(0, 0, 3));
-        focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
-    } else if (iTime < PART_4_SINKING) {
-        const float lenToShip = length(eye - vec3(0, 0, 3));
-        focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
-    } else {
-
     }
 
 
