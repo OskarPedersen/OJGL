@@ -142,7 +142,7 @@ VolumetricResult waterLights(in vec3 p) {
 const float PART_3_flyAwayStartTime = (PART_3_travelEndPoint / PART_3_speed) + 3 * (2 * PI) / PART_3_speed;
 
 //#define MISSILE_TIME (iTime - PART_2_CHANNEL) //
-#define MISSILE_TIME (0.75 * (CHANNEL_6_TOTAL * 0.5  + 0.6 * pow(CHANNEL_6_SINCE, 0.5)))
+#define MISSILE_TIME (0.75 * (CHANNEL_6_TOTAL * 0.5  + 0.5 * pow(CHANNEL_6_SINCE, 0.3)))
 vec3 missilePos() {
     const float time = MISSILE_TIME;//iTime - PART_2_CHANNEL;
 
@@ -166,7 +166,7 @@ vec3 missilePos() {
 
 VolumetricResult missile(in vec3 p) {
     //vec3 rp = shipPos(p);
-    float d = length(p - missilePos()) - 0.3;
+    float d = length(p - missilePos()) - 0.5;
     float strength = 20;
     vec3 res = vec3(0.4, 1.0, 0.4) * strength / (d * d);
 
@@ -200,7 +200,8 @@ VolumetricResult missile(in vec3 p) {
     }
 
     d = max(d, min(td, pd));
-    strength = 20;
+    strength = 0 + 30.0 - pow(CHANNEL_6_SINCE, 0.8) * 30.0;
+    strength = max(0.0, strength);
     res = vec3(0.4, 1.0, 0.4) * strength / (d * d);
 
     //vr = volumetricUn(vr, VolumetricResult(d, res));
