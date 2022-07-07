@@ -181,7 +181,7 @@ VolumetricResult missile(in vec3 p) {
     const float r = 0.01;
 
     float pd = 9999999.0;
-    float td = sdTorus(p - vec3(0.5 - 1, 0.6, -10 + PART_3_travelEndPoint), vec2(1.0, r));
+    float td = sdTorus(p - vec3(0.5 - 1, 0.6, -10 + PART_3_travelEndPoint), vec2(1.0 + sin(atan(p.x + 0.5, p.z - 3.5) * 20.0) * 0.05, r));
 
     //td = max(p.z - 3.5, td);
     //td = max(-(p.z - 3.5), td);
@@ -191,11 +191,11 @@ VolumetricResult missile(in vec3 p) {
     const float time = MISSILE_TIME;//iTime - PART_2_CHANNEL;
     if (time < PART_3_SPIN_START + 1.0) {
         // first cylinder + half torus
-        pd = sdCappedCylinder((p - vec3(0.5, 0.6, 0)).xzy, vec2(r, 3.5));
+        pd = sdCappedCylinder((p - vec3(0.5 + sin(p.z * 10.0) * 0.1, 0.6, 0)).xzy, vec2(r, 3.5));
         td = max(-(p.z - 3.5), td);
     } else if (time > PART_3_flyAwayStartTime) {
         // second cylinder + other half of the torus
-        pd = sdCappedCylinder((p - vec3(0.5, 0.6, 10 + 3.5)).xzy, vec2(r, 10));
+        pd = sdCappedCylinder((p - vec3(0.5 + sin(p.z * 10.0) * 0.1, 0.6, 10 + 3.5)).xzy, vec2(r, 10));
         td = max(p.z - 3.5, td);
     }
 
