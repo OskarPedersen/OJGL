@@ -41,22 +41,23 @@ const int skyType = 4;
 
 #define PART_1_INTRO 12
 #define PART_2_CHANNEL (PART_1_INTRO + 10)
-#define PART_3_MISSILE (PART_2_CHANNEL + 10)
-#define PART_4_SINKING (PART_3_MISSILE + 17)
+#define PART_3_OIL (PART_2_CHANNEL + 15)
+#define PART_4_MISSILE (PART_3_OIL + 10)
+#define PART_5_SINKING (PART_4_MISSILE + 17)
 
-const float PART_3_speed = 3.0;
-const float PART_3_travelEndPoint = 13.5;
-const float PART_3_SPIN_START = PART_3_travelEndPoint / PART_3_speed;
+const float PART_4_speed = 3.0;
+const float PART_4_travelEndPoint = 13.5;
+const float PART_4_SPIN_START = PART_4_travelEndPoint / PART_4_speed;
 
-const float PART_4_SINK_START = PART_3_MISSILE + 5.0;
+const float PART_4_SINK_START = PART_4_MISSILE + 5.0;
 
 bool isGhost() {
     if (iTime < PART_2_CHANNEL) {
         return true;
-    } else if (iTime < PART_4_SINKING) {
+    } else if (iTime < PART_5_SINKING) {
         const float time = iTime - PART_2_CHANNEL;
 
-        if (time > PART_3_SPIN_START) {
+        if (time > PART_4_SPIN_START) {
             return hash11(floor(time * 8.0)) > 0.5;
         } else {
             return true;
@@ -67,11 +68,11 @@ bool isGhost() {
 
 float shipLightStrengthModifier() {
         const float time = iTime - PART_2_CHANNEL;
-        if (time > PART_3_SPIN_START) {
+        if (time > PART_4_SPIN_START) {
             if (!isGhost()) {
                 return 0.0;
             } else {
-                return 1.0 - smoothstep(PART_3_SPIN_START, PART_3_SPIN_START + 5.0, time);
+                return 1.0 - smoothstep(PART_4_SPIN_START, PART_4_SPIN_START + 5.0, time);
             }
         } else {
             return 1.0;
@@ -123,10 +124,10 @@ VolumetricResult volumetricUn(in VolumetricResult vr1, in VolumetricResult vr2) 
 
 VolumetricResult waterLights(in vec3 p) {
     const float speed = 0.3;
-    const float fullspeedDis = speed * PART_3_MISSILE;
+    const float fullspeedDis = speed * PART_4_MISSILE;
     const float slowDis = 1.0;
 
-    p.x -= min(fullspeedDis, iTime * speed) + max(0.0, 1.0 - pow(1.4, -(iTime - PART_3_MISSILE)));
+    p.x -= min(fullspeedDis, iTime * speed) + max(0.0, 1.0 - pow(1.4, -(iTime - PART_4_MISSILE)));
     float index = pMod1(p.x, 1.0);
     p.z -= 3;
     p.z = abs(p.z) - 1;
@@ -140,7 +141,7 @@ VolumetricResult waterLights(in vec3 p) {
     return VolumetricResult(d, res);
 }
 
-const float PART_3_flyAwayStartTime = (PART_3_travelEndPoint / PART_3_speed) + 3 * (2 * PI) / PART_3_speed;
+const float PART_3_flyAwayStartTime = (PART_4_travelEndPoint / PART_4_speed) + 3 * (2 * PI) / PART_4_speed;
 
 //#define MISSILE_TIME (iTime - PART_2_CHANNEL) //
 #define MISSILE_TIME (0.75 * (C_6_TOTAL * 0.5  + 0.5 * pow(C_6_SINCE, 0.3)))
@@ -148,16 +149,16 @@ vec3 missilePos(float timeOffset = 0.0) {
     const float time = MISSILE_TIME + timeOffset;//iTime - PART_2_CHANNEL;
 
     vec3 pos = vec3(0.5, 0.6, -10);
-    const float travel = PART_3_speed * time;
-    pos.z += min(PART_3_travelEndPoint, travel);
+    const float travel = PART_4_speed * time;
+    pos.z += min(PART_4_travelEndPoint, travel);
 
     if (time > PART_3_flyAwayStartTime) {
-        pos.z += (time - PART_3_flyAwayStartTime) * PART_3_speed;
+        pos.z += (time - PART_3_flyAwayStartTime) * PART_4_speed;
 
-    } else if (travel > PART_3_travelEndPoint) {
-        float orbitTime = time - PART_3_travelEndPoint / PART_3_speed;
-        pos.x += sin(-orbitTime * PART_3_speed + radians(90)) - 1;
-        pos.z += cos(-orbitTime * PART_3_speed + radians(90));
+    } else if (travel > PART_4_travelEndPoint) {
+        float orbitTime = time - PART_4_travelEndPoint / PART_4_speed;
+        pos.x += sin(-orbitTime * PART_4_speed + radians(90)) - 1;
+        pos.z += cos(-orbitTime * PART_4_speed + radians(90));
     }
 
     return pos;
@@ -184,7 +185,7 @@ VolumetricResult missile(in vec3 p) {
     float pd = 9999999.0;
     const float torusAngle = atan(p.x + 0.5, p.z - 3.5);
     const float torusRadiusModifier = sin(torusAngle * 20.0) * 0.05;
-    float td = sdTorus(p - vec3(0.5 - 1, 0.6, -10 + PART_3_travelEndPoint), vec2(1.0 + torusRadiusModifier, r));
+    float td = sdTorus(p - vec3(0.5 - 1, 0.6, -10 + PART_4_travelEndPoint), vec2(1.0 + torusRadiusModifier, r));
 
     //td = max(p.z - 3.5, td);
     //td = max(-(p.z - 3.5), td);
@@ -192,7 +193,7 @@ VolumetricResult missile(in vec3 p) {
     //d = max(d, min(pd, td));
     vec3 headOffset = vec3(cos(torusAngle) * torusRadiusModifier, 0, sin(torusAngle) * torusRadiusModifier);
     const float time = MISSILE_TIME;//iTime - PART_2_CHANNEL;
-    if (time < PART_3_SPIN_START + 1.0) {
+    if (time < PART_4_SPIN_START + 1.0) {
         // first cylinder + half torus
         pd = sdCappedCylinder((p - vec3(0.5 + sin(p.z * 10.0) * 0.1, 0.6, 0)).xzy, vec2(r, 3.5));
         td = max(-(p.z - 3.5), td);
@@ -248,6 +249,59 @@ VolumetricResult topLight(in vec3 p) {
     return VolumetricResult(d, res);
 }
 
+float getFogAmount(in vec3 p)
+{
+    return 0.0001;
+}
+
+vec3 oilPos(in vec3 p) {
+    const float time = iTime - PART_3_OIL;
+    return p - vec3(time * 0.3, 0, 0);
+}
+
+float oilBoundingBox(in vec3 p) {
+    return sdBox(p - vec3(0, 0, 25), vec3(3));
+}
+
+
+VolumetricResult oilVolumetric(in vec3 p) {
+    p = oilPos(p);
+    const vec3 o = p;
+    vec2 i = pMod2(p.xz, vec2(1.0));
+    float d = 99999.0;
+    vec3 col = vec3(0);
+    float boundingBox = oilBoundingBox(o);
+    if (boundingBox > 0) {
+        return VolumetricResult(boundingBox, col);
+    }
+
+    if (noise_2(i + vec2(C_4_TOTAL, 0)) > 0.7) {
+        d = sdCappedCylinder(p - vec3(0, 0.2, 0), vec2(0.01, 0.5));
+        float strength = 10.0 * (1.0 - smoothstep(0.2, 0.2 + 0.5, p.y));
+        col = vec3(0.4, 1.0, 0.4) * strength / (d * d);
+
+        //res.distance = min(res.distance, d);
+        //res.color = res.color + col;
+
+        d = max(boundingBox, d);
+    }
+
+    return VolumetricResult(d, col);
+}
+
+DistanceInfo oilMap(in vec3 p) {
+    p = oilPos(p);
+    const vec3 o = p;
+    pMod2(p.xz, vec2(1.0));
+    float d = sdCappedCylinder(p, vec2(0.05 + (0.05 - p.y) * 0.2, 0.2));
+    float boundingBox = oilBoundingBox(o);//sdBox(o - vec3(0, 0, 15), vec3(3));
+    d = max(boundingBox, d);
+
+    //res.distance = smink(res.distance, d, 0.03);
+
+    return DistanceInfo(d, waterType, vec3(0));
+}
+
 VolumetricResult evaluateLight(in vec3 p)
 {
 
@@ -285,24 +339,11 @@ VolumetricResult evaluateLight(in vec3 p)
         res = volumetricUn(res, missile(p));
     }
 
-    {
-        vec2 i = pMod2(p.xz, vec2(1.0));
-        if (noise_2(i + vec2(C_4_TOTAL, 0)) > 0.7) {
-            float d = sdCappedCylinder(p - vec3(0, 0.2, 0), vec2(0.01, 0.5));
-            float strength = 10.0 * (1.0 - smoothstep(0.2, 0.2 + 0.5, p.y));
-            vec3 col = vec3(0.4, 1.0, 0.4) * strength / (d * d);
 
-            res.distance = min(res.distance, d);
-            res.color = res.color + col;
-        }
-    }
+    res = volumetricUn(res, oilVolumetric(p));
+
 
 	return res;
-}
-
-float getFogAmount(in vec3 p)
-{
-    return 0.0001;
 }
 
 DistanceInfo map(in vec3 p, bool isMarch)
@@ -330,9 +371,8 @@ DistanceInfo map(in vec3 p, bool isMarch)
     //res = un(DistanceInfo(sd, skyType, vec3(1, 2, 3)), res);
 
 
-    pMod2(p.xz, vec2(1.0));
-    float d = sdCappedCylinder(p, vec2(0.05 + (0.05 - p.y) * 0.2, 0.2));
-    res.distance = smink(res.distance, d, 0.03);
+     res = un(res, oilMap(p));
+
     return res;
 }
 
@@ -410,7 +450,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
                 firstJumpPos = p;
             }
 
-            if (iTime > PART_2_CHANNEL && iTime < PART_3_MISSILE) {
+            if (iTime > PART_2_CHANNEL && iTime < PART_4_MISSILE) {
                 float d = length(p - missilePos());
                 vec3 toMissile = normalize(p - missilePos());
                 rayDirection += toMissile * 0.1 / (500.1 +  100*d * d * d);
@@ -477,11 +517,17 @@ void main()
     } else if (iTime < PART_2_CHANNEL) {
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
         tar = vec3(0, 0, 3);
-    } else if (iTime < PART_3_MISSILE) {
+    } else if (iTime < PART_3_OIL) {
+        eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
+        tar = vec3(0, 0, 25);
+        const float zoom = 0.4;
+        u *= zoom;
+        v *= zoom;
+    } else if (iTime < PART_4_MISSILE) {
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
         tar = vec3(0, 0, 3);
-    } else if (iTime < PART_4_SINKING) {
-        const float t = iTime - PART_3_MISSILE;
+    } else if (iTime < PART_5_SINKING) {
+        const float t = iTime - PART_4_MISSILE;
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5 + t * 0.5);
         tar = vec3(0, 0, 3);
     } else {
@@ -499,7 +545,10 @@ void main()
     vec3 color = res.col;
     const vec3 firstJumpPos = res.firstJumpPos;
 
-    if (iTime > PART_1_INTRO) {
+    if (iTime > PART_2_CHANNEL && iTime < PART_3_OIL) {
+        const float lenToOil = length(eye - vec3(0, 0, 25));
+        focus = abs(length(firstJumpPos - eye) - lenToOil) * 0.1;
+    } else if (iTime > PART_1_INTRO) {
         const float lenToShip = length(eye - vec3(0, 0, 3));
         focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
     }
@@ -514,8 +563,8 @@ void main()
     fragColor.rgb *= min(1.0, iTime / fadeDuration);
 
     // fade out
-    if (iTime > PART_4_SINKING - fadeDuration) {
-        fragColor.rgb *= 1.0 - (iTime - PART_4_SINKING + fadeDuration) / fadeDuration;
+    if (iTime > PART_5_SINKING - fadeDuration) {
+        fragColor.rgb *= 1.0 - (iTime - PART_5_SINKING + fadeDuration) / fadeDuration;
     }
 }
 
