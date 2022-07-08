@@ -518,9 +518,10 @@ void main()
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
         tar = vec3(0, 0, 3);
     } else if (iTime < PART_3_OIL) {
+        const float time = iTime - PART_2_CHANNEL;
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
-        tar = vec3(0, 0, 25);
-        const float zoom = 0.4;
+        tar = vec3(-5 * smoothstep(2, 4, time), 0, 3 + 22 * smoothstep(0, 2, time));
+        const float zoom = 1.0 - smoothstep(2, 4, time) * 0.6;
         u *= zoom;
         v *= zoom;
     } else if (iTime < PART_4_MISSILE) {
@@ -546,7 +547,8 @@ void main()
     const vec3 firstJumpPos = res.firstJumpPos;
 
     if (iTime > PART_2_CHANNEL && iTime < PART_3_OIL) {
-        const float lenToOil = length(eye - vec3(0, 0, 25));
+        const float time = iTime - PART_2_CHANNEL;
+        const float lenToOil = length(eye - vec3(-5, 0, 3 + 22 * smoothstep(2, 4, time)));
         focus = abs(length(firstJumpPos - eye) - lenToOil) * 0.1;
     } else if (iTime > PART_1_INTRO) {
         const float lenToShip = length(eye - vec3(0, 0, 3));
