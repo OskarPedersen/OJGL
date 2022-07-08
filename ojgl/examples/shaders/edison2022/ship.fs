@@ -33,12 +33,6 @@ uniform float C_9_SINCE; // drum beat crash
 uniform float C_6_SINCE; // 6 melody synth
 uniform float C_6_TOTAL;
 
-
-const int shipTypeBottom = 1;
-const int shipTypeTop = 2;
-const int waterType = 3;
-const int skyType = 4;
-
 #define PART_1_INTRO 12
 #define PART_2_CHANNEL (PART_1_INTRO + 10)
 #define PART_3_OIL (PART_2_CHANNEL + 15)
@@ -63,7 +57,7 @@ bool isGhost() {
             return true;
         }
     }
-    return false; //mod(iTime, 2) > 1;
+    return false;
 }
 
 float shipLightStrengthModifier() {
@@ -143,10 +137,9 @@ VolumetricResult waterLights(in vec3 p) {
 
 const float PART_3_flyAwayStartTime = (PART_4_travelEndPoint / PART_4_speed) + 3 * (2 * PI) / PART_4_speed;
 
-//#define MISSILE_TIME (iTime - PART_2_CHANNEL) //
 #define MISSILE_TIME (0.75 * (C_6_TOTAL * 0.5  + 0.5 * pow(C_6_SINCE, 0.3)))
 vec3 missilePos(float timeOffset = 0.0) {
-    const float time = MISSILE_TIME + timeOffset;//iTime - PART_2_CHANNEL;
+    const float time = MISSILE_TIME + timeOffset;
 
     vec3 pos = vec3(0.5, 0.6, -10);
     const float travel = PART_4_speed * time;
@@ -163,22 +156,13 @@ vec3 missilePos(float timeOffset = 0.0) {
 
     return pos;
 
-    //return vec3(0, 0.6, 0) + vec3(0.1, 0, mod(iTime, 5) - 1);
 }
 
 VolumetricResult missile(in vec3 p) {
-    //vec3 rp = shipPos(p);
     float d = length(p - missilePos()) - 0.5;
     float strength = 20;
     vec3 res = vec3(0.4, 1.0, 0.4) * strength / (d * d);
 
-
-
-    // pipe
-    //float pd = sdCylinder(p - vec3(0.5, 0.6, 0), .01);
-
-    //float pd = sdCappedCylinder((p - vec3(0.5, 0.6, 0)).xzy, vec2(0.01, 3.5));
-    //float pd = sdCappedCylinder((p - vec3(0.5, 0.6, 10 + 3.5)).xzy, vec2(0.01, 10));
 
     const float r = 0.01;
 
@@ -226,7 +210,7 @@ VolumetricResult lightHouseLight(in vec3 p) {
     boundCylPos.xz *= rot(-iTime);
     float boundD = sdCappedCylinder(boundCylPos.xzy - vec3(0, 5.0, 0), vec2(0.0, 5.0));
     float ds = length(rp - vec3(0, 0.5, 0));
-    float strength = 25000 * shipLightStrengthModifier();// - 1500*sin(5*d + 3*sin(d) - 5*iTime);
+    float strength = 25000 * shipLightStrengthModifier();
 
     vec3 lightDir = normalize(vec3(sin(iTime), 0, cos(iTime)));
     vec3 posDir = normalize(p - vec3(0, 0.55, 3));
@@ -299,7 +283,7 @@ DistanceInfo oilMap(in vec3 p) {
 
     //res.distance = smink(res.distance, d, 0.03);
 
-    return DistanceInfo(d, waterType, vec3(0));
+    return DistanceInfo(d, -1, vec3(0));
 }
 
 VolumetricResult evaluateLight(in vec3 p)
@@ -348,27 +332,24 @@ VolumetricResult evaluateLight(in vec3 p)
 
 DistanceInfo map(in vec3 p, bool isMarch)
 {
-    DistanceInfo shipDI = DistanceInfo(shipDistance(p), p.y < 0.11 ? shipTypeBottom : shipTypeTop, vec3(1, 2, 3));
+    DistanceInfo shipDI = DistanceInfo(shipDistance(p), -1, vec3(1, 2, 3));
 
 
 
     // water
     float wn = 0.03*(noise_2(p.xz * 20 - vec2(5.0*iTime, 2.1*iTime)) + noise_2(p.xz * 15 - vec2(4.0*iTime,  -2.1*iTime)));
     float wd = p.y + 0.0 + pow(wn, 0.1) * 0.1;
-    DistanceInfo waterDI = {wd, waterType, vec3(1, 2, 3)};
+    DistanceInfo waterDI = {wd, -1, vec3(1, 2, 3)};
 
     DistanceInfo res = waterDI;
-    //if (!isGhost()) {
-        if (isSinking()) {
-            res = sunk(shipDI, waterDI, 0.1);
-        } else {
-            res = un(shipDI, waterDI);
-        }
-    //}
 
-    // sky
-    //float sd = abs(p.y - 7.0);
-    //res = un(DistanceInfo(sd, skyType, vec3(1, 2, 3)), res);
+    if (isSinking()) {
+        res = sunk(shipDI, waterDI, 0.1);
+    } else {
+        res = un(shipDI, waterDI);
+    }
+
+
 
 
      res = un(res, oilMap(p));
@@ -376,15 +357,6 @@ DistanceInfo map(in vec3 p, bool isMarch)
     return res;
 }
 
-//float getReflectiveIndex(int type)
-//{
-//    if(type == shipTypeBottom || type == shipTypeTop) {
-//        return isGhost() ? 0.5 : 0.5;
-//    }
-//    if(type == waterType)
-//        return 0.5;
-//    return 0.5;
-//}
 
 float specular(vec3 normal, vec3 light, vec3 viewdir, float s)
 {
@@ -440,9 +412,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
     vec3 resultColor = vec3(0.0);
     vec3 firstJumpPos = vec3(0.0);
     int jump = 0;
-#if S_REFLECTIONS
     for (; jump < S_reflectionJumps; jump++) {
-#endif
         for (int steps = 0; steps < S_maxSteps * (jump == 0 ? 1.0 : 0.5); ++steps) {
             vec3 p = rayOrigin + t * rayDirection;
 
@@ -460,7 +430,6 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
             DistanceInfo info = map(p, true);
             float jumpDistance = info.distance * S_distanceMultiplier;
 
-#if S_VOLUMETRIC
             float fogAmount = getFogAmount(p);
             VolumetricResult vr = evaluateLight(p);
 
@@ -469,22 +438,17 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
             vec3 lightIntegrated = vr.color - vr.color * exp(-fogAmount * jumpDistance);
             scatteredLight += transmittance * lightIntegrated;
             transmittance *= exp(-fogAmount * jumpDistance);
-#endif
 
             t += jumpDistance;
             if (info.distance < S_distanceEpsilon) {
                 vec3 color = getColor(MarchResult(info.type, p, steps, transmittance, scatteredLight, jump, rayDirection, info.color), rayOrigin);
-#if !S_REFLECTIONS
-                return color;
-#else
                 t = 0.0;
                 rayDirection = reflect(rayDirection, normal(p));
                 rayOrigin = p + 0.02 * rayDirection;
 
                 resultColor = mix(resultColor, color, reflectionModifier);
-                reflectionModifier *= 0.5; //getReflectiveIndex(info.type);
+                reflectionModifier *= 0.5;
                 break;
- #endif
             }
 
             if (t > S_maxDistance || steps == S_maxDistance - 1) {
@@ -493,9 +457,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
                 return FullMarchResult(resultColor, firstJumpPos);
             }
         }
-#if S_REFLECTIONS
     }
-#endif
 
     return FullMarchResult(resultColor, firstJumpPos);
 }
@@ -515,13 +477,16 @@ void main()
         eye = vec3(-2.5, 2 + iTime * 0.5, 2.999);
         tar = vec3(-2.5, 0, 3);
     } else if (iTime < PART_2_CHANNEL) {
-        eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
-        tar = vec3(0, 0, 3);
+        const float f1 = smoothstep(0, 2, iTime - PART_1_INTRO);
+        const float f2 = smoothstep(2, 4, iTime - PART_1_INTRO);
+        eye = mix(vec3(-2.5, 2 + iTime * 0.5, 2.999), vec3(sin(iTime * 0.1) * 5.0, 3, -5), f1);
+        tar = mix(vec3(eye.x, 0, 3), vec3(0, 0, 3), f1);
     } else if (iTime < PART_3_OIL) {
-        const float time = iTime - PART_2_CHANNEL;
+        float time = iTime - PART_2_CHANNEL;
+        time = min(time, PART_3_OIL - iTime);
         eye = vec3(sin(iTime * 0.1) * 5.0, 3, -5);
-        tar = vec3(-5 * smoothstep(2, 4, time), 0, 3 + 22 * smoothstep(0, 2, time));
-        const float zoom = 1.0 - smoothstep(2, 4, time) * 0.6;
+        tar = vec3((-5 + time * 0.3) * smoothstep(2, 4, time), 0, 3 + 22 * smoothstep(0, 2, time));
+        const float zoom = 1.0 - smoothstep(2, 4, time) * 0.7;
         u *= zoom;
         v *= zoom;
     } else if (iTime < PART_4_MISSILE) {
@@ -547,7 +512,8 @@ void main()
     const vec3 firstJumpPos = res.firstJumpPos;
 
     if (iTime > PART_2_CHANNEL && iTime < PART_3_OIL) {
-        const float time = iTime - PART_2_CHANNEL;
+        float time = iTime - PART_2_CHANNEL;
+        time = min(time, PART_3_OIL - iTime);
         const float lenToOil = length(eye - vec3(-5, 0, 3 + 22 * smoothstep(2, 4, time)));
         focus = abs(length(firstJumpPos - eye) - lenToOil) * 0.1;
     } else if (iTime > PART_1_INTRO) {
