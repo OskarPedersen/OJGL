@@ -37,7 +37,7 @@ uniform float C_6_TOTAL;
 #define PART_2_CHANNEL (PART_1_INTRO + 10)
 #define PART_3_OIL (PART_2_CHANNEL + 15)
 #define PART_4_MISSILE (PART_3_OIL + 10)
-#define PART_5_SINKING (PART_4_MISSILE + 17)
+#define PART_5_SINKING (PART_4_MISSILE + 16)
 
 const float PART_4_speed = 3.0;
 const float PART_4_travelEndPoint = 13.5;
@@ -49,7 +49,7 @@ bool isGhost() {
     if (iTime < PART_2_CHANNEL) {
         return true;
     } else if (iTime < PART_5_SINKING) {
-        const float time = iTime - PART_2_CHANNEL;
+        const float time = iTime - PART_3_OIL;
 
         if (time > PART_4_SPIN_START) {
             return hash11(floor(time * 8.0)) > 0.5;
@@ -61,7 +61,7 @@ bool isGhost() {
 }
 
 float shipLightStrengthModifier() {
-        const float time = iTime - PART_2_CHANNEL;
+        const float time = iTime - PART_3_OIL;
         if (time > PART_4_SPIN_START) {
             if (!isGhost()) {
                 return 0.0;
@@ -261,7 +261,7 @@ VolumetricResult oilVolumetric(in vec3 p) {
 
     if (noise_2(i + vec2(C_4_TOTAL, 0)) > 0.5) {
         d = sdCappedCylinder(p - vec3(0, 0.26, 0), vec2(0.01, 0.05));
-        float strength = 20.0;// * (1.0 - smoothstep(0.2, 0.2 + 0.5, p.y));
+        float strength = 20.0 * (1.0 - smoothstep(PART_3_OIL - 2.0, float(PART_3_OIL), iTime));// * (1.0 - smoothstep(0.2, 0.2 + 0.5, p.y));
         col = vec3(0.4, 1.0, 0.4) * strength / (d * d);
     }
 
@@ -294,12 +294,13 @@ VolumetricResult evaluateLight(in vec3 p)
         res = volumetricUn(res, topLight(p));
 
 
-    if (iTime > PART_2_CHANNEL) {
+    if (iTime > PART_3_OIL) {
         res = volumetricUn(res, missile(p));
     }
 
-
-    res = volumetricUn(res, oilVolumetric(p));
+    if (iTime < PART_3_OIL) {
+        res = volumetricUn(res, oilVolumetric(p));
+    }
 
 
 	return res;
@@ -326,8 +327,9 @@ DistanceInfo map(in vec3 p, bool isMarch)
 
 
 
-
-     res = un(res, oilMap(p));
+    if (iTime < PART_3_OIL) {
+        res = un(res, oilMap(p));
+    }
 
     return res;
 }
@@ -395,7 +397,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
                 firstJumpPos = p;
             }
 
-            if (iTime > PART_2_CHANNEL && iTime < PART_4_MISSILE) {
+            if (iTime > PART_3_OIL && iTime < PART_4_MISSILE) {
                 float d = length(p - missilePos());
                 vec3 toMissile = normalize(p - missilePos());
                 rayDirection += toMissile * 0.1 / (500.1 +  100*d * d * d);
