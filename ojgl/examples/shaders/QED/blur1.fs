@@ -10,10 +10,11 @@ void main()
 {
     vec2 uv = fragCoord.xy;// / iResolution.xy;
     vec3 col = vec3(0.);
-    float samples = 20.;
+    const float samples = 20.;
     float totalWeight = 0.;
-    float focus = texture(inTexture0, uv).a;
+    const float focus = texture(inTexture0, uv).a;
     float dist = focus * 0.01;
+
     for (float i = 0.; i < samples; i++) {
         float f = (i - samples / 2.) / (samples / 2.);
         float weight = 1. - pow(abs(f), 4.);
@@ -22,9 +23,9 @@ void main()
         if (sampleFocus >= focus) {
             weight *= max(0., 1. - abs(sampleFocus - focus) * 0.2);
         }
-        
+
         totalWeight += weight;
-        
+
         vec2 uv3 = clamp(uv + blurDir * f * dist, vec2(0.001), vec2(0.999));
         col += texture(inTexture0, uv3).rgb * weight;
     }

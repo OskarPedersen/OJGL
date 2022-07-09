@@ -244,14 +244,14 @@ vec3 oilPos(in vec3 p) {
 }
 
 float oilBoundingBox(in vec3 p) {
-    return sdBox(p - vec3(0, 0, 25), vec3(3));
+    return sdBox(p - vec3(0, 0, 25), vec3(4.25));
 }
 
 
 VolumetricResult oilVolumetric(in vec3 p) {
     p = oilPos(p);
     const vec3 o = p;
-    vec2 i = pMod2(p.xz, vec2(1.0));
+    vec2 i = pMod2(p.xz, vec2(0.5));
     float d = 99999.0;
     vec3 col = vec3(0);
     float boundingBox = oilBoundingBox(o);
@@ -259,15 +259,10 @@ VolumetricResult oilVolumetric(in vec3 p) {
         return VolumetricResult(boundingBox, col);
     }
 
-    if (noise_2(i + vec2(C_4_TOTAL, 0)) > 0.7) {
-        d = sdCappedCylinder(p - vec3(0, 0.2, 0), vec2(0.01, 0.5));
-        float strength = 10.0 * (1.0 - smoothstep(0.2, 0.2 + 0.5, p.y));
+    if (noise_2(i + vec2(C_4_TOTAL, 0)) > 0.5) {
+        d = sdCappedCylinder(p - vec3(0, 0.26, 0), vec2(0.01, 0.05));
+        float strength = 20.0;// * (1.0 - smoothstep(0.2, 0.2 + 0.5, p.y));
         col = vec3(0.4, 1.0, 0.4) * strength / (d * d);
-
-        //res.distance = min(res.distance, d);
-        //res.color = res.color + col;
-
-        d = max(boundingBox, d);
     }
 
     return VolumetricResult(d, col);
@@ -276,32 +271,18 @@ VolumetricResult oilVolumetric(in vec3 p) {
 DistanceInfo oilMap(in vec3 p) {
     p = oilPos(p);
     const vec3 o = p;
-    pMod2(p.xz, vec2(1.0));
+    pMod2(p.xz, vec2(0.5));
     float d = sdCappedCylinder(p, vec2(0.05 + (0.05 - p.y) * 0.2, 0.2));
     float boundingBox = oilBoundingBox(o);//sdBox(o - vec3(0, 0, 15), vec3(3));
     d = max(boundingBox, d);
-
-    //res.distance = smink(res.distance, d, 0.03);
-
     return DistanceInfo(d, -1, vec3(0));
 }
 
 VolumetricResult evaluateLight(in vec3 p)
 {
-
-   // rp.xz *= rot(iTime * (isGhost() ? 30.0 : 1.0));
-
-    //float d = sdCappedCylinder(rp.xzy - vec3(0, 0, 0.55), vec2(0.01, 0.2));
-
-    //d = max(0.07, d);
-
-
-
     VolumetricResult res = waterLights(p);
 
 
-
-    //if (isGhost()) {
         float d = shipDistance(p);
         d = max(d, 0.02);
         float strength = 20 * shipLightStrengthModifier();
@@ -311,13 +292,7 @@ VolumetricResult evaluateLight(in vec3 p)
 
         res = volumetricUn(res, lightHouseLight(p));
         res = volumetricUn(res, topLight(p));
-    //}
 
-
-
-    //VolumetricResult mis = missile(p);
-    //res.distance = smink(res.distance, mis.distance, 0.1);
-    //res.color = res.color + mis.color;
 
     if (iTime > PART_2_CHANNEL) {
         res = volumetricUn(res, missile(p));
@@ -515,7 +490,7 @@ void main()
         float time = iTime - PART_2_CHANNEL;
         time = min(time, PART_3_OIL - iTime);
         const float lenToOil = length(eye - vec3(-5, 0, 3 + 22 * smoothstep(2, 4, time)));
-        focus = abs(length(firstJumpPos - eye) - lenToOil) * 0.1;
+        focus = abs(length(firstJumpPos - eye) - lenToOil) * 0.1 + 0.01;
     } else if (iTime > PART_1_INTRO) {
         const float lenToShip = length(eye - vec3(0, 0, 3));
         focus = abs(length(firstJumpPos - eye) - lenToShip) * 0.1;
