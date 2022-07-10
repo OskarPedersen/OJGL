@@ -2,7 +2,7 @@ R""(
 
 const float S_distanceEpsilon = 1e-2;
 const float S_normalEpsilon = 1e-2;
-const int S_maxSteps = 150;
+const int S_maxSteps = 200;
 const float S_maxDistance = 200.0;
 const float S_distanceMultiplier = 1.0;
 const float S_minVolumetricJumpDistance = 0.005;
@@ -41,7 +41,7 @@ uniform float C_6_TOTAL;
 
 const float PART_4_speed = 3.0;
 const float PART_4_travelEndPoint = 13.5;
-const float PART_4_SPIN_START = PART_4_travelEndPoint / PART_4_speed;
+const float PART_4_SPIN_START = 1.0 + (PART_4_travelEndPoint / PART_4_speed);
 
 const float PART_4_SINK_START = PART_4_MISSILE + 5.0;
 
@@ -244,7 +244,7 @@ vec3 oilPos(in vec3 p) {
 }
 
 float oilBoundingBox(in vec3 p) {
-    return sdBox(p - vec3(0, 0, 25), vec3(4.25));
+    return sdBox(p - vec3(0, 0, 25), vec3(4.25, 4.25, 4.25));
 }
 
 
@@ -260,7 +260,7 @@ VolumetricResult oilVolumetric(in vec3 p) {
     }
 
     if (noise_2(i + vec2(C_4_TOTAL, 0)) > 0.5) {
-        d = sdCappedCylinder(p - vec3(0, 0.26, 0), vec2(0.01, 0.05));
+        d = sdCappedCylinder(p - vec3(0, 0.27, 0), vec2(0.01, 0.05));
         float strength = 20.0 * (1.0 - smoothstep(PART_3_OIL - 2.0, float(PART_3_OIL), iTime));// * (1.0 - smoothstep(0.2, 0.2 + 0.5, p.y));
         col = vec3(0.4, 1.0, 0.4) * strength / (d * d);
     }
