@@ -517,7 +517,7 @@ void main()
 
     color /= (color + vec3(1.0));
 
-    fragColor = vec4(pow(color, vec3(0.5)), focus);
+    fragColor = vec4(pow(color, vec3(0.5)),  clamp(focus, 0.001, 2.0));
 
     const float fadeDuration = 1.0;
 
