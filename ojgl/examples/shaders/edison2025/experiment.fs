@@ -7,7 +7,7 @@ const float S_maxDistance = 500.0;
 const float S_distanceMultiplier = 0.7;
 const float S_minVolumetricJumpDistance = 0.005;
 const float S_volumetricDistanceMultiplier = 0.5;
-const int S_reflectionJumps = 2;
+const int S_reflectionJumps = 5;
 
 #define S_VOLUMETRIC 1
 #define S_REFLECTIONS 1
@@ -29,9 +29,13 @@ uniform sampler2D inTexture0;
 const int boatType = 1;
 const int mountainType = 2;
 const int waterType = 4;
+const int ufoType = 5;
 
 vec3 cameraPosition;
 vec3 rayDirection;
+
+
+vec3 ufoPos = vec3(0, 10, 0);
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
@@ -42,6 +46,8 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
             return 0.0*vec3(0.2, 0.2, 0.1);
         case waterType:
             return vec3(0.1, 0.1, 0.7);
+        case ufoType:
+            return vec3(1, 0, 1);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -69,15 +75,16 @@ float getFogAmount(in vec3 p)
 
 VolumetricResult evaluateLight(in vec3 p)
 {
-    vec3 center = vec3(0, 10, 0);
+
     //float d = sdRoundBox(p - vec3(0, 15, 0), vec3(0.5, 0.1, 0.5), 0.1);
-    float d1 = sdSphere(p  - center, 2.0);
+    //float d1 = sdSphere(p  - center, 2.0);
     //float pModPolar(inout vec2 p, float repetitions);
     
-    p -= center;
+    p -= ufoPos;
     
-    float dt = sdTorus(p, vec2(8, 0.1));
+    //float dt = sdTorus(p, vec2(8, 0.1));
     
+    p.xz *= rot(iTime * 0.5);
     float section = pModPolar(p.xz, 16);
     //p.x -= 5;
     //pCap.xz = pCap2;
@@ -85,7 +92,8 @@ VolumetricResult evaluateLight(in vec3 p)
     float d2 = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.1);
     //float d2 = sdCylinder(p.zyx, 0.5);
 
-    float d = min(dt, min(d1, d2));
+    //float d = min(dt, min(d1, d2));
+    float d = d2;//min(dt, d2);
 
     float str = 5;
     //vec3 color = mod(section, 2.0) > 0.5 ? vec3(1, 0.1, 0.1) : vec3(0.1, 1, 0.1);
@@ -110,10 +118,12 @@ VolumetricResult evaluateLight(in vec3 p)
 float getReflectiveIndex(int type) {
     switch (type) {
         case boatType:
-            return 0.0;
+            return 0.5;
         case mountainType:
             return 0.0;
         case waterType:
+            return 1.0;
+        case ufoType:
             return 1.0;
         default:
            return 0.0;
@@ -195,12 +205,26 @@ float boat(vec3 p)
 
 }
 
+float ufo(in vec3 p)
+{
+    p -= ufoPos;
+    // float sdRoundBox(vec3 p, vec3 b, float r)
+    float d2 = sdTorus(p, vec2(8.5, 0.5));
+    //mat2 rot(float a)
+   // p.xz *= rot(iTime);
+    //p.xy *= rot(iTime);
+    //float d1 = sdRoundBox(p, vec3(2), 1);
+    float d1 = length(p) - 2.0;
+    return min(d1, d2);
+}
+
 DistanceInfo map(in vec3 p)
 {
    DistanceInfo box = {mountain(p), mountainType};
    DistanceInfo sphereInfo = {boat(p), boatType};
    DistanceInfo waterInfo = {water(p), waterType};
-   return un(waterInfo, un(box, sphereInfo));
+   DistanceInfo ufoInfo = {ufo(p), ufoType};
+   return un(un(waterInfo, ufoInfo), un(box, sphereInfo));
 }
 
 void main()
