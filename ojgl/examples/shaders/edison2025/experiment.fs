@@ -64,22 +64,42 @@ vec3 getColor(in MarchResult result)
 
 float getFogAmount(in vec3 p)
 {
-    return 0.0001;
+    return 0.001;
 }
 
 VolumetricResult evaluateLight(in vec3 p)
 {
-    vec2 pxz = p.xz;
-    pMod2(pxz, vec2(10));
-    p.x = pxz.x;
-    p.z = pxz.y;
+    vec3 center = vec3(0, 15, 0);
+    //float d = sdRoundBox(p - vec3(0, 15, 0), vec3(0.5, 0.1, 0.5), 0.1);
+    float d1 = sdSphere(p  - center, 2.0);
+    //float pModPolar(inout vec2 p, float repetitions);
+    
+    p -= center;
+    pModPolar(p.xz, 15);
+    //p.x -= 5;
+    //pCap.xz = pCap2;
 
-    float d = length(p - vec3(0, 5, 0)) - 0.03;
-    float strength = 500;
+    float d2 = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 10.5,  0.1);
+    //float d2 = sdCylinder(p.zyx, 0.5);
 
-    vec3 res = vec3(1.0, 0.2, 0.1) * strength / (d * d);
+    float d = min(d1, d2);
 
-    return VolumetricResult(d, res);
+    float str = 50;
+    vec3 res = vec3(1.0, 0.2, 0.1) * str / (d * d);
+    return VolumetricResult(d, res); 
+
+
+    //vec2 pxz = p.xz;
+    //pMod2(pxz, vec2(10));
+    //p.x = pxz.x;
+    //p.z = pxz.y;
+
+    //float d = length(p - vec3(0, 5, 0)) - 0.03;
+    //float strength = 500;
+
+    //vec3 res = vec3(1.0, 0.2, 0.1) * strength / (d * d);
+
+    //return VolumetricResult(d, res);
 }
 
 float getReflectiveIndex(int type) {
