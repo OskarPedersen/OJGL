@@ -36,7 +36,7 @@ vec3 rayDirection;
 
 float mountain(vec3 p); // forward declare
 
-vec3 ufoPos = vec3(mod(iTime * 10.0, 200) - 50, 10, 0);
+vec3 ufoPos = vec3(mod(iTime * 10.0, 200), 10, 0);
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
@@ -203,7 +203,51 @@ float opIntersection( float d1, float d2 )
     return max(d1,d2);
 }
 
-float boat(vec3 p)
+float boat(vec3 p) {
+    float ffz = p.z > 0.0 ? -4.0 : -7.0;
+    float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);
+    float fx = 0.971*smoothstep(3, 7, abs(p.z));
+    float fx2 = 1*smoothstep(-3.0, 2.0, p.y);
+    float fy = 0.5*smoothstep(3, 7, p.z);
+    
+    vec3 p1 = p;
+    p1 -= vec3(0, 0.4, 0);
+    float hull = sdBox(p1, vec3(2 - fx - fx2, 1.0 + fy, 7 / fz));
+
+    vec3 p2 = p;
+    p2.y -= 1.3;
+    float wfx = 0.9 * smoothstep(-0.8, 0.8, p2.y);
+    float wffy = p2.y < 0 ? 0 : 0.3; 
+    float wfy = wffy * smoothstep(2.9, 3.3, abs(p2.z));
+    float windows = sdBox(p2, vec3(1.2 - wfx, 0.3 - wfy, 3.3));
+
+    vec3 p3 = p;
+    p3.z = abs(p3.z);
+    p3.y -= 3;
+    p3.z -= 3.6;
+    float mast = sdCappedCylinder(p3, vec2(0.08, 2.2));
+
+
+    vec3 p4 = p;
+    p4.y -= 4.4;
+    p4.y -= 0.9*smoothstep(0, 5, abs(p.z));
+    float line = sdBox(p4, vec3(0.01, 0.01, 3.6));
+    
+    vec3 p5 = p;
+    p5.z = abs(p5.z);
+    p5.z -= 4.6;
+    p5.y -= 3.2;
+    p5.zy *= rot(-1.1);
+    float line2 = sdBox(p5, vec3(0.01, 0.01, 2.05));
+
+    line = min(line, line2);
+
+    float h = min(line, min(mast, min(windows, hull)));
+
+    return h;
+}
+
+float boatFront(vec3 p)
 {
 
     p.y += mod(iTime * 0.5, 5.0);
@@ -213,50 +257,7 @@ float boat(vec3 p)
 
     p.xy *= rot(iTime*0.5);
 
-    p.y += 0.05 * sin(iTime);
-    p.z += 0.1 * sin(iTime + 3);
-    p.x += 0.1 * sin(iTime + 5);
-    
-
-    float ffz = p.z > 0.0 ? -4.0 : -7.0;
-    float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);
-    float fx = 0.971*smoothstep(3, 7, abs(p.z));
-    float fx2 = 1*smoothstep(-3.0, 2.0, p.y);
-    float fy = 0.5*smoothstep(3, 7, p.z);
-    
-    vec3 p1 = p;
-    p1 -= vec3(0, 0.4, 0);
-    float hull = sdBox(p1, vec3(2 - fx - fx2, 1.0 + fy, 7 / fz));
-
-    vec3 p2 = p;
-    p2.y -= 1.3;
-    float wfx = 0.9 * smoothstep(-0.8, 0.8, p2.y);
-    float wffy = p2.y < 0 ? 0 : 0.3; 
-    float wfy = wffy * smoothstep(2.9, 3.3, abs(p2.z));
-    float windows = sdBox(p2, vec3(1.2 - wfx, 0.3 - wfy, 3.3));
-
-    vec3 p3 = p;
-    p3.z = abs(p3.z);
-    p3.y -= 3;
-    p3.z -= 3.6;
-    float mast = sdCappedCylinder(p3, vec2(0.08, 2.2));
-
-
-    vec3 p4 = p;
-    p4.y -= 4.4;
-    p4.y -= 0.9*smoothstep(0, 5, abs(p.z));
-    float line = sdBox(p4, vec3(0.01, 0.01, 3.6));
-    
-    vec3 p5 = p;
-    p5.z = abs(p5.z);
-    p5.z -= 4.6;
-    p5.y -= 3.2;
-    p5.zy *= rot(-1.1);
-    float line2 = sdBox(p5, vec3(0.01, 0.01, 2.05));
-
-    line = min(line, line2);
-
-    float h = min(line, min(mast, min(windows, hull)));
+   float h = boat(p);
 
 
     // float sdBox(vec3 p, vec3 b)
@@ -266,7 +267,7 @@ float boat(vec3 p)
 }
  
 
-float boat2(vec3 p)
+float boatBack(vec3 p)
 {
     p.y += mod(iTime * 0.5, 5.0);
     p.z += 5;
@@ -276,45 +277,7 @@ float boat2(vec3 p)
 
     p.xy *= rot(-iTime*0.5);
 
-    float ffz = p.z > 0.0 ? -4.0 : -7.0;
-    float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);
-    float fx = 0.971*smoothstep(3, 7, abs(p.z));
-    float fx2 = 1*smoothstep(-3.0, 2.0, p.y);
-    float fy = 0.5*smoothstep(3, 7, p.z);
-    
-    vec3 p1 = p;
-    p1 -= vec3(0, 0.4, 0);
-    float hull = sdBox(p1, vec3(2 - fx - fx2, 1.0 + fy, 7 / fz));
-
-    vec3 p2 = p;
-    p2.y -= 1.3;
-    float wfx = 0.9 * smoothstep(-0.8, 0.8, p2.y);
-    float wffy = p2.y < 0 ? 0 : 0.3; 
-    float wfy = wffy * smoothstep(2.9, 3.3, abs(p2.z));
-    float windows = sdBox(p2, vec3(1.2 - wfx, 0.3 - wfy, 3.3));
-
-    vec3 p3 = p;
-    p3.z = abs(p3.z);
-    p3.y -= 3;
-    p3.z -= 3.6;
-    float mast = sdCappedCylinder(p3, vec2(0.08, 2.2));
-
-
-    vec3 p4 = p;
-    p4.y -= 4.4;
-    p4.y -= 0.9*smoothstep(0, 5, abs(p.z));
-    float line = sdBox(p4, vec3(0.01, 0.01, 3.6));
-    
-    vec3 p5 = p;
-    p5.z = abs(p5.z);
-    p5.z -= 4.6;
-    p5.y -= 3.2;
-    p5.zy *= rot(-1.1);
-    float line2 = sdBox(p5, vec3(0.01, 0.01, 2.05));
-
-    line = min(line, line2);
-
-    float h = min(line, min(mast, min(windows, hull)));
+   float h = boat(p);
 
 
     // float sdBox(vec3 p, vec3 b)
@@ -339,12 +302,14 @@ float ufo(in vec3 p)
 DistanceInfo map(in vec3 p)
 {
    DistanceInfo box = {mountainLaser(p), mountainType};
-   DistanceInfo sphereInfo = {boat(p), boatType};
-    DistanceInfo b2 = {boat2(p), boatType};
-   sphereInfo = un(sphereInfo, b2);
+
+   DistanceInfo boatFrontDis = { boatFront(p), boatType};
+   DistanceInfo boatBackDis = { boatBack(p), boatType};
+   DistanceInfo boatDis = un(boatFrontDis, boatBackDis);
+
    DistanceInfo waterInfo = {water(p), waterType};
    DistanceInfo ufoInfo = {ufo(p), ufoType};
-   return un(un(waterInfo, ufoInfo), un(box, sphereInfo));
+   return un(un(waterInfo, ufoInfo), un(box, boatDis));
 }
 
 void main()
