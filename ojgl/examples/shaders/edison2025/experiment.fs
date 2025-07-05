@@ -64,28 +64,33 @@ vec3 getColor(in MarchResult result)
 
 float getFogAmount(in vec3 p)
 {
-    return 0.001;
+    return 0.01;
 }
 
 VolumetricResult evaluateLight(in vec3 p)
 {
-    vec3 center = vec3(0, 15, 0);
+    vec3 center = vec3(0, 10, 0);
     //float d = sdRoundBox(p - vec3(0, 15, 0), vec3(0.5, 0.1, 0.5), 0.1);
     float d1 = sdSphere(p  - center, 2.0);
     //float pModPolar(inout vec2 p, float repetitions);
     
     p -= center;
-    pModPolar(p.xz, 15);
+    
+    float dt = sdTorus(p, vec2(8, 0.1));
+    
+    float section = pModPolar(p.xz, 16);
     //p.x -= 5;
     //pCap.xz = pCap2;
 
-    float d2 = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 10.5,  0.1);
+    float d2 = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.1);
     //float d2 = sdCylinder(p.zyx, 0.5);
 
-    float d = min(d1, d2);
+    float d = min(dt, min(d1, d2));
 
-    float str = 50;
-    vec3 res = vec3(1.0, 0.2, 0.1) * str / (d * d);
+    float str = 5;
+    //vec3 color = mod(section, 2.0) > 0.5 ? vec3(1, 0.1, 0.1) : vec3(0.1, 1, 0.1);
+    vec3 color = vec3(0.1, 1, 1);
+    vec3 res = color * str / (d * d);
     return VolumetricResult(d, res); 
 
 
