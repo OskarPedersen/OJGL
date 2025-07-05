@@ -36,7 +36,7 @@ vec3 rayDirection;
 
 float mountain(vec3 p); // forward declare
 
-vec3 ufoPos = vec3(mod(iTime * 10.0, 100), 10, 0);
+vec3 ufoPos = vec3(mod(iTime * 10.0, 150), 10, 0);
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
@@ -81,11 +81,12 @@ VolumetricResult evaluateLight(in vec3 p)
     //float d = sdRoundBox(p - vec3(0, 15, 0), vec3(0.5, 0.1, 0.5), 0.1);
     //float d1 = sdSphere(p  - center, 2.0);
     //float pModPolar(inout vec2 p, float repetitions);
+    vec3 pOrig = p;
 
     vec3 laserFloorP = p.zyx;
 
     float dm = mountain(p);
-    laserFloorP.y +=  min(dm, p.y);
+    laserFloorP.y +=  dm - 0.5;//min(dm, p.y);
     float dLaserFloor = sdCylinder(laserFloorP, 0.1);
     dLaserFloor = max(dLaserFloor, -p.x);
     dLaserFloor = max(dLaserFloor,  p.x - ufoPos.x + 0.5);
@@ -119,7 +120,9 @@ VolumetricResult evaluateLight(in vec3 p)
     float laserStr = 50;
     res += laserColor * laserStr / (dLaser * dLaser);
 
-     res += laserColor * laserStr / (dLaserFloor * dLaserFloor);
+    float laserFloorDis = abs(ufoPos.x - pOrig.x);
+    float laserFloorStr = max(0, 50  - laserFloorDis);
+     res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
 
     return VolumetricResult(min(d2, dLaser), res); 
 
@@ -175,6 +178,24 @@ float mountain(vec3 p)
               200*pow(texture(inTexture0, (p.xz)/1600.0).x, 4);
 
 	return p.y - h + 10;
+}
+
+float opSubtraction( float d1, float d2 )
+{
+    return max(-d1,d2);
+}
+
+float mountainLaser(vec3 p)
+{
+    float dMountain = mountain(p);
+    vec3 laserFloorP = p.zyx;
+     laserFloorP.y +=  dMountain - 0.5;
+    float dLaserFloor = sdCylinder(laserFloorP, 1.0);
+
+        dLaserFloor = max(dLaserFloor, -p.x);
+    dLaserFloor = max(dLaserFloor,  p.x - ufoPos.x + 0.5);
+    
+	return opSubtraction(dLaserFloor, dMountain);
 }
 
 float boat(vec3 p)
@@ -242,7 +263,7 @@ float ufo(in vec3 p)
 
 DistanceInfo map(in vec3 p)
 {
-   DistanceInfo box = {mountain(p), mountainType};
+   DistanceInfo box = {mountainLaser(p), mountainType};
    DistanceInfo sphereInfo = {boat(p), boatType};
    DistanceInfo waterInfo = {water(p), waterType};
    DistanceInfo ufoInfo = {ufo(p), ufoType};
