@@ -34,8 +34,9 @@ const int ufoType = 5;
 vec3 cameraPosition;
 vec3 rayDirection;
 
+float mountain(vec3 p); // forward declare
 
-vec3 ufoPos = vec3(0, 10, 0);
+vec3 ufoPos = vec3(mod(iTime * 10.0, 100), 10, 0);
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
@@ -55,7 +56,8 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 
 vec3 getColor(in MarchResult result)
 {
-    vec3 lightPosition = vec3(-100, 20, 200);
+    //vec3 lightPosition = vec3(-100, 20, 200);
+    vec3 lightPosition = ufoPos;
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
     float diffuse = max(0., dot(invLight, normal));
@@ -79,27 +81,47 @@ VolumetricResult evaluateLight(in vec3 p)
     //float d = sdRoundBox(p - vec3(0, 15, 0), vec3(0.5, 0.1, 0.5), 0.1);
     //float d1 = sdSphere(p  - center, 2.0);
     //float pModPolar(inout vec2 p, float repetitions);
+
+    vec3 laserFloorP = p.zyx;
+
+    float dm = mountain(p);
+    laserFloorP.y +=  min(dm, p.y);
+    float dLaserFloor = sdCylinder(laserFloorP, 0.1);
+    dLaserFloor = max(dLaserFloor, -p.x);
+    dLaserFloor = max(dLaserFloor,  p.x - ufoPos.x + 0.5);
     
     p -= ufoPos;
     
-    //float dt = sdTorus(p, vec2(8, 0.1));
+    //float dt = sdTorus(p - vec3(0, sin(iTime) * 3, 0), vec2(5, 0.1));
     
+    // float sdCylinder( vec3 p, float r)
+    float dLaser = sdCylinder(p.xzy, 0.1);
+    dLaser = max(dLaser, p.y);
+
+
     p.xz *= rot(iTime * 0.5);
     float section = pModPolar(p.xz, 16);
     //p.x -= 5;
     //pCap.xz = pCap2;
-
-    float d2 = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.1);
+    p.y -= -p.x*0.35;
+    float d2 = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
     //float d2 = sdCylinder(p.zyx, 0.5);
 
     //float d = min(dt, min(d1, d2));
-    float d = d2;//min(dt, d2);
+    //float d = min(dLaser, d2);//min(dt, d2);
 
     float str = 5;
     //vec3 color = mod(section, 2.0) > 0.5 ? vec3(1, 0.1, 0.1) : vec3(0.1, 1, 0.1);
     vec3 color = vec3(0.1, 1, 1);
-    vec3 res = color * str / (d * d);
-    return VolumetricResult(d, res); 
+    vec3 res = color * str / (d2 * d2);
+
+    vec3 laserColor = vec3(1, 0.1, 0.1);
+    float laserStr = 50;
+    res += laserColor * laserStr / (dLaser * dLaser);
+
+     res += laserColor * laserStr / (dLaserFloor * dLaserFloor);
+
+    return VolumetricResult(min(d2, dLaser), res); 
 
 
     //vec2 pxz = p.xz;
@@ -120,7 +142,7 @@ float getReflectiveIndex(int type) {
         case boatType:
             return 0.5;
         case mountainType:
-            return 0.0;
+            return 0.3;
         case waterType:
             return 1.0;
         case ufoType:
@@ -209,7 +231,7 @@ float ufo(in vec3 p)
 {
     p -= ufoPos;
     // float sdRoundBox(vec3 p, vec3 b, float r)
-    float d2 = sdTorus(p, vec2(8.5, 0.5));
+    float d2 = sdTorus(p - vec3(0, -3, 0), vec2(8.5, 0.5));
     //mat2 rot(float a)
    // p.xz *= rot(iTime);
     //p.xy *= rot(iTime);
