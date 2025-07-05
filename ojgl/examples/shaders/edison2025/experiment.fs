@@ -5,11 +5,11 @@ const float S_normalEpsilon = 5e-2;
 const int S_maxSteps = 600;
 const float S_maxDistance = 500.0;
 const float S_distanceMultiplier = 0.7;
-const float S_minVolumetricJumpDistance = 0.02;
-const float S_volumetricDistanceMultiplier = 0.75;
+const float S_minVolumetricJumpDistance = 0.005;
+const float S_volumetricDistanceMultiplier = 0.5;
 const int S_reflectionJumps = 2;
 
-#define S_VOLUMETRIC 0
+#define S_VOLUMETRIC 1
 #define S_REFLECTIONS 1
 #define S_REFRACTIONS 0
 
@@ -59,8 +59,27 @@ vec3 getColor(in MarchResult result)
     float k = max(0.0, dot(rayDirection, reflect(invLight, normal)));
     float spec = 1 * pow(k, 30.0);
     color += spec;
+    return result.scatteredLight + result.transmittance *  mix(color, ao, 0.75);
+}
 
-    return mix(color, ao, 0.75);
+float getFogAmount(in vec3 p)
+{
+    return 0.0001;
+}
+
+VolumetricResult evaluateLight(in vec3 p)
+{
+    vec2 pxz = p.xz;
+    pMod2(pxz, vec2(10));
+    p.x = pxz.x;
+    p.z = pxz.y;
+
+    float d = length(p - vec3(0, 5, 0)) - 0.03;
+    float strength = 500;
+
+    vec3 res = vec3(1.0, 0.2, 0.1) * strength / (d * d);
+
+    return VolumetricResult(d, res);
 }
 
 float getReflectiveIndex(int type) {
