@@ -326,9 +326,15 @@ float ufo(in vec3 p)
     return min(d1, d2);
 }
 
+DistanceInfo sunk(DistanceInfo a, DistanceInfo b, float k) {
+    DistanceInfo res = a.distance < b.distance ? a : b;
+    res.distance = smink(a.distance, b.distance, k);
+    return res;
+}
+
 DistanceInfo map(in vec3 p)
 {
-   DistanceInfo box = {mountainLaser(p), mountainType};
+   DistanceInfo mountainDis = {mountainLaser(p), mountainType};
 
    DistanceInfo boatFrontDis = { boatFront(p), boatType};
    DistanceInfo boatBackDis = { boatBack(p), boatType};
@@ -336,7 +342,7 @@ DistanceInfo map(in vec3 p)
 
    DistanceInfo waterInfo = {water(p), waterType};
    DistanceInfo ufoInfo = {ufo(p), ufoType};
-   return un(un(waterInfo, ufoInfo), un(box, boatDis));
+   return un(un(mountainDis, ufoInfo), sunk(waterInfo, boatDis, 0.3));
 }
 
 void main()
