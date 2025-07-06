@@ -77,44 +77,38 @@ float getFogAmount(in vec3 p)
 
 VolumetricResult evaluateLight(in vec3 p)
 {
+    // vec3 pStars = p;
+    // vec2 iStars = pMod2(pStars.xz, vec2(50, 50));
+    // pStars.y -= 50 + sin(iStars.x * 10) * 10 + sin(iStars.y * 10) * 10;
+    // float dStars = length(pStars) - 0.1;
 
-    //float d = sdRoundBox(p - vec3(0, 15, 0), vec3(0.5, 0.1, 0.5), 0.1);
-    //float d1 = sdSphere(p  - center, 2.0);
-    //float pModPolar(inout vec2 p, float repetitions);
     vec3 pOrig = p;
 
     vec3 laserFloorP = p.zyx;
 
     float dm = mountain(p);
-    laserFloorP.y +=  dm - 0.5;//min(dm, p.y);
+    laserFloorP.y +=  dm - 0.5;
     float dLaserFloor = sdCylinder(laserFloorP, 0.1);
     dLaserFloor = max(dLaserFloor, -p.x);
     dLaserFloor = max(dLaserFloor,  p.x - ufoPos.x + 0.5);
     
     p -= ufoPos;
     
-    //float dt = sdTorus(p - vec3(0, sin(iTime) * 3, 0), vec2(5, 0.1));
-    
-    // float sdCylinder( vec3 p, float r)
+
     float dLaser = sdCylinder(p.xzy, 0.1);
     dLaser = max(dLaser, p.y);
 
 
     p.xz *= rot(iTime * 0.5);
     float section = pModPolar(p.xz, 16);
-    //p.x -= 5;
-    //pCap.xz = pCap2;
-    p.y -= -p.x*0.35;
-    float d2 = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
-    //float d2 = sdCylinder(p.zyx, 0.5);
 
-    //float d = min(dt, min(d1, d2));
-    //float d = min(dLaser, d2);//min(dt, d2);
+    p.y -= -p.x*0.35;
+    float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
+
 
     float str = 5;
-    //vec3 color = mod(section, 2.0) > 0.5 ? vec3(1, 0.1, 0.1) : vec3(0.1, 1, 0.1);
     vec3 color = vec3(0.1, 1, 1);
-    vec3 res = color * str / (d2 * d2);
+    vec3 res = color * str / (dUfoSpin * dUfoSpin);
 
     vec3 laserColor = vec3(1, 0.1, 0.1);
     float laserStr = 50;
@@ -122,22 +116,20 @@ VolumetricResult evaluateLight(in vec3 p)
 
     float laserFloorDis = abs(ufoPos.x - pOrig.x);
     float laserFloorStr = max(0, 50  - laserFloorDis);
-     res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
+    res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
 
-    return VolumetricResult(min(d2, dLaser), res); 
+    //float starStr = 10;
+    //vec3 starColor = vec3(mod(iStars.x * 0.1, 1), mod(iStars.y * 0.1, 1), 1);
+    //res += starColor * starStr / (dStars * dStars);
 
+    //float finalDis = dStars;
+    //finalDis = min(finalDis, dLaserFloor);
+    float finalDis = dLaserFloor;
+    finalDis = min(finalDis, laserFloorDis);
+    finalDis = min(finalDis, dLaser);
+    finalDis = min(finalDis, dUfoSpin);
 
-    //vec2 pxz = p.xz;
-    //pMod2(pxz, vec2(10));
-    //p.x = pxz.x;
-    //p.z = pxz.y;
-
-    //float d = length(p - vec3(0, 5, 0)) - 0.03;
-    //float strength = 500;
-
-    //vec3 res = vec3(1.0, 0.2, 0.1) * strength / (d * d);
-
-    //return VolumetricResult(d, res);
+    return VolumetricResult(finalDis, res); 
 }
 
 float getReflectiveIndex(int type) {
