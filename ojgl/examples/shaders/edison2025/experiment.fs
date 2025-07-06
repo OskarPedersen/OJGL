@@ -48,7 +48,7 @@ vec3 rayDirection;
 float mountain(vec3 p); // forward declare
 
 vec3 ufoPos = vec3(mod(iTime * 10.0, 200) - 20, 10, 0);
-float boatSplitTime = max(0, iTime - 2.3);
+float boatSplitTime = max(0, iTime - 2.15);
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
@@ -277,12 +277,12 @@ float boat(vec3 p) {
 
 float boatSplit(vec3 p, float dir)
 {
-    p.y += mod(boatSplitTime * 0.5, 5.0);
+    p.y += mod(boatSplitTime * 0.3, 5.0);
     p.z -= dir*5;
-    p.zy *= rot(dir*boatSplitTime*0.2);
+    p.zy *= rot(dir*boatSplitTime*0.1);
     p.z += dir*5;
 
-    p.xy *= rot(dir*boatSplitTime*0.5);
+    p.xy *= rot(dir*boatSplitTime*0.3);
 
    float h = boat(p);
 
