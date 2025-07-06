@@ -154,13 +154,14 @@ VolumetricResult evaluateLight(in vec3 p)
     res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
 
     float starStr = 10;
-    vec3 starColor = vec3(mod(iStars.x * 0.3, 1), mod(iStars.y * 0.4, 1), 1);
+    //vec3 starColor = vec3(mod(iStars.x * 0.3, 1), mod(iStars.y * 0.4, 1), 1);
+    vec3 starColor = vec3(1);
     res += starColor * starStr / (dStars * dStars);
 
     float finalDis = dStars;
     finalDis = min(finalDis, dLaserFloor);
     //float finalDis = dLaserFloor;
-    finalDis = min(finalDis, laserFloorDis);
+    finalDis = min(finalDis, laserFloorDis); // think this one cuses the white AO wall, maybe something wrong with it
     finalDis = min(finalDis, dLaser);
     finalDis = min(finalDis, dUfoSpin);
 
@@ -320,7 +321,7 @@ DistanceInfo map(in vec3 p)
 
    DistanceInfo waterInfo = {water(p), waterType};
    DistanceInfo ufoInfo = {ufo(p), ufoType};
-   return un(un(mountainDis, ufoInfo), sunk(waterInfo, boatDis, 0.3));
+   return un(un(ufoInfo, mountainDis), sunk(waterInfo, boatDis, 0.3));
 }
 
 void main()
