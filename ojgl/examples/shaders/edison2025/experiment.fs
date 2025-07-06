@@ -26,6 +26,17 @@ uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
 
+uniform float C_1_S; // bass
+uniform float C_6_S; // "vocals"
+uniform float C_7_S; // "synth"
+
+uniform float C_7_S_0;
+uniform float C_7_S_1;
+uniform float C_7_S_2;
+uniform float C_7_S_3;
+
+uniform float C_7_T; // "synth"
+
 const int boatType = 1;
 const int mountainType = 2;
 const int waterType = 4;
@@ -99,16 +110,39 @@ VolumetricResult evaluateLight(in vec3 p)
     dLaser = max(dLaser, p.y);
 
 
-    p.xz *= rot(iTime * 0.5);
+    //p.xz *= rot(iTime * 0.5);
+    //p.xz *= rot(min(1.0, C_7_S));
     float section = pModPolar(p.xz, 16);
+    
+    float tilt = -p.x*0.35;
+    
+    //float capsuleStr = 5 + max(10 - C_1_S * 100, 0);
+    float capsuleStr = 5;
+    if (mod(section, 4.0) == 0.0) {
+        capsuleStr = 5.0 + max(0, 10 - C_7_S_0 * 100);
+        tilt *= min(1, C_7_S_0 * 3.0);
 
-    p.y -= -p.x*0.35;
+    } else if (mod(section, 4.0) == 1.0) {
+        capsuleStr = 5.0 + max(0, 10 - C_7_S_1 * 100);
+         tilt *= min(1, C_7_S_1 * 3.0);
+
+    } else if (mod(section, 4.0) == 2.0) {
+        capsuleStr = 5.0 + max(0, 10 - C_7_S_2 * 100);
+         tilt *= min(1, C_7_S_2 * 3.0);
+
+    } else if (mod(section, 4.0) == 3.0) {
+        capsuleStr = 5.0 + max(0, 10 - C_7_S_3 * 100);
+         tilt *= min(1, C_7_S_3 * 3.0);
+
+    }
+
+
+    p.y -= tilt;
     float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
 
 
-    float str = 5;
     vec3 color = vec3(0.1, 1, 1);
-    vec3 res = color * str / (dUfoSpin * dUfoSpin);
+    vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
 
     vec3 laserColor = vec3(1, 0.1, 0.1);
     float laserStr = 50;
@@ -137,7 +171,7 @@ float getReflectiveIndex(int type) {
         case boatType:
             return 0.5;
         case mountainType:
-            return 0.3;
+            return 0.0;
         case waterType:
             return 1.0;
         case ufoType:
@@ -287,7 +321,7 @@ float ufo(in vec3 p)
    // p.xz *= rot(iTime);
     //p.xy *= rot(iTime);
     //float d1 = sdRoundBox(p, vec3(2), 1);
-    float d1 = length(p) - 2.0;
+    float d1 = length(p) - (2.0 + max(0.5 - C_1_S*3, 0));
     return min(d1, d2);
 }
 
