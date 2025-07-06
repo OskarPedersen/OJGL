@@ -7,6 +7,15 @@ Edison2025::Edison2025()
 {
 }
 
+static const unsigned char song[] = {
+#include "songs/edison_2025_song.inc"
+};
+
+const unsigned char* Edison2025::getSong() const
+{
+    return song;
+}
+
 ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) const
 {
     ojstd::vector<Scene> scenes;
@@ -24,8 +33,6 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
     scenes.emplace_back(experiment, Duration::seconds(1000000), "experiment");
     return scenes;
 }
-
-const unsigned char* Edison2025::getSong() const { return nullptr; }
 
 ojstd::string Edison2025::getTitle() const
 {
