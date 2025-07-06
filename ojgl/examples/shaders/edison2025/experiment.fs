@@ -257,6 +257,7 @@ float boat(vec3 p) {
     vec3 p4 = p;
     p4.y -= 4.4;
     p4.y -= 0.9*smoothstep(0, 5, abs(p.z));
+    p4.y -= -(3.0-abs(p.z*0.8))*iTime*4.0; // make line fall down
     float line = sdBox(p4, vec3(0.01, 0.01, 3.6));
     
     vec3 p5 = p;
