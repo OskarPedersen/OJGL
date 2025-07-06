@@ -45,7 +45,21 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
 
         return vector;
     });
-    scenes.emplace_back(experiment, Duration::seconds(1000000), "experiment");
+
+    auto chrom = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/chrom_ab.fs");
+    chrom->setInputs(experiment);
+    chrom->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
+        Buffer::UniformVector vector;
+        vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));
+
+        auto music = Music::instance();
+
+        vector.push_back(ojstd::make_shared<Uniform1f>("C_1_S", music->syncChannels()[1].getTimeSinceAnyNote().toSeconds()));
+
+        return vector;
+    });
+
+    scenes.emplace_back(chrom, Duration::seconds(1000000), "experiment");
     return scenes;
 }
 

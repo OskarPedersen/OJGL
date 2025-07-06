@@ -88,10 +88,10 @@ float getFogAmount(in vec3 p)
 
 VolumetricResult evaluateLight(in vec3 p)
 {
-    // vec3 pStars = p;
-    // vec2 iStars = pMod2(pStars.xz, vec2(50, 50));
-    // pStars.y -= 50 + sin(iStars.x * 10) * 10 + sin(iStars.y * 10) * 10;
-    // float dStars = length(pStars) - 0.1;
+    vec3 pStars = p;
+    vec2 iStars = pMod2(pStars.xz, vec2(50, 50));
+    pStars.y -= 50 + sin(iStars.x * 10) * 10 + sin(iStars.y * 10) * 10;
+    float dStars = length(pStars) - 0.1;
 
     vec3 pOrig = p;
 
@@ -152,13 +152,13 @@ VolumetricResult evaluateLight(in vec3 p)
     float laserFloorStr = max(0, 50  - laserFloorDis);
     res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
 
-    //float starStr = 10;
-    //vec3 starColor = vec3(mod(iStars.x * 0.1, 1), mod(iStars.y * 0.1, 1), 1);
-    //res += starColor * starStr / (dStars * dStars);
+    float starStr = 10;
+    vec3 starColor = vec3(mod(iStars.x * 0.3, 1), mod(iStars.y * 0.4, 1), 1);
+    res += starColor * starStr / (dStars * dStars);
 
-    //float finalDis = dStars;
-    //finalDis = min(finalDis, dLaserFloor);
-    float finalDis = dLaserFloor;
+    float finalDis = dStars;
+    finalDis = min(finalDis, dLaserFloor);
+    //float finalDis = dLaserFloor;
     finalDis = min(finalDis, laserFloorDis);
     finalDis = min(finalDis, dLaser);
     finalDis = min(finalDis, dUfoSpin);
