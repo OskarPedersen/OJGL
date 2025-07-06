@@ -47,7 +47,8 @@ vec3 rayDirection;
 
 float mountain(vec3 p); // forward declare
 
-vec3 ufoPos = vec3(mod(iTime * 10.0, 200), 10, 0);
+vec3 ufoPos = vec3(mod(iTime * 10.0, 200) - 20, 10, 0);
+float boatSplitTime = max(0, iTime - 2.3);
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
@@ -257,7 +258,7 @@ float boat(vec3 p) {
     vec3 p4 = p;
     p4.y -= 4.4;
     p4.y -= 0.9*smoothstep(0, 5, abs(p.z));
-    p4.y -= -(3.0-abs(p.z*0.8))*iTime*4.0; // make line fall down
+    p4.y -= -(3.0-abs(p.z*0.8))*boatSplitTime*4.0; // make line fall down
     float line = sdBox(p4, vec3(0.01, 0.01, 3.6));
     
     vec3 p5 = p;
@@ -274,43 +275,20 @@ float boat(vec3 p) {
     return h;
 }
 
-float boatFront(vec3 p)
+float boatSplit(vec3 p, float dir)
 {
+    p.y += mod(boatSplitTime * 0.5, 5.0);
+    p.z -= dir*5;
+    p.zy *= rot(dir*boatSplitTime*0.2);
+    p.z += dir*5;
 
-    p.y += mod(iTime * 0.5, 5.0);
-    p.z -= 5;
-    p.zy *= rot(iTime*0.2);
-    p.z += 5;
-
-    p.xy *= rot(iTime*0.5);
+    p.xy *= rot(dir*boatSplitTime*0.5);
 
    float h = boat(p);
 
 
-    // float sdBox(vec3 p, vec3 b)
-    float d = sdBox(p - vec3(0, 0, 5), vec3(5));
+    float d = sdBox(p - vec3(0, 0, dir*4.95), vec3(5));
     return max(d, h);
-    //return h;
-}
- 
-
-float boatBack(vec3 p)
-{
-    p.y += mod(iTime * 0.5, 5.0);
-    p.z += 5;
-    p.zy *= rot(-iTime*0.2);
-    p.z -= 5;
-    
-
-    p.xy *= rot(-iTime*0.5);
-
-   float h = boat(p);
-
-
-    // float sdBox(vec3 p, vec3 b)
-    float d = sdBox(p - vec3(0, 0, -5), vec3(5));
-    return max(d, h);
-    //return h;
 }
 
 float ufo(in vec3 p)
@@ -336,8 +314,8 @@ DistanceInfo map(in vec3 p)
 {
    DistanceInfo mountainDis = {mountainLaser(p), mountainType};
 
-   DistanceInfo boatFrontDis = { boatFront(p), boatType};
-   DistanceInfo boatBackDis = { boatBack(p), boatType};
+   DistanceInfo boatFrontDis = { boatSplit(p, 1.0), boatType};
+   DistanceInfo boatBackDis = { boatSplit(p, -1.0), boatType};
    DistanceInfo boatDis = un(boatFrontDis, boatBackDis);
 
    DistanceInfo waterInfo = {water(p), waterType};
