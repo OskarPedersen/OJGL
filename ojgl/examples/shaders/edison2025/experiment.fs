@@ -27,13 +27,13 @@ uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
 
-float PART_0_DESCENT = 8;
-float PART_1_SHIP_SPLIT = (PART_0_DESCENT + 12);
-float PART_2_UFO_MOUNTAIN = (PART_1_SHIP_SPLIT + 10);
-float PART_25_UFO_MOUNTAIN_2_DURATION = 6.5;
-float PART_25_UFO_MOUNTAIN_2 = (PART_2_UFO_MOUNTAIN + PART_25_UFO_MOUNTAIN_2_DURATION);
-float PART_3_UFO_FOLLOW = (PART_25_UFO_MOUNTAIN_2 + 10);
-#define PART_4_UFO_FLY_AWAY (PART_3_UFO_FOLLOW + 4)
+float P_0 = 8;
+float P_1 = (P_0 + 12);
+float P_2 = (P_1 + 10);
+float P_25_D = 6.5;
+float PART_25 = (P_2 + P_25_D);
+float P_3 = (PART_25 + 10);
+#define P_4 (P_3 + 4)
 
 uniform float C_1_S; // bass
 uniform float C_6_S; // "vocals"
@@ -62,28 +62,28 @@ float ufoSpeed = 10.0;
 
 vec3 ufoPos()
 {
-    float timeBeforePart0 = (iTime - PART_0_DESCENT);
-    float timeBeforePart25 = (iTime - PART_0_DESCENT - PART_25_UFO_MOUNTAIN_2_DURATION);
-    if (iTime < PART_0_DESCENT) {
+    float timeBeforePart0 = (iTime - P_0);
+    float timeBeforePart25 = (iTime - P_0 - P_25_D);
+    if (iTime < P_0) {
         float y = 65 - smoothstep(-6, 6, iTime) * 7 * 7;
         //y = max(y, 18);
         return vec3(-70, y, 100);
-    } else if (iTime < PART_1_SHIP_SPLIT) {
+    } else if (iTime < P_1) {
         return vec3(timeBeforePart0 * ufoSpeed - 70, 10, 0);
-    } else if (iTime < PART_2_UFO_MOUNTAIN) { // PART_2_UFO_MOUNTAIN
+    } else if (iTime < P_2) { // P_2
         return vec3(timeBeforePart0 * ufoSpeed - 120, 13, 0);
-    } else if (iTime < PART_25_UFO_MOUNTAIN_2) {
-        float t = (iTime - PART_2_UFO_MOUNTAIN);
+    } else if (iTime < PART_25) {
+        float t = (iTime - P_2);
         return vec3(t * ufoSpeed - 120, 13, 0);
-    } else if (iTime < PART_3_UFO_FOLLOW) {
+    } else if (iTime < P_3) {
         return vec3(timeBeforePart25 * ufoSpeed - 120, 5, 0);
     } else {
-        float t = iTime - PART_3_UFO_FOLLOW;
+        float t = iTime - P_3;
         return vec3(timeBeforePart25 * ufoSpeed - 120, 5 + t*t*t*t, 0);
     }
 }
 
-float boatSplitTime = max(0, iTime - 7.15 - PART_0_DESCENT);
+float boatSplitTime = max(0, iTime - 7.15 - P_0);
 
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
@@ -106,12 +106,11 @@ float hash(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
-
 vec3 getColor(in MarchResult result)
 {
     vec3 color = vec3(0);
     // stars look bad in relections and when camera moves, so limit them for now
-    if (result.type == invalidType && result.jump == 0 && iTime < PART_3_UFO_FOLLOW && iTime > PART_0_DESCENT) {
+    if (result.type == invalidType && result.jump == 0 && iTime < P_3 && iTime > P_0) {
         float pitch = asin(result.rayDirection.y); // up/down angle
         float yaw = atan(result.rayDirection.z, result.rayDirection.x); // side angle
 
@@ -161,7 +160,6 @@ VolumetricResult evaluateLight(in vec3 p)
     vec3 ufo = ufoPos();
     float laserFloorDis = abs(ufo.x - pOrig.x);
     float dLaserFloor = sdCylinder(laserFloorP, 0.05 + 0.3 * smoothstep(0, 10, laserFloorDis));
-    //dLaserFloor = max(dLaserFloor, -p.x); // cut of behind ship, not needed?
     dLaserFloor = max(dLaserFloor,  p.x - ufo.x + 0.5); // cut off in front of UFO
     
     p -= ufo;
@@ -170,14 +168,10 @@ VolumetricResult evaluateLight(in vec3 p)
     float dLaser = sdCylinder(p.xzy, 0.1);
     dLaser = max(dLaser, p.y);
 
-
-    //p.xz *= rot(iTime * 0.5);
-    //p.xz *= rot(min(1.0, C_7_S));
     float section = pModPolar(p.xz, 16);
     
     float tilt = -p.x*0.35;
     
-    //float capsuleStr = 5 + max(10 - C_1_S * 100, 0);
     float capsuleStr = 5;
     if (mod(section, 4.0) == 0.0) {
         capsuleStr = 5.0 + max(0, 10 - C_7_S_0 * 100);
@@ -201,7 +195,7 @@ VolumetricResult evaluateLight(in vec3 p)
     p.y -= tilt;
     float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
 
-    bool showLaser = iTime < PART_25_UFO_MOUNTAIN_2 && iTime > PART_0_DESCENT;
+    bool showLaser = iTime < PART_25 && iTime > P_0;
 
     vec3 color = vec3(0.1, 1, 1);
     vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
@@ -211,20 +205,14 @@ VolumetricResult evaluateLight(in vec3 p)
         float laserStr = 50;
         res += laserColor * laserStr / (dLaser * dLaser);
 
-        //float laserFloorDis = abs(ufoPos.x - pOrig.x);
-        float laserFloorStr = 50; // max(0, 50  - laserFloorDis);
-        if (iTime > PART_1_SHIP_SPLIT) { // dont show the floor laser on the ship scene
+   
+        float laserFloorStr = 50; 
+        if (iTime > P_1) { 
             res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
         }
     }
 
-    float starStr = 10;
-    //vec3 starColor = vec3(mod(iStars.x * 0.3, 1), mod(iStars.y * 0.4, 1), 1);
-    vec3 starColor = vec3(1);
-    //res += starColor * starStr / (dStars * dStars);
 
-    //float finalDis = dStars;
-    //finalDis = min(finalDis, dLaserFloor);
     float finalDis = dLaserFloor;
     if (showLaser) {
         finalDis = min(finalDis, laserFloorDis); // think this one cuses the white AO wall, maybe something wrong with it
@@ -264,7 +252,7 @@ float water(in vec3 p)
 
 float mountainH(vec3 p) // just the height
 {
-    if (iTime > PART_1_SHIP_SPLIT) { // Shift mountains to something which works better for laser
+    if (iTime > P_1) { // Shift mountains to something which works better for laser
         p.x += 20;
         p.z += 100;
     }
@@ -373,12 +361,8 @@ float boatSplit(vec3 p, float dir)
 float ufo(in vec3 p)
 {
     p -= ufoPos();
-    // float sdRoundBox(vec3 p, vec3 b, float r)
     float d2 = sdTorus(p - vec3(0, -3, 0), vec2(8.5, 0.5));
-    //mat2 rot(float a)
-   // p.xz *= rot(iTime);
-    //p.xy *= rot(iTime);
-    //float d1 = sdRoundBox(p, vec3(2), 1);
+
     float d1 = length(p) - (2.0 + max(0.5 - C_1_S*3, 0));
     return min(d1, d2);
 }
@@ -417,11 +401,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
 
     vec3 firstJumpPos = vec3(0.0);
 
-#if S_REFLECTIONS
     for (int jump = 0; jump < S_reflectionJumps; jump++) {
-#else
-        int jump = 0;
-#endif
         for (int steps = 0; steps < S_maxSteps; ++steps) {
             vec3 p = rayOrigin + t * rayDirection;
             
@@ -432,23 +412,20 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
             DistanceInfo info = map(p);
             float jumpDistance = info.distance * S_distanceMultiplier;
 
-#if S_VOLUMETRIC
             float fogAmount = getFogAmount(p);
             VolumetricResult vr = evaluateLight(p);
 
             float volumetricJumpDistance = max(S_minVolumetricJumpDistance, vr.distance * S_volumetricDistanceMultiplier);
             jumpDistance = min(jumpDistance, volumetricJumpDistance);
+
             vec3 lightIntegrated = vr.color - vr.color * exp(-fogAmount * jumpDistance);
             scatteredLight += transmittance * lightIntegrated;	
             transmittance *= exp(-fogAmount * jumpDistance);      
-#endif
 
             t += jumpDistance;
             if (info.distance < (S_distanceEpsilon)) {
                 vec3 color = getColor(MarchResult(info.type, p, steps, transmittance, scatteredLight, jump, rayDirection));
-#if !S_REFLECTIONS
-                return color;
-#else
+
                 t = 0.0;
                 rayDirection = reflect(rayDirection, normal(p));
                 rayOrigin = p + 0.1 * rayDirection;
@@ -456,7 +433,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
                 resultColor = mix(resultColor, color, reflectionModifier);
                 reflectionModifier *= getReflectiveIndex(info.type);
                 break;
- #endif
+
             }
 
             if (t > S_maxDistance || steps == S_maxDistance - 1) {
@@ -465,9 +442,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
                 return FullMarchResult(resultColor, firstJumpPos);
             }
         }
-#if S_REFLECTIONS
     }
-#endif
 
     return FullMarchResult(resultColor, firstJumpPos);
 }
@@ -477,9 +452,9 @@ void main()
     float u = (fragCoord.x - 0.5);
     float v = (fragCoord.y - 0.5) * iResolution.y / iResolution.x;
     float zoom = 1.0;
-    if (iTime < PART_0_DESCENT) {
+    if (iTime < P_0) {
         zoom = 0.8 - 0.5*smoothstep(2, 4, iTime);
-    } else if (iTime > PART_2_UFO_MOUNTAIN &&  iTime < PART_25_UFO_MOUNTAIN_2) {
+    } else if (iTime > P_2 &&  iTime < PART_25) {
         zoom = 0.8;
     }
     u *= zoom;
@@ -491,20 +466,19 @@ void main()
 
     float focus = 0.0;
 
-    //iTime += fragCoord.x;
     const float transitionTime = 0.75;
-    float a = clamp(iTime - PART_1_SHIP_SPLIT + transitionTime, 0, transitionTime) / transitionTime;
+    float a = clamp(iTime - P_1 + transitionTime, 0, transitionTime) / transitionTime;
     if (a > fragCoord.x) {
         //iTime += 10;
-        PART_1_SHIP_SPLIT -= transitionTime;
+        P_1 -= transitionTime;
     }
 
-    float b = clamp(iTime - PART_25_UFO_MOUNTAIN_2 + transitionTime, 0, transitionTime) / transitionTime;
+    float b = clamp(iTime - PART_25 + transitionTime, 0, transitionTime) / transitionTime;
     if (b > 1 - fragCoord.x) {
-        PART_25_UFO_MOUNTAIN_2 -= transitionTime;
+        PART_25 -= transitionTime;
     }
   
-    if (iTime < PART_0_DESCENT) {
+    if (iTime < P_0) {
         vec3 ufo = ufoPos();
         rayOrigin = vec3(ufo.x - 200, 4, ufo.z);
         vec3 tar = ufo;
@@ -516,7 +490,7 @@ void main()
 
         rayDirection = normalize(dir + right*u + up*v);
     
-    } else if (iTime < PART_1_SHIP_SPLIT) {
+    } else if (iTime < P_1) {
         rayOrigin = vec3(11.1394, 1.31, -10.4126);
         vec3 tar = vec3(1, 1, 1);
 
@@ -525,7 +499,7 @@ void main()
  	    vec3 up = cross(dir, right);
 
         rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < PART_2_UFO_MOUNTAIN) {
+    } else if (iTime < P_2) {
         rayOrigin = vec3(15, 8.28, 20);
         vec3 tar = rayOrigin + vec3(0.5, 0, -0.5);
 
@@ -534,8 +508,8 @@ void main()
  	    vec3 up = cross(dir, right);
 
         rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < PART_25_UFO_MOUNTAIN_2) {
-        float spin = (iTime - PART_2_UFO_MOUNTAIN) * 0.2;
+    } else if (iTime < PART_25) {
+        float spin = (iTime - P_2) * 0.2;
         float d = 60;
         rayOrigin = ufoPos() + vec3(d*sin(spin), 10, d*cos(spin));
         vec3 tar = ufoPos();
@@ -545,7 +519,7 @@ void main()
  	    vec3 up = cross(dir, right);
 
         rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < PART_4_UFO_FLY_AWAY) { // part 3 and 4 in same case
+    } else if (iTime < P_4) { // part 3 and 4 in same case
         S_volumetricDistanceMultiplier = 0.2; // lower is needed here to avoid artifacts
 
 
@@ -569,8 +543,8 @@ void main()
 
     // fade to black
     float transitionTimeFadeToBlack = 1.5;
-    float fade = clamp(iTime - PART_4_UFO_FLY_AWAY + transitionTimeFadeToBlack, 0, transitionTimeFadeToBlack) / transitionTimeFadeToBlack;
-    if (iTime < PART_4_UFO_FLY_AWAY) {
+    float fade = clamp(iTime - P_4 + transitionTimeFadeToBlack, 0, transitionTimeFadeToBlack) / transitionTimeFadeToBlack;
+    if (iTime < P_4) {
         color = mix(color, vec3(0), fade);
     }
 
@@ -578,7 +552,7 @@ void main()
 
 
      // focus / blur
-     if (iTime < PART_0_DESCENT) {
+     if (iTime < P_0) {
          
         //const float lenToUfo = length(rayOrigin - ufo);
 
@@ -587,11 +561,11 @@ void main()
         focus =  1.0 - smoothstep(3, 4, iTime);
         //focus = abs(length(res.firstJumpPos - focusPoint)) * 0.003 - 0.5;// + 0.01;
         //focus = 0.0;
-     } else if (iTime > PART_25_UFO_MOUNTAIN_2 ) { //for scene 3 & 4
+     } else if (iTime > PART_25 ) { //for scene 3 & 4
         vec3 ufo = ufoPos();
          focus = abs(length(res.firstJumpPos - ufo)) * 0.005;// + 0.01;
         
-        float t4 = max(0, iTime - PART_3_UFO_FOLLOW);
+        float t4 = max(0, iTime - P_3);
         focus = mix(focus, 1 - smoothstep(0, 1, t4), t4); // make clearer as ufo ascends
 
      } 
