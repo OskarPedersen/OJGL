@@ -26,7 +26,7 @@ uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
 
-#define PART_1_SHIP_SPLIT 7
+#define PART_1_SHIP_SPLIT 12
 #define PART_2_UFO_MOUNTAIN (PART_1_SHIP_SPLIT + 10)
 
 uniform float C_1_S; // bass
@@ -51,9 +51,17 @@ vec3 rayDirection;
 float mountain(vec3 p); // forward declare
 float mountainH(vec3 p); // forward declare
 
+float ufoSpeed = 10.0;
 
-vec3 ufoPos = vec3(mod(iTime * 10.0, 200) - 20 + (iTime > PART_1_SHIP_SPLIT ? -50 : 0), 10 + (iTime > PART_1_SHIP_SPLIT ? 3 : 0), 0);
-float boatSplitTime = max(0, iTime - 2.15);
+vec3 ufoPos()
+{
+    if (iTime < PART_1_SHIP_SPLIT) {
+        return vec3(iTime * ufoSpeed - 70, 10, 0);
+    } else {
+        return vec3(iTime * ufoSpeed - 120, 13, 0);
+    }
+}
+float boatSplitTime = max(0, iTime - 7.15);
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
@@ -74,7 +82,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 vec3 getColor(in MarchResult result)
 {
     //vec3 lightPosition = vec3(-100, 20, 200);
-    vec3 lightPosition = ufoPos;
+    vec3 lightPosition = ufoPos();
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
     float diffuse = max(0., dot(invLight, normal));
@@ -106,12 +114,13 @@ VolumetricResult evaluateLight(in vec3 p)
     float dm = mountainH(p);
     laserFloorP.y +=  dm;
     //laserFloorP.y += sin(p.x);;
-    float laserFloorDis = abs(ufoPos.x - pOrig.x);
+    vec3 ufo = ufoPos();
+    float laserFloorDis = abs(ufo.x - pOrig.x);
     float dLaserFloor = sdCylinder(laserFloorP, 0.05 + 0.3 * smoothstep(0, 10, laserFloorDis));
     dLaserFloor = max(dLaserFloor, -p.x); // cut of behind ship, not needed?
-    dLaserFloor = max(dLaserFloor,  p.x - ufoPos.x + 0.5); // cut off in fron of UFO
+    dLaserFloor = max(dLaserFloor,  p.x - ufo.x + 0.5); // cut off in fron of UFO
     
-    p -= ufoPos;
+    p -= ufo;
     
 
     float dLaser = sdCylinder(p.xzy, 0.1);
@@ -251,7 +260,7 @@ float mountainLaser(vec3 p)
     float dLaserFloor = sdCylinder(laserFloorP, 1.0);
 
     dLaserFloor = max(dLaserFloor, -p.x);
-    dLaserFloor = max(dLaserFloor,  p.x - ufoPos.x + 0.5);
+    dLaserFloor = max(dLaserFloor,  p.x - ufoPos().x + 0.5);
 
 	return opSubtraction(dLaserFloor, dMountain);
 }
@@ -324,7 +333,7 @@ float boatSplit(vec3 p, float dir)
 
 float ufo(in vec3 p)
 {
-    p -= ufoPos;
+    p -= ufoPos();
     // float sdRoundBox(vec3 p, vec3 b, float r)
     float d2 = sdTorus(p - vec3(0, -3, 0), vec2(8.5, 0.5));
     //mat2 rot(float a)
