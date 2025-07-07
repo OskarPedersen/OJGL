@@ -62,7 +62,9 @@ vec3 ufoPos()
 {
     float timeBeforePart0 = (iTime - PART_0_DESCENT);
     if (iTime < PART_0_DESCENT) {
-        return vec3(-70, 60 - iTime * 7, 100);
+        float y = 65 - smoothstep(-6, 6, iTime) * 7 * 7;
+        //y = max(y, 18);
+        return vec3(-70, y, 100);
     } else if (iTime < PART_1_SHIP_SPLIT) {
         return vec3(timeBeforePart0 * ufoSpeed - 70, 10, 0);
     } else if (iTime < PART_2_UFO_MOUNTAIN) {
@@ -398,6 +400,13 @@ void main()
 {
     float u = (fragCoord.x - 0.5);
     float v = (fragCoord.y - 0.5) * iResolution.y / iResolution.x;
+    float zoom = 1.0;
+    if (iTime < PART_0_DESCENT) {
+        zoom = 1 - 0.7*smoothstep(2, 4, iTime);
+    }
+    u *= zoom;
+    v *= zoom;
+
     vec3 rayOrigin = (iCameraMatrix * vec4(u, v, -0.5, 1.0)).xyz;
     cameraPosition = (iCameraMatrix * vec4(0.0, 0.0, 0.0, 1)).xyz;
     rayDirection = normalize(rayOrigin - cameraPosition);
