@@ -22,12 +22,13 @@ in vec2 fragCoord;
 out vec4 fragColor;
 
 uniform float iTime;
+
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
 
-#define PART_1_SHIP_SPLIT 12
-#define PART_2_UFO_MOUNTAIN (PART_1_SHIP_SPLIT + 10)
+float PART_1_SHIP_SPLIT = 12;
+float PART_2_UFO_MOUNTAIN = (PART_1_SHIP_SPLIT + 10);
 #define PART_3_UFO_FOLLOW (PART_2_UFO_MOUNTAIN + 10)
 #define PART_4_UFO_FLY_AWAY (PART_3_UFO_FOLLOW + 6)
 
@@ -69,7 +70,9 @@ vec3 ufoPos()
         return vec3(iTime * ufoSpeed - 120, 5 + t*t*t*t, 0);
     }
 }
+
 float boatSplitTime = max(0, iTime - 7.15);
+
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
@@ -395,6 +398,14 @@ void main()
     cameraPosition = (iCameraMatrix * vec4(0.0, 0.0, 0.0, 1)).xyz;
     rayDirection = normalize(rayOrigin - cameraPosition);
 
+
+    //iTime += fragCoord.x;
+    const float transitionTime = 0.75;
+    float a = clamp(iTime - PART_1_SHIP_SPLIT + transitionTime, 0, transitionTime) / transitionTime;
+    if (a > fragCoord.x) {
+        //iTime += 10;
+        PART_1_SHIP_SPLIT -= transitionTime;
+    }
   
     if (iTime < PART_1_SHIP_SPLIT) {
         rayOrigin = vec3(11.1394, 1.31, -10.4126);
