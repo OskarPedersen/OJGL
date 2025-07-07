@@ -73,15 +73,6 @@ void Edison2025::update(const Duration& relativeSceneTime, const Duration& elaps
     OJ_UNUSED(relativeSceneTime);
     OJ_UNUSED(elapsedTime);
     OJ_UNUSED(currentScene);
-
-    if (currentScene == "experiment") {
-        if (relativeSceneTime.toSeconds() < 5) { 
-            //FreeCameraController::instance().set({ 11.1394f, 1.31f, -10.4126f }, -3.946f, 0.0839994f);
-        } else if (relativeSceneTime.toSeconds() < 15) {
-            // 29.2441, 15.38, 15.0708), [-0.742002, -0.564001
-            //FreeCameraController::instance().set({ 29.2441f, 15.38f, 15.0708f }, -0.742002f, -0.564001f);
-        }
-    }
 }
 
 }

@@ -26,7 +26,8 @@ uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
 
-#define PART_1_SHIP_SPLIT 5
+#define PART_1_SHIP_SPLIT 7
+#define PART_2_UFO_MOUNTAIN (PART_1_SHIP_SPLIT + 10)
 
 uniform float C_1_S; // bass
 uniform float C_6_S; // "vocals"
@@ -51,7 +52,7 @@ float mountain(vec3 p); // forward declare
 float mountainH(vec3 p); // forward declare
 
 
-vec3 ufoPos = vec3(mod(iTime * 10.0, 200) - 20, 10 + (iTime > PART_1_SHIP_SPLIT ? 3 : 0), 0);
+vec3 ufoPos = vec3(mod(iTime * 10.0, 200) - 20 + (iTime > PART_1_SHIP_SPLIT ? -50 : 0), 10 + (iTime > PART_1_SHIP_SPLIT ? 3 : 0), 0);
 float boatSplitTime = max(0, iTime - 2.15);
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
@@ -370,7 +371,7 @@ void main()
  	    vec3 up = cross(dir, right);
 
         rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < 10) {
+    } else if (iTime < PART_2_UFO_MOUNTAIN) {
         rayOrigin = vec3(15, 8.28, 20);
         vec3 tar = rayOrigin + vec3(0.5, 0, -0.5);
 
