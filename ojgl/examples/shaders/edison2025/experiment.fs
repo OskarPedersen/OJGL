@@ -402,7 +402,7 @@ void main()
     float v = (fragCoord.y - 0.5) * iResolution.y / iResolution.x;
     float zoom = 1.0;
     if (iTime < PART_0_DESCENT) {
-        zoom = 1 - 0.7*smoothstep(2, 4, iTime);
+        zoom = 0.8 - 0.5*smoothstep(2, 4, iTime);
     }
     u *= zoom;
     v *= zoom;
