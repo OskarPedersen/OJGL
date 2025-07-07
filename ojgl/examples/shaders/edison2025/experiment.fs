@@ -30,7 +30,7 @@ uniform sampler2D inTexture0;
 float PART_1_SHIP_SPLIT = 12;
 float PART_2_UFO_MOUNTAIN = (PART_1_SHIP_SPLIT + 10);
 float PART_3_UFO_FOLLOW = (PART_2_UFO_MOUNTAIN + 10);
-#define PART_4_UFO_FLY_AWAY (PART_3_UFO_FOLLOW + 6)
+#define PART_4_UFO_FLY_AWAY (PART_3_UFO_FOLLOW + 4)
 
 uniform float C_1_S; // bass
 uniform float C_6_S; // "vocals"
@@ -449,7 +449,17 @@ void main()
 
     firstRayDirection = rayDirection;
     vec3 color = march(rayOrigin, rayDirection);
-    // color /= (color + vec3(1.0));
+    
+    // fade to black
+    float transitionTimeFadeToBlack = 1.5;
+    float fade = clamp(iTime - PART_4_UFO_FLY_AWAY + transitionTimeFadeToBlack, 0, transitionTimeFadeToBlack) / transitionTimeFadeToBlack;
+    if (iTime < PART_4_UFO_FLY_AWAY) {
+        color = mix(color, vec3(0), fade);
+    }
+
+     color /= (color + vec3(1.0));
+
+      
 
     fragColor = vec4(pow(color, vec3(0.5)), 1.0);
 }
