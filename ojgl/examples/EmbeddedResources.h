@@ -307,9 +307,13 @@ namespace ojgl::resources {
 #include "shaders/edison2025/noise.fs"
           , "edison2025/noise.fs"
           },
-                    {
+          {
 #include "shaders/edison2025/chrom_ab.fs"
           , "edison2025/chrom_ab.fs"
+          },
+          {
+#include "shaders/edison2025/blur1.fs"
+          , "edison2025/blur1.fs"
           },
   };
 // clang-format on

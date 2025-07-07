@@ -27,7 +27,7 @@ uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
 
-float PART_0_DESCENT = 7;
+float PART_0_DESCENT = 8;
 float PART_1_SHIP_SPLIT = (PART_0_DESCENT + 12);
 float PART_2_UFO_MOUNTAIN = (PART_1_SHIP_SPLIT + 10);
 float PART_3_UFO_FOLLOW = (PART_2_UFO_MOUNTAIN + 10);
@@ -396,6 +396,76 @@ DistanceInfo map(in vec3 p)
    return un(un(ufoInfo, mountainDis), sunk(waterInfo, boatDis, 0.3));
 }
 
+struct FullMarchResult {
+    vec3 col;
+    vec3 firstJumpPos;
+};
+
+FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
+{
+    float t = 0.0;
+    vec3 scatteredLight = vec3(0.0);
+    float transmittance = 1.0;
+    float reflectionModifier = 1.0;
+    vec3 resultColor = vec3(0.0);
+
+    vec3 firstJumpPos = vec3(0.0);
+
+#if S_REFLECTIONS
+    for (int jump = 0; jump < S_reflectionJumps; jump++) {
+#else
+        int jump = 0;
+#endif
+        for (int steps = 0; steps < S_maxSteps; ++steps) {
+            vec3 p = rayOrigin + t * rayDirection;
+            
+            if (jump == 0) {
+                firstJumpPos = p;
+            }
+
+            DistanceInfo info = map(p);
+            float jumpDistance = info.distance * S_distanceMultiplier;
+
+#if S_VOLUMETRIC
+            float fogAmount = getFogAmount(p);
+            VolumetricResult vr = evaluateLight(p);
+
+            float volumetricJumpDistance = max(S_minVolumetricJumpDistance, vr.distance * S_volumetricDistanceMultiplier);
+            jumpDistance = min(jumpDistance, volumetricJumpDistance);
+            vec3 lightIntegrated = vr.color - vr.color * exp(-fogAmount * jumpDistance);
+            scatteredLight += transmittance * lightIntegrated;	
+            transmittance *= exp(-fogAmount * jumpDistance);      
+#endif
+
+            t += jumpDistance;
+            if (info.distance < (S_distanceEpsilon)) {
+                vec3 color = getColor(MarchResult(info.type, p, steps, transmittance, scatteredLight, jump, rayDirection));
+#if !S_REFLECTIONS
+                return color;
+#else
+                t = 0.0;
+                rayDirection = reflect(rayDirection, normal(p));
+                rayOrigin = p + 0.1 * rayDirection;
+
+                resultColor = mix(resultColor, color, reflectionModifier);
+                reflectionModifier *= getReflectiveIndex(info.type);
+                break;
+ #endif
+            }
+
+            if (t > S_maxDistance || steps == S_maxDistance - 1) {
+                vec3 color = getColor(MarchResult(invalidType, p, steps, transmittance, scatteredLight, jump, rayDirection));
+                resultColor = mix(resultColor, color, reflectionModifier);
+                return FullMarchResult(resultColor, firstJumpPos);
+            }
+        }
+#if S_REFLECTIONS
+    }
+#endif
+
+    return FullMarchResult(resultColor, firstJumpPos);
+}
+
 void main()
 {
     float u = (fragCoord.x - 0.5);
@@ -411,6 +481,7 @@ void main()
     cameraPosition = (iCameraMatrix * vec4(0.0, 0.0, 0.0, 1)).xyz;
     rayDirection = normalize(rayOrigin - cameraPosition);
 
+    float focus = 0.0;
 
     //iTime += fragCoord.x;
     const float transitionTime = 0.75;
@@ -473,8 +544,10 @@ void main()
     }
 
     firstRayDirection = rayDirection;
-    vec3 color = march(rayOrigin, rayDirection);
-    
+    //vec3 color = march(rayOrigin, rayDirection);
+    FullMarchResult res = march2(rayOrigin, rayDirection);
+    vec3 color = res.col;
+
     // fade to black
     float transitionTimeFadeToBlack = 1.5;
     float fade = clamp(iTime - PART_4_UFO_FLY_AWAY + transitionTimeFadeToBlack, 0, transitionTimeFadeToBlack) / transitionTimeFadeToBlack;
@@ -484,9 +557,29 @@ void main()
 
      color /= (color + vec3(1.0));
 
-      
 
-    fragColor = vec4(pow(color, vec3(0.5)), 1.0);
+     // focus / blur
+     if (iTime < PART_0_DESCENT) {
+         
+        //const float lenToUfo = length(rayOrigin - ufo);
+
+        //vec3 focusPoint = mix(rayOrigin,ufo, smoothstep(3, 4, iTime));
+
+        focus =  1.0 - smoothstep(3, 4, iTime);
+        //focus = abs(length(res.firstJumpPos - focusPoint)) * 0.003 - 0.5;// + 0.01;
+        //focus = 0.0;
+     } else if (iTime > PART_2_UFO_MOUNTAIN ) { //for scene 3 & 4
+        vec3 ufo = ufoPos();
+         focus = abs(length(res.firstJumpPos - ufo)) * 0.005;// + 0.01;
+        
+        float t4 = max(0, iTime - PART_3_UFO_FOLLOW);
+        focus = mix(focus, 1 - smoothstep(0, 1, t4), t4); // make clearer as ufo ascends
+
+     } 
+      
+        //focus = clamp(focus, 0, 1);
+
+    fragColor = vec4(pow(color, vec3(0.5)), clamp(focus, 0.001, 2.0));
 }
 
 )""
