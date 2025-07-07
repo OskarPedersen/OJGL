@@ -27,7 +27,8 @@ uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
 
-float PART_1_SHIP_SPLIT = 12;
+float PART_0_DESCENT = 7;
+float PART_1_SHIP_SPLIT = (PART_0_DESCENT + 12);
 float PART_2_UFO_MOUNTAIN = (PART_1_SHIP_SPLIT + 10);
 float PART_3_UFO_FOLLOW = (PART_2_UFO_MOUNTAIN + 10);
 #define PART_4_UFO_FLY_AWAY (PART_3_UFO_FOLLOW + 4)
@@ -59,19 +60,22 @@ float ufoSpeed = 10.0;
 
 vec3 ufoPos()
 {
-    if (iTime < PART_1_SHIP_SPLIT) {
-        return vec3(iTime * ufoSpeed - 70, 10, 0);
+    float timeBeforePart0 = (iTime - PART_0_DESCENT);
+    if (iTime < PART_0_DESCENT) {
+        return vec3(-70, 60 - iTime * 7, 100);
+    } else if (iTime < PART_1_SHIP_SPLIT) {
+        return vec3(timeBeforePart0 * ufoSpeed - 70, 10, 0);
     } else if (iTime < PART_2_UFO_MOUNTAIN) {
-        return vec3(iTime * ufoSpeed - 120, 13, 0);
+        return vec3(timeBeforePart0 * ufoSpeed - 120, 13, 0);
     } else if (iTime < PART_3_UFO_FOLLOW) {
-        return vec3(iTime * ufoSpeed - 120, 5, 0);
+        return vec3(timeBeforePart0 * ufoSpeed - 120, 5, 0);
     } else {
         float t = iTime - PART_3_UFO_FOLLOW;
-        return vec3(iTime * ufoSpeed - 120, 5 + t*t*t*t, 0);
+        return vec3(timeBeforePart0 * ufoSpeed - 120, 5 + t*t*t*t, 0);
     }
 }
 
-float boatSplitTime = max(0, iTime - 7.15);
+float boatSplitTime = max(0, iTime - 7.15 - PART_0_DESCENT);
 
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
@@ -99,7 +103,7 @@ vec3 getColor(in MarchResult result)
 {
     vec3 color = vec3(0);
     // stars look bad in relections and when camera moves, so limit them for now
-    if (result.type == invalidType && result.jump == 0 && iTime < PART_3_UFO_FOLLOW) {
+    if (result.type == invalidType && result.jump == 0 && iTime < PART_3_UFO_FOLLOW && iTime > PART_0_DESCENT) {
         float pitch = asin(result.rayDirection.y); // up/down angle
         float yaw = atan(result.rayDirection.z, result.rayDirection.x); // side angle
 
@@ -189,7 +193,7 @@ VolumetricResult evaluateLight(in vec3 p)
     p.y -= tilt;
     float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
 
-    bool showLaser = iTime < PART_2_UFO_MOUNTAIN;
+    bool showLaser = iTime < PART_2_UFO_MOUNTAIN && iTime > PART_0_DESCENT;
 
     vec3 color = vec3(0.1, 1, 1);
     vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
@@ -412,7 +416,19 @@ void main()
         PART_2_UFO_MOUNTAIN -= transitionTime;
     }
   
-    if (iTime < PART_1_SHIP_SPLIT) {
+    if (iTime < PART_0_DESCENT) {
+        vec3 ufo = ufoPos();
+        rayOrigin = vec3(ufo.x - 200, 4, ufo.z);
+        vec3 tar = ufo;
+
+
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+
+        rayDirection = normalize(dir + right*u + up*v);
+    
+    } else if (iTime < PART_1_SHIP_SPLIT) {
         rayOrigin = vec3(11.1394, 1.31, -10.4126);
         vec3 tar = vec3(1, 1, 1);
 
