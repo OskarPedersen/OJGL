@@ -6,7 +6,7 @@ const int S_maxSteps = 600;
 const float S_maxDistance = 500.0;
 const float S_distanceMultiplier = 0.7;
 const float S_minVolumetricJumpDistance = 0.005;
-const float S_volumetricDistanceMultiplier = 0.5;
+float S_volumetricDistanceMultiplier = 0.5;
 const int S_reflectionJumps = 5;
 
 #define S_VOLUMETRIC 1
@@ -430,23 +430,15 @@ void main()
  	    vec3 up = cross(dir, right);
 
         rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < PART_4_UFO_FLY_AWAY) {
-        //rayOrigin = ufoPos() + vec3(-30, 10, 0);
+    } else if (iTime < PART_4_UFO_FLY_AWAY) { // part 3 and 4 in same case
+        S_volumetricDistanceMultiplier = 0.2; // lower is needed here to avoid artifacts
+
+
         vec3 ufo = ufoPos();
         rayOrigin = vec3(ufo.x - 30, 15, ufo.z);
         vec3 tar = ufo;//rayOrigin + vec3(1.0, -0.4, 0);
 
         //vec3 tar = ufo + vec3(1.0, -0.4, 0);
-
-        vec3 dir = normalize(tar - rayOrigin);
-	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
- 	    vec3 up = cross(dir, right);
-
-        rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < PART_4_UFO_FLY_AWAY) {
-        vec3 ufo = ufoPos();
-        rayOrigin = vec3(ufo.x + 30, 10, ufo.z + 10);
-        vec3 tar = ufo;
 
         vec3 dir = normalize(tar - rayOrigin);
 	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
