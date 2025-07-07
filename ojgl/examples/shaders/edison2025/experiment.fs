@@ -30,7 +30,9 @@ uniform sampler2D inTexture0;
 float PART_0_DESCENT = 8;
 float PART_1_SHIP_SPLIT = (PART_0_DESCENT + 12);
 float PART_2_UFO_MOUNTAIN = (PART_1_SHIP_SPLIT + 10);
-float PART_3_UFO_FOLLOW = (PART_2_UFO_MOUNTAIN + 10);
+float PART_25_UFO_MOUNTAIN_2_DURATION = 6.5;
+float PART_25_UFO_MOUNTAIN_2 = (PART_2_UFO_MOUNTAIN + PART_25_UFO_MOUNTAIN_2_DURATION);
+float PART_3_UFO_FOLLOW = (PART_25_UFO_MOUNTAIN_2 + 10);
 #define PART_4_UFO_FLY_AWAY (PART_3_UFO_FOLLOW + 4)
 
 uniform float C_1_S; // bass
@@ -61,19 +63,23 @@ float ufoSpeed = 10.0;
 vec3 ufoPos()
 {
     float timeBeforePart0 = (iTime - PART_0_DESCENT);
+    float timeBeforePart25 = (iTime - PART_0_DESCENT - PART_25_UFO_MOUNTAIN_2_DURATION);
     if (iTime < PART_0_DESCENT) {
         float y = 65 - smoothstep(-6, 6, iTime) * 7 * 7;
         //y = max(y, 18);
         return vec3(-70, y, 100);
     } else if (iTime < PART_1_SHIP_SPLIT) {
         return vec3(timeBeforePart0 * ufoSpeed - 70, 10, 0);
-    } else if (iTime < PART_2_UFO_MOUNTAIN) {
+    } else if (iTime < PART_2_UFO_MOUNTAIN) { // PART_2_UFO_MOUNTAIN
         return vec3(timeBeforePart0 * ufoSpeed - 120, 13, 0);
+    } else if (iTime < PART_25_UFO_MOUNTAIN_2) {
+        float t = (iTime - PART_2_UFO_MOUNTAIN);
+        return vec3(t * ufoSpeed - 120, 13, 0);
     } else if (iTime < PART_3_UFO_FOLLOW) {
-        return vec3(timeBeforePart0 * ufoSpeed - 120, 5, 0);
+        return vec3(timeBeforePart25 * ufoSpeed - 120, 5, 0);
     } else {
         float t = iTime - PART_3_UFO_FOLLOW;
-        return vec3(timeBeforePart0 * ufoSpeed - 120, 5 + t*t*t*t, 0);
+        return vec3(timeBeforePart25 * ufoSpeed - 120, 5 + t*t*t*t, 0);
     }
 }
 
@@ -195,7 +201,7 @@ VolumetricResult evaluateLight(in vec3 p)
     p.y -= tilt;
     float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
 
-    bool showLaser = iTime < PART_2_UFO_MOUNTAIN && iTime > PART_0_DESCENT;
+    bool showLaser = iTime < PART_25_UFO_MOUNTAIN_2 && iTime > PART_0_DESCENT;
 
     vec3 color = vec3(0.1, 1, 1);
     vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
@@ -473,6 +479,8 @@ void main()
     float zoom = 1.0;
     if (iTime < PART_0_DESCENT) {
         zoom = 0.8 - 0.5*smoothstep(2, 4, iTime);
+    } else if (iTime > PART_2_UFO_MOUNTAIN &&  iTime < PART_25_UFO_MOUNTAIN_2) {
+        zoom = 0.8;
     }
     u *= zoom;
     v *= zoom;
@@ -491,9 +499,9 @@ void main()
         PART_1_SHIP_SPLIT -= transitionTime;
     }
 
-    float b = clamp(iTime - PART_2_UFO_MOUNTAIN + transitionTime, 0, transitionTime) / transitionTime;
+    float b = clamp(iTime - PART_25_UFO_MOUNTAIN_2 + transitionTime, 0, transitionTime) / transitionTime;
     if (b > 1 - fragCoord.x) {
-        PART_2_UFO_MOUNTAIN -= transitionTime;
+        PART_25_UFO_MOUNTAIN_2 -= transitionTime;
     }
   
     if (iTime < PART_0_DESCENT) {
@@ -520,6 +528,17 @@ void main()
     } else if (iTime < PART_2_UFO_MOUNTAIN) {
         rayOrigin = vec3(15, 8.28, 20);
         vec3 tar = rayOrigin + vec3(0.5, 0, -0.5);
+
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+
+        rayDirection = normalize(dir + right*u + up*v);
+    } else if (iTime < PART_25_UFO_MOUNTAIN_2) {
+        float spin = (iTime - PART_2_UFO_MOUNTAIN) * 0.2;
+        float d = 60;
+        rayOrigin = ufoPos() + vec3(d*sin(spin), 10, d*cos(spin));
+        vec3 tar = ufoPos();
 
         vec3 dir = normalize(tar - rayOrigin);
 	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
@@ -568,7 +587,7 @@ void main()
         focus =  1.0 - smoothstep(3, 4, iTime);
         //focus = abs(length(res.firstJumpPos - focusPoint)) * 0.003 - 0.5;// + 0.01;
         //focus = 0.0;
-     } else if (iTime > PART_2_UFO_MOUNTAIN ) { //for scene 3 & 4
+     } else if (iTime > PART_25_UFO_MOUNTAIN_2 ) { //for scene 3 & 4
         vec3 ufo = ufoPos();
          focus = abs(length(res.firstJumpPos - ufo)) * 0.005;// + 0.01;
         
