@@ -31,8 +31,8 @@ float P_0 = 8;
 float P_1 = (P_0 + 12);
 float P_2 = (P_1 + 10);
 float P_25_D = 6.5;
-float PART_25 = (P_2 + P_25_D);
-float P_3 = (PART_25 + 10);
+float P_25 = (P_2 + P_25_D);
+float P_3 = (P_25 + 10);
 #define P_4 (P_3 + 4)
 
 uniform float C_1_S; // bass
@@ -72,7 +72,7 @@ vec3 ufoPos()
         return vec3(timeBeforePart0 * ufoSpeed - 70, 10, 0);
     } else if (iTime < P_2) { // P_2
         return vec3(timeBeforePart0 * ufoSpeed - 120, 13, 0);
-    } else if (iTime < PART_25) {
+    } else if (iTime < P_25) {
         float t = (iTime - P_2);
         return vec3(t * ufoSpeed - 120, 13, 0);
     } else if (iTime < P_3) {
@@ -110,7 +110,7 @@ vec3 getColor(in MarchResult result)
 {
     vec3 color = vec3(0);
     // stars look bad in relections and when camera moves, so limit them for now
-    if (result.type == invalidType && result.jump == 0 && iTime < P_3 && iTime > P_0) {
+    if (result.type == invalidType && result.jump == 0 && iTime < P_2 && iTime > P_0) {
         float pitch = asin(result.rayDirection.y); // up/down angle
         float yaw = atan(result.rayDirection.z, result.rayDirection.x); // side angle
 
@@ -134,8 +134,12 @@ vec3 getColor(in MarchResult result)
     color += spec;
 
     vec3 ao = vec3(float(result.steps) / 600);
+    if (result.type == invalidType) {
+        return result.scatteredLight;
+    } else {
+        return result.scatteredLight + result.transmittance *  mix(color, ao, 0.75);
+    }
 
-    return result.scatteredLight + result.transmittance *  mix(color, ao, 0.75);
 }
 
 float getFogAmount(in vec3 p)
@@ -195,7 +199,7 @@ VolumetricResult evaluateLight(in vec3 p)
     p.y -= tilt;
     float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
 
-    bool showLaser = iTime < PART_25 && iTime > P_0;
+    bool showLaser = iTime < P_25 && iTime > P_0;
 
     vec3 color = vec3(0.1, 1, 1);
     vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
@@ -215,12 +219,13 @@ VolumetricResult evaluateLight(in vec3 p)
 
     float finalDis = dLaserFloor;
     if (showLaser) {
-        finalDis = min(finalDis, laserFloorDis); // think this one cuses the white AO wall, maybe something wrong with it
+        //finalDis = min(finalDis, laserFloorDis); // think this one cuses the white AO wall, maybe something wrong with it
         finalDis = min(finalDis, dLaser);
     }
     finalDis = min(finalDis, dUfoSpin);
 
     return VolumetricResult(finalDis, res); 
+    //return VolumetricResult(dUfoSpin, res); 
 }
 
 float getReflectiveIndex(int type) {
@@ -454,7 +459,7 @@ void main()
     float zoom = 1.0;
     if (iTime < P_0) {
         zoom = 0.8 - 0.5*smoothstep(2, 4, iTime);
-    } else if (iTime > P_2 &&  iTime < PART_25) {
+    } else if (iTime > P_2 &&  iTime < P_25) {
         zoom = 0.8;
     }
     u *= zoom;
@@ -473,9 +478,9 @@ void main()
         P_1 -= transitionTime;
     }
 
-    float b = clamp(iTime - PART_25 + transitionTime, 0, transitionTime) / transitionTime;
+    float b = clamp(iTime - P_25 + transitionTime, 0, transitionTime) / transitionTime;
     if (b > 1 - fragCoord.x) {
-        PART_25 -= transitionTime;
+        P_25 -= transitionTime;
     }
   
     if (iTime < P_0) {
@@ -508,7 +513,7 @@ void main()
  	    vec3 up = cross(dir, right);
 
         rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < PART_25) {
+    } else if (iTime < P_25) {
         float spin = (iTime - P_2) * 0.2;
         float d = 60;
         rayOrigin = ufoPos() + vec3(d*sin(spin), 10, d*cos(spin));
@@ -561,7 +566,7 @@ void main()
         focus =  1.0 - smoothstep(3, 4, iTime);
         //focus = abs(length(res.firstJumpPos - focusPoint)) * 0.003 - 0.5;// + 0.01;
         //focus = 0.0;
-     } else if (iTime > PART_25 ) { //for scene 3 & 4
+     } else if (iTime > P_25 ) { //for scene 3 & 4
         vec3 ufo = ufoPos();
          focus = abs(length(res.firstJumpPos - ufo)) * 0.005;// + 0.01;
         
