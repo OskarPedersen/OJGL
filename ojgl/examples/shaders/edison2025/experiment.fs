@@ -94,6 +94,7 @@ float hash(vec2 p) {
 
 vec3 getColor(in MarchResult result)
 {
+    vec3 color = vec3(0);
     // stars look bad in relections and when camera moves, so limit them for now
     if (result.type == invalidType && result.jump == 0 && iTime < PART_3_UFO_FOLLOW) {
         float pitch = asin(result.rayDirection.y); // up/down angle
@@ -104,20 +105,22 @@ vec3 getColor(in MarchResult result)
         uv.y = (pitch + PI / 2.0) / PI; // [0, 1] from bottom (-90) to top (+90)
         float h = hash(uv);
 
-        return result.scatteredLight + result.transmittance *  100*vec3(pow(h, 1000));
+        color = 1000*vec3(pow(h, 1000));
     }
-
+    
     //vec3 lightPosition = vec3(-100, 20, 200);
     vec3 lightPosition = ufoPos();
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
     float diffuse = max(0., dot(invLight, normal));
     vec3 ambientColor = getAmbientColor(result.type, result.position, normal);
-    vec3 color = ambientColor * (0.02 + 0.98*diffuse);
-    vec3 ao = vec3(float(result.steps) / 600);
+    color += ambientColor * (0.02 + 0.98*diffuse);
     float k = max(0.0, dot(rayDirection, reflect(invLight, normal)));
     float spec = 1 * pow(k, 30.0);
     color += spec;
+
+    vec3 ao = vec3(float(result.steps) / 600);
+
     return result.scatteredLight + result.transmittance *  mix(color, ao, 0.75);
 }
 
