@@ -49,6 +49,7 @@ const int ufoType = 5;
 
 vec3 cameraPosition;
 vec3 rayDirection;
+vec3 firstRayDirection;
 
 float mountain(vec3 p); // forward declare
 float mountainH(vec3 p); // forward declare
@@ -86,8 +87,26 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
     }
 }
 
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+
 vec3 getColor(in MarchResult result)
 {
+    // stars look bad in relections and when camera moves, so limit them for now
+    if (result.type == invalidType && result.jump == 0 && iTime < PART_3_UFO_FOLLOW) {
+        float pitch = asin(result.rayDirection.y); // up/down angle
+        float yaw = atan(result.rayDirection.z, result.rayDirection.x); // side angle
+
+        vec2 uv;
+        uv.x = (yaw + PI) / (2.0 * PI); // [0, 1] across full 360
+        uv.y = (pitch + PI / 2.0) / PI; // [0, 1] from bottom (-90) to top (+90)
+        float h = hash(uv);
+
+        return result.scatteredLight + result.transmittance *  100*vec3(pow(h, 1000));
+    }
+
     //vec3 lightPosition = vec3(-100, 20, 200);
     vec3 lightPosition = ufoPos();
     vec3 normal = normal(result.position);
@@ -184,11 +203,11 @@ VolumetricResult evaluateLight(in vec3 p)
     float starStr = 10;
     //vec3 starColor = vec3(mod(iStars.x * 0.3, 1), mod(iStars.y * 0.4, 1), 1);
     vec3 starColor = vec3(1);
-    res += starColor * starStr / (dStars * dStars);
+    //res += starColor * starStr / (dStars * dStars);
 
-    float finalDis = dStars;
-    finalDis = min(finalDis, dLaserFloor);
-    //float finalDis = dLaserFloor;
+    //float finalDis = dStars;
+    //finalDis = min(finalDis, dLaserFloor);
+    float finalDis = dLaserFloor;
     if (showLaser) {
         finalDis = min(finalDis, laserFloorDis); // think this one cuses the white AO wall, maybe something wrong with it
         finalDis = min(finalDis, dLaser);
@@ -417,6 +436,7 @@ void main()
         rayDirection = normalize(dir + right*u + up*v);
     }
 
+    firstRayDirection = rayDirection;
     vec3 color = march(rayOrigin, rayDirection);
     // color /= (color + vec3(1.0));
 
