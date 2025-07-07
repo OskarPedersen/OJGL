@@ -104,9 +104,10 @@ VolumetricResult evaluateLight(in vec3 p)
     vec3 laserFloorP = p.zyx;
 
     float dm = mountainH(p);
-    laserFloorP.y +=  dm - 0.5;
+    laserFloorP.y +=  dm;
     //laserFloorP.y += sin(p.x);;
-    float dLaserFloor = sdCylinder(laserFloorP, 0.1);
+    float laserFloorDis = abs(ufoPos.x - pOrig.x);
+    float dLaserFloor = sdCylinder(laserFloorP, 0.05 + 0.3 * smoothstep(0, 10, laserFloorDis));
     dLaserFloor = max(dLaserFloor, -p.x); // cut of behind ship, not needed?
     dLaserFloor = max(dLaserFloor,  p.x - ufoPos.x + 0.5); // cut off in fron of UFO
     
@@ -155,8 +156,8 @@ VolumetricResult evaluateLight(in vec3 p)
     float laserStr = 50;
     res += laserColor * laserStr / (dLaser * dLaser);
 
-    float laserFloorDis = abs(ufoPos.x - pOrig.x);
-    float laserFloorStr = max(0, 50  - laserFloorDis);
+    //float laserFloorDis = abs(ufoPos.x - pOrig.x);
+    float laserFloorStr = 50; // max(0, 50  - laserFloorDis);
     res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
 
     float starStr = 10;
@@ -201,7 +202,7 @@ float water(in vec3 p)
     return d;
 }
 
-float mountainH(vec3 p)
+float mountainH(vec3 p) // just the height, todo: merge with mountain func
 {
     if (iTime > PART_1_SHIP_SPLIT) { // Shift mountains to something which works better for laser
         p.x += 20;
