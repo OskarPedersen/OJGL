@@ -29,7 +29,7 @@ uniform sampler2D inTexture0;
 
 float PART_1_SHIP_SPLIT = 12;
 float PART_2_UFO_MOUNTAIN = (PART_1_SHIP_SPLIT + 10);
-#define PART_3_UFO_FOLLOW (PART_2_UFO_MOUNTAIN + 10)
+float PART_3_UFO_FOLLOW = (PART_2_UFO_MOUNTAIN + 10);
 #define PART_4_UFO_FLY_AWAY (PART_3_UFO_FOLLOW + 6)
 
 uniform float C_1_S; // bass
@@ -405,6 +405,11 @@ void main()
     if (a > fragCoord.x) {
         //iTime += 10;
         PART_1_SHIP_SPLIT -= transitionTime;
+    }
+
+    float b = clamp(iTime - PART_2_UFO_MOUNTAIN + transitionTime, 0, transitionTime) / transitionTime;
+    if (b > 1 - fragCoord.x) {
+        PART_2_UFO_MOUNTAIN -= transitionTime;
     }
   
     if (iTime < PART_1_SHIP_SPLIT) {
