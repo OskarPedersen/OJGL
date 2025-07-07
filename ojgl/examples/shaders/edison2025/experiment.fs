@@ -124,8 +124,8 @@ VolumetricResult evaluateLight(in vec3 p)
     vec3 ufo = ufoPos();
     float laserFloorDis = abs(ufo.x - pOrig.x);
     float dLaserFloor = sdCylinder(laserFloorP, 0.05 + 0.3 * smoothstep(0, 10, laserFloorDis));
-    dLaserFloor = max(dLaserFloor, -p.x); // cut of behind ship, not needed?
-    dLaserFloor = max(dLaserFloor,  p.x - ufo.x + 0.5); // cut off in fron of UFO
+    //dLaserFloor = max(dLaserFloor, -p.x); // cut of behind ship, not needed?
+    dLaserFloor = max(dLaserFloor,  p.x - ufo.x + 0.5); // cut off in front of UFO
     
     p -= ufo;
     
@@ -176,7 +176,9 @@ VolumetricResult evaluateLight(in vec3 p)
 
         //float laserFloorDis = abs(ufoPos.x - pOrig.x);
         float laserFloorStr = 50; // max(0, 50  - laserFloorDis);
-        res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
+        if (iTime > PART_1_SHIP_SPLIT) { // dont show the floor laser on the ship scene
+            res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
+        }
     }
 
     float starStr = 10;
