@@ -28,6 +28,7 @@ uniform sampler2D inTexture0;
 
 #define PART_1_SHIP_SPLIT 12
 #define PART_2_UFO_MOUNTAIN (PART_1_SHIP_SPLIT + 10)
+#define PART_3_UFO_FOLLOW (PART_2_UFO_MOUNTAIN + 10)
 
 uniform float C_1_S; // bass
 uniform float C_6_S; // "vocals"
@@ -57,8 +58,10 @@ vec3 ufoPos()
 {
     if (iTime < PART_1_SHIP_SPLIT) {
         return vec3(iTime * ufoSpeed - 70, 10, 0);
-    } else {
+    } else if (iTime < PART_2_UFO_MOUNTAIN) {
         return vec3(iTime * ufoSpeed - 120, 13, 0);
+    } else {
+        return vec3(iTime * ufoSpeed - 120, 5, 0);
     }
 }
 float boatSplitTime = max(0, iTime - 7.15);
@@ -157,17 +160,20 @@ VolumetricResult evaluateLight(in vec3 p)
     p.y -= tilt;
     float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
 
+    bool showLaser = iTime < PART_2_UFO_MOUNTAIN;
 
     vec3 color = vec3(0.1, 1, 1);
     vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
 
-    vec3 laserColor = vec3(1, 0.1, 0.1);
-    float laserStr = 50;
-    res += laserColor * laserStr / (dLaser * dLaser);
+    if (showLaser) {
+        vec3 laserColor = vec3(1, 0.1, 0.1);
+        float laserStr = 50;
+        res += laserColor * laserStr / (dLaser * dLaser);
 
-    //float laserFloorDis = abs(ufoPos.x - pOrig.x);
-    float laserFloorStr = 50; // max(0, 50  - laserFloorDis);
-    res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
+        //float laserFloorDis = abs(ufoPos.x - pOrig.x);
+        float laserFloorStr = 50; // max(0, 50  - laserFloorDis);
+        res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
+    }
 
     float starStr = 10;
     //vec3 starColor = vec3(mod(iStars.x * 0.3, 1), mod(iStars.y * 0.4, 1), 1);
@@ -177,8 +183,10 @@ VolumetricResult evaluateLight(in vec3 p)
     float finalDis = dStars;
     finalDis = min(finalDis, dLaserFloor);
     //float finalDis = dLaserFloor;
-    finalDis = min(finalDis, laserFloorDis); // think this one cuses the white AO wall, maybe something wrong with it
-    finalDis = min(finalDis, dLaser);
+    if (showLaser) {
+        finalDis = min(finalDis, laserFloorDis); // think this one cuses the white AO wall, maybe something wrong with it
+        finalDis = min(finalDis, dLaser);
+    }
     finalDis = min(finalDis, dUfoSpin);
 
     return VolumetricResult(finalDis, res); 
@@ -211,31 +219,13 @@ float water(in vec3 p)
     return d;
 }
 
-float mountainH(vec3 p) // just the height, todo: merge with mountain func
+float mountainH(vec3 p) // just the height
 {
     if (iTime > PART_1_SHIP_SPLIT) { // Shift mountains to something which works better for laser
         p.x += 20;
         p.z += 100;
-
     }
-    const float r = max(0, length(p.xz) - 60);
-    const float k = 40 * exp(-0.006*r);
-    //if (p.y > k) {
-     //   return sdPlane(p, vec4(0, 1, 0, k));
-    //}
-	float h = 4*texture(inTexture0, (p.xz)/90.0).x + 
-              200*pow(texture(inTexture0, (p.xz)/1600.0).x, 4);
     
-	return - h + 10;
-}
-
-float mountain(vec3 p)
-{
-    if (iTime > PART_1_SHIP_SPLIT) { // Shift mountains to something which works better for laser
-        p.x += 20;
-        p.z += 100;
-
-    }
     const float r = max(0, length(p.xz) - 60);
     const float k = 40 * exp(-0.006*r);
     if (p.y > k) {
@@ -244,7 +234,13 @@ float mountain(vec3 p)
 	float h = 4*texture(inTexture0, (p.xz)/90.0).x + 
               200*pow(texture(inTexture0, (p.xz)/1600.0).x, 4);
     
-	return p.y - h + 10;
+	return - h + 10;
+}
+
+float mountain(vec3 p)
+{
+    float h = mountainH(p);
+	return p.y + h;
 }
 
 float opSubtraction( float d1, float d2 )
@@ -384,6 +380,15 @@ void main()
     } else if (iTime < PART_2_UFO_MOUNTAIN) {
         rayOrigin = vec3(15, 8.28, 20);
         vec3 tar = rayOrigin + vec3(0.5, 0, -0.5);
+
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+
+        rayDirection = normalize(dir + right*u + up*v);
+    } else if (iTime < PART_3_UFO_FOLLOW) {
+        rayOrigin = ufoPos() + vec3(-30, 10, 0);
+        vec3 tar = rayOrigin + vec3(1.0, -0.4, 0);
 
         vec3 dir = normalize(tar - rayOrigin);
 	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
