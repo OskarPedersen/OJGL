@@ -26,6 +26,8 @@ uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
 
+#define PART_1_SHIP_SPLIT 5
+
 uniform float C_1_S; // bass
 uniform float C_6_S; // "vocals"
 uniform float C_7_S; // "synth"
@@ -46,8 +48,10 @@ vec3 cameraPosition;
 vec3 rayDirection;
 
 float mountain(vec3 p); // forward declare
+float mountainH(vec3 p); // forward declare
 
-vec3 ufoPos = vec3(mod(iTime * 10.0, 200) - 20, 10, 0);
+
+vec3 ufoPos = vec3(mod(iTime * 10.0, 200) - 20, 10 + (iTime > PART_1_SHIP_SPLIT ? 3 : 0), 0);
 float boatSplitTime = max(0, iTime - 2.15);
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
@@ -98,11 +102,12 @@ VolumetricResult evaluateLight(in vec3 p)
 
     vec3 laserFloorP = p.zyx;
 
-    float dm = mountain(p);
+    float dm = mountainH(p);
     laserFloorP.y +=  dm - 0.5;
+    //laserFloorP.y += sin(p.x);;
     float dLaserFloor = sdCylinder(laserFloorP, 0.1);
-    dLaserFloor = max(dLaserFloor, -p.x);
-    dLaserFloor = max(dLaserFloor,  p.x - ufoPos.x + 0.5);
+    dLaserFloor = max(dLaserFloor, -p.x); // cut of behind ship, not needed?
+    dLaserFloor = max(dLaserFloor,  p.x - ufoPos.x + 0.5); // cut off in fron of UFO
     
     p -= ufoPos;
     
@@ -195,8 +200,31 @@ float water(in vec3 p)
     return d;
 }
 
+float mountainH(vec3 p)
+{
+    if (iTime > PART_1_SHIP_SPLIT) { // Shift mountains to something which works better for laser
+        p.x += 20;
+        p.z += 100;
+
+    }
+    const float r = max(0, length(p.xz) - 60);
+    const float k = 40 * exp(-0.006*r);
+    //if (p.y > k) {
+     //   return sdPlane(p, vec4(0, 1, 0, k));
+    //}
+	float h = 4*texture(inTexture0, (p.xz)/90.0).x + 
+              200*pow(texture(inTexture0, (p.xz)/1600.0).x, 4);
+    
+	return - h + 10;
+}
+
 float mountain(vec3 p)
 {
+    if (iTime > PART_1_SHIP_SPLIT) { // Shift mountains to something which works better for laser
+        p.x += 20;
+        p.z += 100;
+
+    }
     const float r = max(0, length(p.xz) - 60);
     const float k = 40 * exp(-0.006*r);
     if (p.y > k) {
@@ -204,7 +232,7 @@ float mountain(vec3 p)
     }
 	float h = 4*texture(inTexture0, (p.xz)/90.0).x + 
               200*pow(texture(inTexture0, (p.xz)/1600.0).x, 4);
-
+    
 	return p.y - h + 10;
 }
 
@@ -217,12 +245,12 @@ float mountainLaser(vec3 p)
 {
     float dMountain = mountain(p);
     vec3 laserFloorP = p.zyx;
-     laserFloorP.y +=  dMountain - 0.5;
+    laserFloorP.y +=  mountainH(p) - 0.5;
     float dLaserFloor = sdCylinder(laserFloorP, 1.0);
 
-        dLaserFloor = max(dLaserFloor, -p.x);
+    dLaserFloor = max(dLaserFloor, -p.x);
     dLaserFloor = max(dLaserFloor,  p.x - ufoPos.x + 0.5);
-    
+
 	return opSubtraction(dLaserFloor, dMountain);
 }
 
@@ -331,6 +359,27 @@ void main()
     vec3 rayOrigin = (iCameraMatrix * vec4(u, v, -0.5, 1.0)).xyz;
     cameraPosition = (iCameraMatrix * vec4(0.0, 0.0, 0.0, 1)).xyz;
     rayDirection = normalize(rayOrigin - cameraPosition);
+
+  
+    if (iTime < PART_1_SHIP_SPLIT) {
+        rayOrigin = vec3(11.1394, 1.31, -10.4126);
+        vec3 tar = vec3(1, 1, 1);
+
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+
+        rayDirection = normalize(dir + right*u + up*v);
+    } else if (iTime < 10) {
+        rayOrigin = vec3(15, 8.28, 20);
+        vec3 tar = rayOrigin + vec3(0.5, 0, -0.5);
+
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+
+        rayDirection = normalize(dir + right*u + up*v);
+    }
 
     vec3 color = march(rayOrigin, rayDirection);
     // color /= (color + vec3(1.0));
