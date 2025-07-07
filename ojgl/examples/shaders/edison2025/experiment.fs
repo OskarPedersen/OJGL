@@ -29,6 +29,7 @@ uniform sampler2D inTexture0;
 #define PART_1_SHIP_SPLIT 12
 #define PART_2_UFO_MOUNTAIN (PART_1_SHIP_SPLIT + 10)
 #define PART_3_UFO_FOLLOW (PART_2_UFO_MOUNTAIN + 10)
+#define PART_4_UFO_FLY_AWAY (PART_3_UFO_FOLLOW + 6)
 
 uniform float C_1_S; // bass
 uniform float C_6_S; // "vocals"
@@ -60,8 +61,11 @@ vec3 ufoPos()
         return vec3(iTime * ufoSpeed - 70, 10, 0);
     } else if (iTime < PART_2_UFO_MOUNTAIN) {
         return vec3(iTime * ufoSpeed - 120, 13, 0);
-    } else {
+    } else if (iTime < PART_3_UFO_FOLLOW) {
         return vec3(iTime * ufoSpeed - 120, 5, 0);
+    } else {
+        float t = iTime - PART_3_UFO_FOLLOW;
+        return vec3(iTime * ufoSpeed - 120, 5 + t*t*t*t, 0);
     }
 }
 float boatSplitTime = max(0, iTime - 7.15);
@@ -386,9 +390,23 @@ void main()
  	    vec3 up = cross(dir, right);
 
         rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < PART_3_UFO_FOLLOW) {
-        rayOrigin = ufoPos() + vec3(-30, 10, 0);
-        vec3 tar = rayOrigin + vec3(1.0, -0.4, 0);
+    } else if (iTime < PART_4_UFO_FLY_AWAY) {
+        //rayOrigin = ufoPos() + vec3(-30, 10, 0);
+        vec3 ufo = ufoPos();
+        rayOrigin = vec3(ufo.x - 30, 15, ufo.z);
+        vec3 tar = ufo;//rayOrigin + vec3(1.0, -0.4, 0);
+
+        //vec3 tar = ufo + vec3(1.0, -0.4, 0);
+
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+
+        rayDirection = normalize(dir + right*u + up*v);
+    } else if (iTime < PART_4_UFO_FLY_AWAY) {
+        vec3 ufo = ufoPos();
+        rayOrigin = vec3(ufo.x + 30, 10, ufo.z + 10);
+        vec3 tar = ufo;
 
         vec3 dir = normalize(tar - rayOrigin);
 	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
