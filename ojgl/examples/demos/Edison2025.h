@@ -14,6 +14,10 @@ public:
     const unsigned char* getSong() const override;
     ojstd::string getTitle() const override;
     void update(const Duration& relativeSceneTime, const Duration& elapsedTime, const ojstd::string& currentScene) const override;
+
+private:
+    ojstd::shared_ptr<Texture> getText(const ojstd::string& text, const ojstd::string& font) const;
+    mutable ojstd::unordered_map<ojstd::string, ojstd::shared_ptr<Texture>> _textures;
 };
 
 }

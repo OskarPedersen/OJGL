@@ -45,7 +45,7 @@ void main()
     if (uv.x > 0.5) {
     	uv.x = 1.0 - uv.x;
     }
-    
+
     if (uv.y > 0.5) {
     	uv.y = 1.0 - uv.y;
     }

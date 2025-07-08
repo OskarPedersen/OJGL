@@ -315,6 +315,34 @@ namespace ojgl::resources {
 #include "shaders/edison2025/blur1.fs"
           , "edison2025/blur1.fs"
           },
+          {
+#include "shaders/edison2025/experiment.fs"
+          , "edison2025/experiment.fs"
+          },
+          {
+#include "shaders/edison2025/lissajous.fs"
+          , "edison2025/lissajous.fs"
+          },
+          {
+#include "shaders/edison2025/radar.fs"
+          , "edison2025/radar.fs"
+          },
+          {
+#include "shaders/edison2025/oj_text.fs"
+          , "edison2025/oj_text.fs"
+          },
+          {
+#include "shaders/edison2025/borgila.fs"
+          , "edison2025/borgila.fs"
+          },
+          {
+#include "shaders/edison2025/indoor.fs"
+          , "edison2025/indoor.fs"
+          },
+//        {
+//#include "shaders/edison2025/post.fs"
+//          , "edison2025/post.fs"
+//          },
   };
 // clang-format on
 }

@@ -136,8 +136,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
             case Window::KEY_C:
                 const FreeCameraController& c = FreeCameraController::instance();
-                LOG_INFO("Camera: (" << c.position.x << ", " << c.position.y << ", " << c.position.z << ")"
-                                     << ", [" << c.heading << ", " << c.elevation << "]");
+                LOG_INFO("Camera: {" << c.position.x << "f, " << c.position.y << "f, " << c.position.z << "f}"
+                                     << ", " << c.heading << "f, " << c.elevation << "f");
                 break;
 #endif
             }
@@ -169,6 +169,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         debugTitle.append(ojstd::to_string(timer.elapsed().toMilliseconds<long>()));
         debugTitle.append(" ms");
         window.setTitle(debugTitle);
+
+        // ojstd::sleep(20);
 #endif
     }
 }
