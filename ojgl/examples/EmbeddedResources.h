@@ -300,8 +300,8 @@ namespace ojgl::resources {
           , "edison2022/blur1.fs"
           },
           {
-#include "shaders/edison2025/experiment.fs"
-          , "edison2025/experiment.fs"
+#include "shaders/edison2025/ufo_scenes.fs"
+          , "edison2025/ufo_scenes.fs"
           },
           {
 #include "shaders/edison2025/noise.fs"

@@ -23,10 +23,10 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
     auto noise = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/noise.fs");
     noise->setRenderOnce(true);
 
-    auto experiment = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/experiment.fs");
-    experiment->setInputs(noise);
+    auto ufoScenes = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/ufo_scenes.fs");
+    ufoScenes->setInputs(noise);
 
-    experiment->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
+    ufoScenes->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
         Buffer::UniformVector vector;
         vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));
         
@@ -47,7 +47,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
     });
 
     auto blur1 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
-    blur1->setInputs(experiment);
+    blur1->setInputs(ufoScenes);
     blur1->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
         return { ojstd::make_shared<Uniform2f>("blurDir", 1.f, 0.f) };
     });
@@ -71,7 +71,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
         return vector;
     });
 
-    scenes.emplace_back(chrom, Duration::seconds(1000000), "experiment");
+    scenes.emplace_back(chrom, Duration::seconds(1000000), "ufo_scenes");
     return scenes;
 }
 
