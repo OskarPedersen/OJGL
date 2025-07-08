@@ -111,7 +111,6 @@ vec3 getColor(in MarchResult result)
     vec3 color = vec3(0);
 
     
-    //vec3 lightPosition = vec3(-100, 20, 200);
     vec3 lightPosition = ufoPos();
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
@@ -124,14 +123,13 @@ vec3 getColor(in MarchResult result)
 
     vec3 ao = vec3(float(result.steps) / 600);
     if (result.type == invalidType) {
-        // stars look bad in relections and when camera moves, so limit them for now
         if (result.jump == 0 && iTime < P_2 && iTime > P_0) {
-            float pitch = asin(result.rayDirection.y); // up/down angle
-            float yaw = atan(result.rayDirection.z, result.rayDirection.x); // side angle
+            float pitch = asin(result.rayDirection.y);
+            float yaw = atan(result.rayDirection.z, result.rayDirection.x);
 
             vec2 uv;
-            uv.x = (yaw + PI) / (2.0 * PI); // [0, 1] across full 360
-            uv.y = (pitch + PI / 2.0) / PI; // [0, 1] from bottom (-90) to top (+90)
+            uv.x = (yaw + PI) / (2.0 * PI);
+            uv.y = (pitch + PI / 2.0) / PI;
             float h = hash(uv);
 
             color = 1000*vec3(pow(h, 1000));
