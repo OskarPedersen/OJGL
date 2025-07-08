@@ -62,24 +62,32 @@ float ufoSpeed = 10.0;
 
 vec3 ufoPos()
 {
-    float timeBeforePart0 = (iTime - P_0);
     float timeBeforePart25 = (iTime - P_0 - P_25_D);
     if (iTime < P_0) {
         float y = 65 - smoothstep(-6, 6, iTime) * 7 * 7;
         //y = max(y, 18);
         return vec3(-70, y, 100);
+
     } else if (iTime < P_1) {
-        return vec3(timeBeforePart0 * ufoSpeed - 70, 10, 0);
-    } else if (iTime < P_2) { // P_2
-        return vec3(timeBeforePart0 * ufoSpeed - 120, 13, 0);
+        float t = iTime - P_0;
+        return vec3(t * ufoSpeed - 70, 10, 0);
+
+    } else if (iTime < P_2) {
+         float t = iTime - P_0;
+        return vec3(t * ufoSpeed - 120, 13, 0);
+
     } else if (iTime < P_25) {
         float t = (iTime - P_2);
         return vec3(t * ufoSpeed - 120, 13, 0);
+
     } else if (iTime < P_3) {
-        return vec3(timeBeforePart25 * ufoSpeed - 120, 5, 0);
+        float t = iTime - P_25;
+        return vec3(t * ufoSpeed - 120 - (8 + 6.5)*ufoSpeed, 5, 0);
+
     } else {
         float t = iTime - P_3;
-        return vec3(timeBeforePart25 * ufoSpeed - 120, 5 + t*t*t*t, 0);
+        float t2 = iTime - P_25;;
+        return vec3(t2 * ufoSpeed - 120 - (8 + 6.5)*ufoSpeed, 5 + t*t*t*t, 0);
     }
 }
 
@@ -455,6 +463,18 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
 
 void main()
 {
+    const float transitionTime = 0.75;
+    float a = clamp(iTime - P_1 + transitionTime, 0, transitionTime) / transitionTime;
+    if (a > fragCoord.x) {
+        //iTime += 10;
+        P_1 -= transitionTime;
+    }
+
+    float b = clamp(iTime - P_25 + transitionTime, 0, transitionTime) / transitionTime;
+    if (b > 1 - fragCoord.x) {
+        P_25 -= transitionTime;
+    }
+
     float u = (fragCoord.x - 0.5);
     float v = (fragCoord.y - 0.5) * iResolution.y / iResolution.x;
     float zoom = 1.0;
@@ -472,17 +492,7 @@ void main()
 
     float focus = 0.0;
 
-    const float transitionTime = 0.75;
-    float a = clamp(iTime - P_1 + transitionTime, 0, transitionTime) / transitionTime;
-    if (a > fragCoord.x) {
-        //iTime += 10;
-        P_1 -= transitionTime;
-    }
-
-    float b = clamp(iTime - P_25 + transitionTime, 0, transitionTime) / transitionTime;
-    if (b > 1 - fragCoord.x) {
-        P_25 -= transitionTime;
-    }
+    
   
     if (iTime < P_0) {
         vec3 ufo = ufoPos();
