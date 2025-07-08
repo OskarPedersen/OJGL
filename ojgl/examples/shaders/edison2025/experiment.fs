@@ -109,18 +109,7 @@ float hash(vec2 p) {
 vec3 getColor(in MarchResult result)
 {
     vec3 color = vec3(0);
-    // stars look bad in relections and when camera moves, so limit them for now
-    if (result.type == invalidType && result.jump == 0 && iTime < P_2 && iTime > P_0) {
-        float pitch = asin(result.rayDirection.y); // up/down angle
-        float yaw = atan(result.rayDirection.z, result.rayDirection.x); // side angle
 
-        vec2 uv;
-        uv.x = (yaw + PI) / (2.0 * PI); // [0, 1] across full 360
-        uv.y = (pitch + PI / 2.0) / PI; // [0, 1] from bottom (-90) to top (+90)
-        float h = hash(uv);
-
-        color = 1000*vec3(pow(h, 1000));
-    }
     
     //vec3 lightPosition = vec3(-100, 20, 200);
     vec3 lightPosition = ufoPos();
@@ -135,7 +124,21 @@ vec3 getColor(in MarchResult result)
 
     vec3 ao = vec3(float(result.steps) / 600);
     if (result.type == invalidType) {
-        return result.scatteredLight;
+        // stars look bad in relections and when camera moves, so limit them for now
+        if (result.jump == 0 && iTime < P_2 && iTime > P_0) {
+            float pitch = asin(result.rayDirection.y); // up/down angle
+            float yaw = atan(result.rayDirection.z, result.rayDirection.x); // side angle
+
+            vec2 uv;
+            uv.x = (yaw + PI) / (2.0 * PI); // [0, 1] across full 360
+            uv.y = (pitch + PI / 2.0) / PI; // [0, 1] from bottom (-90) to top (+90)
+            float h = hash(uv);
+
+            color = 1000*vec3(pow(h, 1000));
+            return result.scatteredLight + result.transmittance * color;
+        } else {
+            return result.scatteredLight;
+        }
     } else {
         return result.scatteredLight + result.transmittance *  mix(color, ao, 0.75);
     }
