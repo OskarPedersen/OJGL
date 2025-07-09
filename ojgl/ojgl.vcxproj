@@ -325,6 +325,7 @@
     <ClCompile Include="examples\FreeCameraController.cpp" />
     <ClCompile Include="examples\Main.cpp" />
     <ClCompile Include="examples\demos\InnerSystemLab.cpp" />
+    <None Include="examples\shaders\edison2025\experiment.fs" />
     <None Include="examples\shaders\edison2025\ufo_hyperspace.fs">
       <FileType>Document</FileType>
     </None>
@@ -430,6 +431,7 @@
     <None Include="examples\shaders\edison2025\noise.fs" />
     <None Include="examples\shaders\edison2025\oj_text.fs" />
     <None Include="examples\shaders\edison2025\radar.fs" />
+    <None Include="examples\shaders\edison2025\ufo_landing.fs" />
     <None Include="examples\shaders\edison2025\ufo_scenes.fs" />
     <None Include="examples\shaders\experiments\cachedGeometry.fs" />
     <None Include="examples\shaders\common\noise.fs" />
