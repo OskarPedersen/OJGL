@@ -1,9 +1,9 @@
 R""(
 
-const float S_distanceEpsilon = 1e-3;
+float S_distanceEpsilon = 1e-3;
 const float S_normalEpsilon = 5e-2;
 const int S_maxSteps = 600;
-const float S_maxDistance = 500.0;
+const float S_maxDistance = 600.0;
 const float S_distanceMultiplier = 0.7;
 const float S_minVolumetricJumpDistance = 0.02;
 const float S_volumetricDistanceMultiplier = 0.75;
@@ -41,6 +41,13 @@ bool willHitText = false;
 vec3 boatPosition;
 float boatRotation = 0;
 
+
+DistanceInfo sunk(DistanceInfo a, DistanceInfo b, float k) {
+    DistanceInfo res = a.distance < b.distance ? a : b;
+    res.distance = smink(a.distance, b.distance, k);
+    return res;
+}
+
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
     switch (type) {
@@ -74,9 +81,23 @@ vec3 getColor(in MarchResult result)
     float k = max(0.0, dot(rayDirection, reflect(invLight, normal)));
     float spec = 1 * pow(k, 30.0);
     color += spec;
-    float aof = willHitText || result.type == boatType ? 0.2 : 0.75;
-    return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
 
+    float aof = willHitText || result.type == boatType ? 0.2 : 0.75;
+
+    if (result.type == invalidType && result.jump == 0) {
+        float pitch = asin(rayDirection.y);
+        float yaw = atan(rayDirection.z, rayDirection.x);
+
+        vec2 uv;
+        uv.x = (yaw + PI) / (2.0 * PI);
+        uv.y = (pitch + PI / 2.0) / PI;
+        float h = texture(inTexture1, uv * 5).x;
+        color = mix(color, color + 2*vec3(clamp(h, 0.0, 1.0)), h);
+        return result.scatteredLight + result.transmittance * mix(color, ao, aof);
+    } else {
+        return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
+
+    }
 }
 
 float getReflectiveIndex(int type) {
@@ -150,12 +171,13 @@ float water(in vec3 p)
 
 float mountain(vec3 p)
 {
-    const float r = max(0, length(p.xz) - 60);
-    const float k = 40 * exp(-0.006*r);
+    float dd = length(p.xz - vec2(8.28524, 2.728));
+    const float r = max(0, dd - 60);
+    const float k = 40 * exp(-0.0042*r);
     if (p.y > k) {
         return sdPlane(p, vec4(0, 1, 0, k));
     }
-	float h = 4*texture(inTexture0, (p.xz)/90.0).x + 
+	float h = 4*texture(inTexture0, (p.xz )/90.0).x + 
               200*pow(texture(inTexture0, (p.xz)/1600.0).x, 4);
 
 	return p.y - h + 10;
@@ -211,14 +233,17 @@ float boat(vec3 p)
 
 DistanceInfo map(in vec3 p)
 {
-   DistanceInfo box = {mountain(p), mountainType};
-   DistanceInfo sphereInfo = {boat(p), boatType};
+   S_distanceEpsilon = 1e-3 + (1e-1)*(smoothstep(100, 400, length(p)));
+   DistanceInfo mountainInfo = {mountain(p), mountainType};
    DistanceInfo waterInfo = {water(p), waterType};
-   return un(waterInfo, un(box, sphereInfo));
+   DistanceInfo d = un(mountainInfo, waterInfo);
+   DistanceInfo boatInfo = {boat(p), boatType};
+   return un(d, boatInfo);
 }
 
 VolumetricResult evaluateLight(in vec3 p)
 {
+    vec3 po = p;
     p -= boatPosition;
     p.xz *= rot(boatRotation);
 
@@ -245,7 +270,6 @@ VolumetricResult evaluateLight(in vec3 p)
     float str = 1;
     vec3 color = vec3(1.0, 1.0, 0.1);
     vec3 res = color * str / (d * d);
-
     return VolumetricResult(d, res); 
 }
 
@@ -257,22 +281,26 @@ void main()
     cameraPosition = (iCameraMatrix * vec4(0.0, 0.0, 0.0, 1)).xyz;
     rayDirection = normalize(rayOrigin - cameraPosition);
 
-    if (iTime < 5.0) {
-        boatPosition = vec3(0.0);
+    if (iTime < 10.0) {
+        boatPosition = vec3(100.0);
     }
-    else if (iTime < 10.0) {
+    else if (iTime < 15.0) {
+        float t = iTime - 10.0;
         boatPosition = vec3(-25.6538, 0.0, -57.434);
-        boatPosition += vec3(0.0, 0.0, 1.5*iTime);
+        boatPosition += vec3(0.0, 0.0, 1.5*t);
     } else {
-        boatPosition = vec3(-25.6426, 0.0, -20.0);
-        boatPosition += vec3(0.0, 0.0, 0.5*iTime);
+        float t = iTime - 15;
+        boatPosition = vec3(-25.6426, 0.0, -19.0);
+        boatPosition += vec3(0.0, 0.0, 0.5*t);
     }
     boatPosition += vec3(0.05 * sin(iTime), 0.1 * sin(iTime + 3), 0.1 * sin(iTime + 5));
 
     willHitText = willHitBorgilaText(rayOrigin, rayDirection);
     vec3 color = march(rayOrigin, rayDirection);
     // color /= (color + vec3(1.0));
-    color *= 1.0 - smoothstep(19, 20, iTime);
+    color *= 1.0 - smoothstep(29, 30, iTime);
+    color *= smoothstep(1, 5, iTime);
+
     fragColor = vec4(pow(color, vec3(0.5)), 1.0);
 }
 

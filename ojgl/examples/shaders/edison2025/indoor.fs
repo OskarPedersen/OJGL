@@ -1,9 +1,9 @@
 R""(
 
-const float S_distanceEpsilon = 1e-3;
+float S_distanceEpsilon = 1e-3;
 const float S_normalEpsilon = 5e-2;
 const int S_maxSteps = 600;
-const float S_maxDistance = 500.0;
+const float S_maxDistance = 800.0;
 const float S_distanceMultiplier = 0.7;
 const float S_minVolumetricJumpDistance = 0.02;
 const float S_volumetricDistanceMultiplier = 0.75;
@@ -29,6 +29,7 @@ uniform sampler2D inTexture0;
 uniform sampler2D inTexture1;
 uniform sampler2D inTexture2;
 uniform sampler2D inTexture3;
+uniform sampler2D inTexture4;
 
 const int boatType = 1;
 const int mountainType = 2;
@@ -101,7 +102,21 @@ vec3 getColor(in MarchResult result)
     color += spec;
 
     float aof = result.type == screenType ? 0.0 : 0.75;
-    return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
+
+    if (result.type == invalidType && result.jump == 0) {
+        float pitch = asin(rayDirection.y);
+        float yaw = atan(rayDirection.z, rayDirection.x);
+
+        vec2 uv;
+        uv.x = (yaw + PI) / (2.0 * PI);
+        uv.y = (pitch + PI / 2.0) / PI;
+        float h = texture(inTexture4, uv * 5).x;
+        color = mix(color, color + 2*vec3(clamp(h, 0.0, 1.0)), h);
+        return result.scatteredLight + result.transmittance * mix(color, ao, aof);
+    } else {
+        return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
+
+    }
 
 }
 
@@ -298,6 +313,7 @@ float ufo(vec3 p) {
 
 DistanceInfo map(vec3 p)
 {
+   S_distanceEpsilon = 1e-3 + (1e-1)*(smoothstep(100, 400, length(p)));
    DistanceInfo box = {mountain(p), mountainType};
    DistanceInfo waterInfo = {water(p), waterType};
    DistanceInfo ufoInfo = {ufo(p), ufoType};
