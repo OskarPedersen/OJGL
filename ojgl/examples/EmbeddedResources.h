@@ -343,6 +343,10 @@ namespace ojgl::resources {
 //#include "shaders/edison2025/post.fs"
 //          , "edison2025/post.fs"
 //          },
+          {
+#include "shaders/edison2025/ufo_hyperspace.fs"
+          , "edison2025/ufo_hyperspace.fs"
+          },
   };
 // clang-format on
 }
