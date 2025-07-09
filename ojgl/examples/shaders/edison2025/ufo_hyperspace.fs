@@ -98,11 +98,6 @@ float getFogAmount(in vec3 p)
 
 VolumetricResult evaluateLight(in vec3 p)
 {
-    vec3 pStars = p;
-    vec2 iStars = pMod2(pStars.xz, vec2(50, 50));
-    pStars.y -= 50 + sin(iStars.x * 10) * 10 + sin(iStars.y * 10) * 10;
-    float dStars = length(pStars) - 0.1;
-
     vec3 pOrig = p;
 
     vec3 laserFloorP = p.zyx;
@@ -142,9 +137,46 @@ VolumetricResult evaluateLight(in vec3 p)
     vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
 
 
+    float dHyperSum = 999999;
+
+    { // hyper 1
+    
+        vec3 pHyper = pOrig;
+         pHyper.y -= 1;
+        pHyper.yz *= rot(pHyper.x * 0.01);
+        float iHyper = pModPolar(pHyper.yz, 16);
+        pHyper -= vec3(0, 20, sin(pOrig.x + iTime * 30)*5);
+        float dHyper = sdCylinder(pHyper.zyx, 0.0);
+
+        float hyperStr = 30;
+        vec3 hyperColor = vec3(0.01, 0.05, 1.0);
+        res += hyperColor * hyperStr / (dHyper * dHyper);
+
+        dHyperSum = min(dHyperSum, dHyper);
+    }
 
 
-    float finalDis = dUfoSpin;
+    { // hyper 2
+         vec3 pHyper = pOrig;
+         pHyper.y -= 1;
+        pHyper.yz *= rot(pHyper.x * 0.001);
+        float iHyper = pModPolar(pHyper.yz, 16);
+        pHyper -= vec3(0, 6 + sin(pOrig.x * 0.03 + iTime), -sin(pOrig.x + iTime * 30)*1.1);
+        float dHyper = sdCylinder(pHyper.zyx, 0.0);
+        //dHyper -= texture(inTexture0, (pOrig.yz)/90.0).x;
+        dHyper = max(0.01, dHyper);
+
+        float hyperStr = 0.2;
+        vec3 hyperColor = vec3(0.01, 0.5, 1.0);
+        res += hyperColor * hyperStr / (dHyper);
+
+        dHyperSum = min(dHyperSum, dHyper);
+    }
+
+
+
+
+    float finalDis = min(dHyperSum, dUfoSpin);
  
 
     return VolumetricResult(finalDis, res); 
@@ -274,7 +306,7 @@ void main()
     
   
     vec3 ufo = ufoPos();
-    rayOrigin = vec3(ufo.x - 50, 15, ufo.z);
+    rayOrigin = vec3(ufo.x - 50, 5, ufo.z);
     vec3 tar = ufo;
 
 
@@ -296,16 +328,12 @@ void main()
 
 
      // focus / blur
-     //if (iTime < P_0) {
-     //
-     //} else if (iTime > P_25 ) { 
-     //   vec3 ufo = ufoPos();
-     //    focus = abs(length(res.firstJumpPos - ufo)) * 0.005;// + 0.01;
-     //   
-     //   float t4 = max(0, iTime - P_3);
-     //   focus = mix(focus, 1 - smoothstep(0, 1, t4), t4); // make clearer as ufo ascends
-     //
-     //} 
+
+      //vec3 ufo = ufoPos();
+       //focus = abs(length(res.firstJumpPos - ufo)) * 0.005 + 0.01;
+      
+      //float t4 = max(0, iTime - P_3);
+      //focus = mix(focus, 1 - smoothstep(0, 1, t4), t4); // make clearer as ufo ascends
       
 
     fragColor = vec4(pow(color, vec3(0.5)), clamp(focus, 0.001, 2.0));
