@@ -229,7 +229,7 @@ VolumetricResult evaluateLight(in vec3 p)
     }
     finalDis = min(finalDis, dUfoSpin);
 
-    return VolumetricResult(finalDis, res); 
+    return VolumetricResult(finalDis, res * smoothstep(1.0,5.0, iTime)); 
     //return VolumetricResult(dUfoSpin, res); 
 }
 
