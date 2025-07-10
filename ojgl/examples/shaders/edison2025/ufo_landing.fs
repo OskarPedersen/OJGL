@@ -52,10 +52,31 @@ float hangarBox(in vec3 p);
 
 float ufoSpeed = 10.0;
 
+const float ufoPosD1 = 3;
+const float ufoPosD2 = 4;
+const float ufoPosD3 = 5;
+
 vec3 ufoPos()
 {
-    //return vec3(0, 10, 0);
-    return vec3(40, 0, 30);
+
+    float t = mod(iTime, ufoPosD1 + ufoPosD2 + ufoPosD3);
+
+
+    if (t < ufoPosD1) {
+        return mix(vec3(-150, 30, 0), vec3(-40, 2, 0), (t) / ufoPosD1);
+    } else if (t < ufoPosD1 + ufoPosD2) {
+     return mix(vec3(-40, 2, 0), vec3(40, 1, 0), (t - ufoPosD1) / ufoPosD2);
+    } else if (t < ufoPosD1 + ufoPosD2 + ufoPosD3) {
+     return mix(vec3(40, 1, 0), vec3(40, 0, 30), smoothstep(0, 1, (t - ufoPosD1 - ufoPosD2) / ufoPosD3));
+    }
+
+
+    return vec3(0);
+
+    //return vec3(-150, 30, 0); // above runway
+    //return vec3(-40, 2, 0); // touch down
+    //return vec3(40, 1, 0); // in front of hangar
+    //return vec3(40, 0, 30); // inside hangar
 }
 
 
@@ -260,7 +281,13 @@ float hangar(in vec3 p)
 
 float doors(in vec3 p) 
 {
-    float open = mod(iTime, 1.0);
+    float t = mod(iTime, ufoPosD1 + ufoPosD2 + ufoPosD3);
+
+    float open = 1.0;
+    if (t > ufoPosD1 + ufoPosD2) {
+        float tt = t - (ufoPosD1 + ufoPosD2);
+        open = max(0.0, max(1.0 - tt, tt - ufoPosD3 + 1));
+    }
 
     float w = 6.5;
 
