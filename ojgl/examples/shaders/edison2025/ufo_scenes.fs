@@ -3,7 +3,7 @@ R""(
 const float S_distanceEpsilon = 1e-3;
 const float S_normalEpsilon = 5e-2;
 const int S_maxSteps = 600;
-const float S_maxDistance = 500.0;
+const float S_maxDistance = 650.0;
 const float S_distanceMultiplier = 0.7;
 const float S_minVolumetricJumpDistance = 0.005;
 float S_volumetricDistanceMultiplier = 0.5;
@@ -26,6 +26,7 @@ uniform float iTime;
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
+uniform sampler2D inTexture1;
 
 float P_0 = 8;
 float P_1 = (P_0 + 12);
@@ -98,7 +99,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
     switch (type) {
         case boatType:
-            return 1.2*vec3(1, 1, 1);
+            return 2.0*vec3(1, 1, 1);
         case mountainType: 
             return 0.0*vec3(0.2, 0.2, 0.1);
         case waterType:
@@ -119,7 +120,7 @@ vec3 getColor(in MarchResult result)
     vec3 color = vec3(0);
 
     
-    vec3 lightPosition = ufoPos();
+    vec3 lightPosition = vec3(10, 10, 0);
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
     float diffuse = max(0., dot(invLight, normal));
@@ -128,32 +129,27 @@ vec3 getColor(in MarchResult result)
     float k = max(0.0, dot(rayDirection, reflect(invLight, normal)));
     float spec = 1 * pow(k, 30.0);
     color += spec;
-
     vec3 ao = vec3(float(result.steps) / 600);
-    if (result.type == invalidType) {
-        if (result.jump == 0 && iTime < P_2 && iTime > P_0) {
-            float pitch = asin(result.rayDirection.y);
-            float yaw = atan(result.rayDirection.z, result.rayDirection.x);
+    float aof = result.type == boatType ? 0.2 : 0.75;
+    if (result.type == invalidType && result.jump == 0) {
+        float pitch = asin(result.rayDirection.y);
+        float yaw = atan(result.rayDirection.z, result.rayDirection.x);
 
-            vec2 uv;
-            uv.x = (yaw + PI) / (2.0 * PI);
-            uv.y = (pitch + PI / 2.0) / PI;
-            float h = hash(uv);
-
-            color = 1000*vec3(pow(h, 1000));
-            return result.scatteredLight + result.transmittance * color;
+        vec2 uv;
+        uv.x = (yaw + PI) / (2.0 * PI);
+        uv.y = (pitch + PI / 2.0) / PI;
+        float hf = iTime < P_0 ? 25 : 7;
+        float h = texture(inTexture1, uv * hf).x;
+        color = mix(color, color + 11*vec3(clamp(h, 0.0, 1.0)), h);
+        return result.scatteredLight + result.transmittance * mix(color, ao, aof);
         } else {
-            return result.scatteredLight;
-        }
-    } else {
-        return result.scatteredLight + result.transmittance *  mix(color, ao, 0.75);
+            return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
     }
-
 }
 
 float getFogAmount(in vec3 p)
 {
-    return 0.01;
+    return 0.003 + 0.001*smoothstep(18, 20, iTime);
 }
 
 VolumetricResult evaluateLight(in vec3 p)
@@ -233,7 +229,7 @@ VolumetricResult evaluateLight(in vec3 p)
     }
     finalDis = min(finalDis, dUfoSpin);
 
-    return VolumetricResult(finalDis, res); 
+    return VolumetricResult(finalDis, res * smoothstep(1.0,5.0, iTime)); 
     //return VolumetricResult(dUfoSpin, res); 
 }
 
@@ -312,6 +308,9 @@ float opIntersection( float d1, float d2 )
 }
 
 float boat(vec3 p) {
+    p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
+    
+    p.xz *= rot(PI);
     float ffz = p.z > 0.0 ? -4.0 : -7.0;
     float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);
     float fx = 0.971*smoothstep(3, 7, abs(p.z));
@@ -507,8 +506,8 @@ void main()
         rayDirection = normalize(dir + right*u + up*v);
     
     } else if (iTime < P_1) {
-        rayOrigin = vec3(11.1394, 1.31, -10.4126);
-        vec3 tar = vec3(1, 1, 1);
+        rayOrigin = vec3(9.1394, 2.31, -12.4126);
+        vec3 tar = vec3(-2, 1, 1);
 
         vec3 dir = normalize(tar - rayOrigin);
 	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
@@ -566,17 +565,8 @@ void main()
 
      color /= (color + vec3(1.0));
 
-
-     // focus / blur
      if (iTime < P_0) {
-         
-        //const float lenToUfo = length(rayOrigin - ufo);
-
-        //vec3 focusPoint = mix(rayOrigin,ufo, smoothstep(3, 4, iTime));
-
         focus =  1.0 - smoothstep(3, 4, iTime);
-        //focus = abs(length(res.firstJumpPos - focusPoint)) * 0.003 - 0.5;// + 0.01;
-        //focus = 0.0;
      } else if (iTime > P_25 ) { //for scene 3 & 4
         vec3 ufo = ufoPos();
          focus = abs(length(res.firstJumpPos - ufo)) * 0.005;// + 0.01;
@@ -585,9 +575,6 @@ void main()
         focus = mix(focus, 1 - smoothstep(0, 1, t4), t4); // make clearer as ufo ascends
 
      } 
-      
-        //focus = clamp(focus, 0, 1);
-
     fragColor = vec4(pow(color, vec3(0.5)), clamp(focus, 0.001, 2.0));
 }
 

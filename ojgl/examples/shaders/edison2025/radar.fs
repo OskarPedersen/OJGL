@@ -62,7 +62,7 @@ float blip(vec2 uv) {
     uv.y -= 0.385;
     float s = 0.03 * cbeat(iTime -0.4, 2 * PI / rw, 130.0);
 
-    if (iTime < 10.0) {
+    if (iTime < 7.0) {
         s = 0.0;
     }
     return length(uv) - s;
