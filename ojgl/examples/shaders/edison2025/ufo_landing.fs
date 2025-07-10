@@ -40,6 +40,8 @@ uniform float C_7_T; // "synth"
 
 const int ufoType = 5;
 const int mountainType = 6;
+const int runwayType = 7;
+const int hangarType = 8;
 
 vec3 cameraPosition;
 vec3 rayDirection;
@@ -61,6 +63,10 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
             return vec3(1, 0, 1);
         case mountainType:
             return vec3(1, 0.3, 0.1);
+        case runwayType:
+            return vec3(1, 0.9, 0.8);
+        case hangarType:
+            return vec3(1, 0.1, 0.9);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -157,8 +163,10 @@ float getReflectiveIndex(int type) {
     switch (type) {
         case ufoType:
             return 1.0;
-         case mountainType:
+        case mountainType:
             return 0;
+        case runwayType:
+            return 0.1;
         default:
            return 0.0;
     }
@@ -209,11 +217,36 @@ DistanceInfo sunk(DistanceInfo a, DistanceInfo b, float k) {
     return res;
 }
 
+float runway(in vec3 p) 
+{
+    vec3 b = vec3(60, 1, 15);
+    p -= vec3(0, -5, 0);
+    float d = sdBox(p, b);
+    return d;
+}
+
+float hangar(in vec3 p) 
+{
+    vec3 b = vec3(15, 15, 15);
+    p -= vec3(40, -5, 30);
+    float d = sdBox(p, b);
+
+    p.y -= 7;
+    p.z -= -10;
+    float inside = sdBox(p, vec3(13, 6, 13));
+    d = opSubtraction(inside, d);
+    return d;
+}
+
 DistanceInfo map(in vec3 p)
 {
    DistanceInfo ufoInfo = {ufo(p), ufoType};
    DistanceInfo mountainInfo = {mountain(p), mountainType};
-   return un(ufoInfo, mountainInfo);
+
+   DistanceInfo runwayInfo = {runway(p), runwayType};
+   DistanceInfo hangarInfo = {hangar(p), hangarType};
+
+   return un(un(runwayInfo, hangarInfo), un(ufoInfo, mountainInfo));
 }
 
 struct FullMarchResult {
