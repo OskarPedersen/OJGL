@@ -42,17 +42,20 @@ const int ufoType = 5;
 const int mountainType = 6;
 const int runwayType = 7;
 const int hangarType = 8;
+const int doorsType = 9;
 
 vec3 cameraPosition;
 vec3 rayDirection;
 vec3 firstRayDirection;
 
+float hangarBox(in vec3 p);
 
 float ufoSpeed = 10.0;
 
 vec3 ufoPos()
 {
-    return vec3(0, 10, 0);
+    //return vec3(0, 10, 0);
+    return vec3(40, 0, 30);
 }
 
 
@@ -67,6 +70,8 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
             return vec3(1, 0.9, 0.8);
         case hangarType:
             return vec3(1, 0.1, 0.9);
+        case doorsType:
+            return vec3(1, 0.9, 0.4);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -167,6 +172,8 @@ float getReflectiveIndex(int type) {
             return 0;
         case runwayType:
             return 0.1;
+        case doorsType:
+            return 0.1;
         default:
            return 0.0;
     }
@@ -199,7 +206,12 @@ float mountainH(vec3 p) // just the height
 float mountain(vec3 p)
 {
     float h = mountainH(p);
-	return p.y + h;
+    float d = p.y + h;
+
+    float inside = hangarBox(p);
+    d = opSubtraction(inside, d);
+
+	return d;
 }
 
 float ufo(in vec3 p)
@@ -219,23 +231,48 @@ DistanceInfo sunk(DistanceInfo a, DistanceInfo b, float k) {
 
 float runway(in vec3 p) 
 {
-    vec3 b = vec3(60, 1, 15);
+    vec3 b = vec3(65, 1, 15);
     p -= vec3(0, -5, 0);
     float d = sdBox(p, b);
     return d;
 }
 
+vec3 hangarPos = vec3(40, -5, 33);
+
+float hangarBox(in vec3 p) {
+   p -= hangarPos;
+    float w = p.y;
+   vec3 b = vec3(15 - w * 0.6 + 10, 15, 18);
+  return sdBox(p, b);
+}
+
 float hangar(in vec3 p) 
 {
-    vec3 b = vec3(15, 15, 15);
-    p -= vec3(40, -5, 30);
-    float d = sdBox(p, b);
+    float d = hangarBox(p);
 
+    p -= hangarPos;
     p.y -= 7;
     p.z -= -10;
-    float inside = sdBox(p, vec3(13, 6, 13));
+    float inside = sdBox(p, vec3(13, 6, 16));
     d = opSubtraction(inside, d);
     return d;
+}
+
+float doors(in vec3 p) 
+{
+    float open = mod(iTime, 1.0);
+
+    float w = 6.5;
+
+    vec3 b = vec3(w*open, 13, 0.5);
+    //p.x = abs(p.x + w) - w;
+    // TODO: can probably be done with abs and just one box
+    float d1 = sdBox(p - vec3(40 + w*2 - w * open, -5, 17), b);
+    float d2 = sdBox(p - vec3(40 - w*2 + w * open, -5, 17), b);
+    //float d2 = sdBox(p - vec3(40 - w * open - w, -5, 17), b);
+
+    return min(d1, d2);
+    //return d1;
 }
 
 DistanceInfo map(in vec3 p)
@@ -245,8 +282,9 @@ DistanceInfo map(in vec3 p)
 
    DistanceInfo runwayInfo = {runway(p), runwayType};
    DistanceInfo hangarInfo = {hangar(p), hangarType};
+   DistanceInfo doorsInfo = {doors(p), doorsType};
 
-   return un(un(runwayInfo, hangarInfo), un(ufoInfo, mountainInfo));
+   return un(un(runwayInfo, un(hangarInfo, doorsInfo)), un(ufoInfo, mountainInfo));
 }
 
 struct FullMarchResult {
