@@ -308,6 +308,8 @@ float opIntersection( float d1, float d2 )
 }
 
 float boat(vec3 p) {
+    p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
+    
     p.xz *= rot(PI);
     float ffz = p.z > 0.0 ? -4.0 : -7.0;
     float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);

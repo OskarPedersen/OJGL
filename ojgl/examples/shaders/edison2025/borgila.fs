@@ -28,6 +28,17 @@ uniform sampler2D borgilaTexture;
 uniform sampler2D inTexture0;
 uniform sampler2D inTexture1;
 
+uniform float C_1_S; // bass
+uniform float C_6_S; // "vocals"
+uniform float C_7_S; // "synth"
+
+uniform float C_7_S_0;
+uniform float C_7_S_1;
+uniform float C_7_S_2;
+uniform float C_7_S_3;
+
+uniform float C_7_T; // "synth"
+
 const int boatType = 1;
 const int mountainType = 2;
 const int lissajousType = 3;
@@ -40,6 +51,7 @@ bool willHitText = false;
 
 vec3 boatPosition;
 float boatRotation = 0;
+
 
 
 DistanceInfo sunk(DistanceInfo a, DistanceInfo b, float k) {
@@ -241,36 +253,60 @@ DistanceInfo map(in vec3 p)
    return un(d, boatInfo);
 }
 
+struct Light {
+    float str;
+    float d;
+};
+
+Light lun(Light a, Light b) {
+    return a.d < b.d ? a : b;
+}
+
 VolumetricResult evaluateLight(in vec3 p)
 {
     vec3 po = p;
     p -= boatPosition;
+
+    int li = int(ceil((abs(p.z) - 1.5)/1.8));
+    if (p.z >= 0) {
+        li = 2 - li;
+    } else {
+        li += 3;
+    }
+    li = clamp(li, 0, 5);
+
+    float ls = 1.0;
+    float k = 1 + floor(mod(C_7_T, 4));
+    if (li == 0 || li == 5) {
+        ls = 1 + 8*max(0.5 - C_1_S*3, 0);
+    } else if (li == k) {
+        ls = 1 + 8*max(0.5 - C_7_S*3, 0);
+    }
     p.xz *= rot(boatRotation);
 
     vec3 p2 = p;
     p2.z = abs(p2.z);
     p2.y -= 4.91;
     p2.z -= 2.8;
-    float d = sdSphere(p2, 0.05);
-
+    Light d = {ls, sdSphere(p2, 0.05)};
+    
     vec3 p3 = p;
     p3.z = abs(p3.z);
     p3.y -= 4.5;
     p3.z -= 1.0;
-    float d2 = sdSphere(p3, 0.05);
-    d = min(d, d2);
+    Light d2 = {ls, sdSphere(p3, 0.05)};
+    d = lun(d, d2);
 
     vec3 p4 = p;
     p4.z = abs(p4.z);
     p4.y -= 3.5;
     p4.z -= 4.44;
-    float d3 = sdSphere(p4, 0.05);
-    d = min(d, d3);
+    Light d3 = {ls, sdSphere(p4, 0.05)};
+    d = lun(d, d3);
 
-    float str = 1;
     vec3 color = vec3(1.0, 1.0, 0.1);
-    vec3 res = color * str / (d * d);
-    return VolumetricResult(d, res); 
+    vec3 res = color * d.str / (d.d * d.d);
+    return VolumetricResult(d.d, res); 
 }
 
 void main()
