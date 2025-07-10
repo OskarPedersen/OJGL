@@ -506,7 +506,7 @@ void main()
         rayDirection = normalize(dir + right*u + up*v);
     
     } else if (iTime < P_1) {
-        rayOrigin = vec3(11.1394, 2.31, -10.4126);
+        rayOrigin = vec3(9.1394, 2.31, -12.4126);
         vec3 tar = vec3(-2, 1, 1);
 
         vec3 dir = normalize(tar - rayOrigin);

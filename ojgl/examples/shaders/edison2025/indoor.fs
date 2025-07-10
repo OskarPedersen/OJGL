@@ -85,7 +85,7 @@ float specularIndex(int type) {
 
 float getFogAmount(in vec3 p)
 {
-    return 0.001 + 0.002 * smoothstep(25, 30, iTime);
+    return 0.001 + 0.002 * smoothstep(18, 23, iTime);
 }
 
 vec3 getColor(in MarchResult result)
@@ -302,10 +302,10 @@ float ojText(vec3 p)
 float ufo(vec3 p) {
     float heading = -3.1415;
     float l = 0;
-    if (iTime > 20.0) {
+    if (iTime > 13.0) {
         p -= vec3(-46.524 -l, 50.38, 121.575 + l);
     }
-    float s = 0.9*smoothstep(25.0, 35.0, iTime);
+    float s = 0.9*smoothstep(18.0, 28.0, iTime);
     float d2 = sdTorus(p - vec3(0, -3*s, 0), vec2(s*8.5, 0.5));
     float d1 = length(p) - 2.0 * s;
     return min(d1, d2);

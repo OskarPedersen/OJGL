@@ -71,7 +71,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(experiment, Duration::seconds(30), "borgila");
+        scenes.emplace_back(experiment, Duration::seconds(28), "borgila");
     }
 
     // indoor scene
@@ -131,7 +131,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(experiment, Duration::seconds(30), "indoor");
+        scenes.emplace_back(experiment, Duration::seconds(24), "indoor");
     }
 
     // Ufo scenes
@@ -336,22 +336,22 @@ void Edison2025::update(const Duration& relativeSceneTime, const Duration& elaps
             float t = currentTime - 30.0f;
             camera.set({ -19.6426f, 3.28002f - 0.1f * t, -2.09492f }, 0.776f, -0.08f);
         }
-    } else {
+    } else if (currentScene == "indoor") {
         Vector3f cameraPosition { 21.9963f, 3.94f, -72.8188f };
         float speed = 1.0f;
         float heading = -3.1415f;
         float elevation = -0.22f;
         Vector3f dv { speed * ojstd::sin(heading), 0.0, -speed * ojstd::cos(heading) * currentTime };
         cameraPosition += dv;
-        if (currentTime > 15.0f) {
-            float s = ojstd::smoothstep(15.0, 20.0, currentTime);
+        if (currentTime > 8.0f) {
+            float s = ojstd::smoothstep(8.0, 13.0, currentTime);
             cameraPosition.x -= 1.75f * s;
             cameraPosition.y -= 0.5f * s;
             cameraPosition.z += 2.9f * s;
             elevation -= 0.4f * s;
         }
-        if (currentTime > 25.0f) {
-            float s = ojstd::smoothstep(25.0, 27.0, currentTime);
+        if (currentTime > 18.0f) {
+            float s = ojstd::smoothstep(18.0, 20.0, currentTime);
             elevation += 0.7f * s;
             heading -= 0.25f * s;
         }
