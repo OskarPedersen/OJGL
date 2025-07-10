@@ -85,7 +85,7 @@ float specularIndex(int type) {
 
 float getFogAmount(in vec3 p)
 {
-    return 0.001;
+    return 0.001 + 0.002 * smoothstep(25, 30, iTime);
 }
 
 vec3 getColor(in MarchResult result)

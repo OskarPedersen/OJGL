@@ -125,9 +125,11 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
     {
         auto noise = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/noise.fs");
         noise->setRenderOnce(true);
+        auto stars = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/stars.fs");
+        stars->setRenderOnce(true);
 
         auto ufoScenes = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/ufo_scenes.fs");
-        ufoScenes->setInputs(noise);
+        ufoScenes->setInputs(noise, stars);
 
         ufoScenes->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
             Buffer::UniformVector vector;

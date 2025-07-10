@@ -3,7 +3,7 @@ R""(
 const float S_distanceEpsilon = 1e-3;
 const float S_normalEpsilon = 5e-2;
 const int S_maxSteps = 600;
-const float S_maxDistance = 500.0;
+const float S_maxDistance = 650.0;
 const float S_distanceMultiplier = 0.7;
 const float S_minVolumetricJumpDistance = 0.005;
 float S_volumetricDistanceMultiplier = 0.5;
@@ -26,6 +26,7 @@ uniform float iTime;
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
+uniform sampler2D inTexture1;
 
 float P_0 = 8;
 float P_1 = (P_0 + 12);
@@ -130,29 +131,25 @@ vec3 getColor(in MarchResult result)
     color += spec;
     vec3 ao = vec3(float(result.steps) / 600);
     float aof = result.type == boatType ? 0.2 : 0.75;
-    if (result.type == invalidType) {
-        if (result.jump == 0 && iTime < P_2 && iTime > P_0) {
-            float pitch = asin(result.rayDirection.y);
-            float yaw = atan(result.rayDirection.z, result.rayDirection.x);
+    if (result.type == invalidType && result.jump == 0) {
+        float pitch = asin(result.rayDirection.y);
+        float yaw = atan(result.rayDirection.z, result.rayDirection.x);
 
-            vec2 uv;
-            uv.x = (yaw + PI) / (2.0 * PI);
-            uv.y = (pitch + PI / 2.0) / PI;
-            float h = hash(uv);
-
-            color = 1000*vec3(pow(h, 1000));
-            return result.scatteredLight + result.transmittance * color;
+        vec2 uv;
+        uv.x = (yaw + PI) / (2.0 * PI);
+        uv.y = (pitch + PI / 2.0) / PI;
+        float hf = iTime < P_0 ? 25 : 7;
+        float h = texture(inTexture1, uv * hf).x;
+        color = mix(color, color + 11*vec3(clamp(h, 0.0, 1.0)), h);
+        return result.scatteredLight + result.transmittance * mix(color, ao, aof);
         } else {
             return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
-        }
-    } else {
-        return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
     }
 }
 
 float getFogAmount(in vec3 p)
 {
-    return 0.004;
+    return 0.003 + 0.001*smoothstep(18, 20, iTime);
 }
 
 VolumetricResult evaluateLight(in vec3 p)
