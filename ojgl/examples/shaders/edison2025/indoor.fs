@@ -60,13 +60,13 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case waterType:
             return vec3(0.1, 0.1, 0.7);
         case instrumentPanelType:
-            return vec3(0.3);
+            return vec3(0.1);
         case screenType:
             return vec3(0.02);
         case lissajousType:
             return vec3(0.0, 0.0, 0.0);
         case hullType:
-            return vec3(1.0);
+            return vec3(0.0);
         case ufoType:
             return vec3(5.0);
         default:
@@ -101,7 +101,7 @@ vec3 getColor(in MarchResult result)
     float spec = specularIndex(result.type) * pow(k, 30.0);
     color += spec;
 
-    float aof = result.type == screenType ? 0.0 : 0.75;
+    float aof = result.type == screenType || result.type == instrumentPanelType ? 0.0 : 0.75;
 
     if (result.type == invalidType && result.jump == 0) {
         float pitch = asin(rayDirection.y);
@@ -131,7 +131,7 @@ float getReflectiveIndex(int type) {
         case screenType:
             return 0.2;
         case instrumentPanelType:
-            return 0.05;
+            return 0.008;
         case hullType:
             return 0.0;
         case ufoType:
@@ -190,9 +190,11 @@ float instrumentPanel(vec3 p)
     p.y -= 1.0;
     p.zy *= rot(screenRotation);
     p.xz *= rot(boatRotation);
-    float d3 = sdBox(p, vec3(7.0, 0.9, 1.0));
-
+    float d3 = sdBox(p, vec3(7.0, 0.66, 1.0));
     d = min(d, d3);
+
+
+
     return min(d, d1);
 }
 
@@ -209,15 +211,48 @@ float screens(vec3 p) {
 }
 
 float hull(vec3 p) {
+    vec3 po2 = p;
+    p.x *= 1.5;
     vec3 po = p;
     p.y += 0.0;
-    p.z -= 0.0;
-    float bd = sdCappedCylinder(p, vec2(6,2));
+    p.z -= 2.0;
+    float bd = sdCappedCylinder(p, vec2(10,2));
+    
     p = po.zxy;
-    float cd = sdCylinder(p, 5.0);
+    p.x += 8.43;
+    float cd = sdCylinder(p, 9.0);
     p = po;
     p.y += 5.0;
     float ed = sdBox(p, vec3(5.0));
+
+    p = po2;
+    p.x = abs(p.x);
+    p.y -= 2.3;
+    p.x -= 4.0;
+    p.z += 3.6;
+    p.zy *= rot(3.1);
+    float d5 = sdBox(p, vec3(5.0, 5.6, 2.2));
+    bd = min(bd, d5);
+    
+    p = po2;
+    p.y -= 6.85;
+    p.z+=3;
+    p.xz *= rot(boatRotation);
+    float d4 = sdBox(p, vec3(18.0, 1.6, 3.0));
+    ed = min(ed, d4);
+
+    p = po2;
+    p.y -= 7.5;
+    p.z+=6;
+    float d6 = sdBox(p, vec3(10.0, 15.6, 0.2));
+    ed = min(ed, d6);
+
+    p = po2;
+    p = p.xzy;
+    p.y-=5;
+    float d7 = sdCylinder(p, 0.3);
+    ed = min(ed, d7);
+
     return min(ed, max(bd, -cd));
 }
 
@@ -325,17 +360,29 @@ DistanceInfo map(vec3 p)
    return un(ufoInfo, un(screenInfo, un(hullInfo, un(waterInfo, un(box, sphereInfo)))));
 }
 
+struct Light {
+    float str;
+    float d;
+};
+
+Light lun(Light a, Light b) {
+    return a.d < b.d ? a : b;
+}
+
 VolumetricResult evaluateLight(in vec3 p)
 {
     p -= boatPosition;
-    float d = lissajous(p);
-    d = min(d, radar(p));
-    d = min(d, ojText(p));
-    float str = lissajousStrength;
-    vec3 color = vec3(0.1, 0.9, 0.1);
-    vec3 res = color * str / (d * d);
+    Light d = {1.0, lissajous(p)};
+    Light dr = {1, radar(p)};
+    Light doj = {1.0, ojText(p)};
+    d = lun(d, dr);
+    d = lun(d, doj);
 
-    return VolumetricResult(d, res); 
+    float str = lissajousStrength * d.str;
+    vec3 color = vec3(0.1, 0.9, 0.1);
+    vec3 res = color * str / (d.d * d.d);
+
+    return VolumetricResult(d.d, res); 
 }
 
 void main()
