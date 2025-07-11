@@ -131,9 +131,9 @@ float getReflectiveIndex(int type) {
         case screenType:
             return 0.2;
         case instrumentPanelType:
-            return 0.008;
+            return 0.5;
         case hullType:
-            return 0.0;
+            return 0.1;
         case ufoType:
             return 0.1;
         default:
@@ -367,6 +367,7 @@ Light lun(Light a, Light b) {
 VolumetricResult evaluateLight(in vec3 p)
 {
     p -= boatPosition;
+    vec3 color = vec3(0.1, 0.9, 0.1);
     Light d = {1.0, lissajous(p)};
     Light dr = {1, radar(p)};
     Light doj = {1.0, ojText(p)};
@@ -374,8 +375,8 @@ VolumetricResult evaluateLight(in vec3 p)
     d = lun(d, doj);
 
     float str = lissajousStrength * d.str;
-    vec3 color = vec3(0.1, 0.9, 0.1);
-    vec3 res = color * str / (d.d * d.d);
+    
+    vec3 res = color * str / 0.001;
 
     return VolumetricResult(d.d, res); 
 }
