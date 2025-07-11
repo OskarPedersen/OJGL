@@ -171,20 +171,17 @@ float instrumentPanel(vec3 p)
     p.y -= -0.05;
     p.z -= 2.0;
 
-    float d = sdBox(p, vec3(6.0, 1.0, 1.0)); 
-
+    float d = sdBox(p, vec3(6.0, 1.0, 4.0)); 
     p = po;
     p.y -= 1.5;
     p.zy *= rot(screenRotation);
     p.xz *= rot(boatRotation);
 
-    float s = 0.01;
-    float d1 = sdBoxFrame(p - vec3(-2.0, 0.0, 0.03), vec3(1.0, 1.0, 1.0), s);
-    float dd1 = sdBoxFrame(p - vec3(-0.0, 0.0, 0.03), vec3(1.0, 1.0, 1.0), s);
-    d1 = min(d1, dd1);
-    float dd2 = sdBoxFrame(p - vec3(2.0, 0.0, 0.03), vec3(1.0, 1.0, 1.0), s);
-    d1 = min(d1, dd2);
-
+    
+    p.x = abs(p.x);
+    float d1 = sdBox(p - vec3(1, 0, 1), vec3(0.01, 1.0, 0.001));
+    d = min(d, d1);
+    
     p = po;
 
     p.y -= 1.0;
@@ -193,9 +190,7 @@ float instrumentPanel(vec3 p)
     float d3 = sdBox(p, vec3(7.0, 0.66, 1.0));
     d = min(d, d3);
 
-
-
-    return min(d, d1);
+    return d;
 }
 
 float screens(vec3 p) {
