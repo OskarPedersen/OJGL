@@ -49,6 +49,7 @@ vec3 rayDirection;
 vec3 firstRayDirection;
 
 float hangarBox(in vec3 p);
+float runwayBox(in vec3 p);
 
 float ufoSpeed = 10.0;
 
@@ -80,13 +81,18 @@ vec3 ufoPos()
 }
 
 
+float opIntersection( float d1, float d2 )
+{
+    return max(d1,d2);
+}
+
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
     switch (type) {
         case ufoType:
             return vec3(1, 0, 1);
         case mountainType:
-            return vec3(1, 0.3, 0.1);
+            return 2*vec3(1, 0.3, 0.1);
         case runwayType:
             return vec3(1, 0.9, 0.8);
         case hangarType:
@@ -128,7 +134,7 @@ vec3 getColor(in MarchResult result)
 
 float getFogAmount(in vec3 p)
 {
-    return 0.01;
+    return 0.02;
 }
 
 VolumetricResult evaluateLight(in vec3 p)
@@ -173,13 +179,20 @@ VolumetricResult evaluateLight(in vec3 p)
     vec3 color = vec3(0.1, 1, 1);
     vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
 
-
-    float dHyperSum = 999999;
-
-    
-
-
+    vec3 runwayColor = vec3(1.0, 0.1, 0.7);
+    p = pOrig;
+    p.y -= -3.5;
+    p.z = abs(p.z);
+    p.z -= 12;
+    // vec2 pMod2(inout vec2 p, vec2 size)
+   pMod1(p.x, 10);
+    float dRunway = sdBox(p, vec3(0.1, 0.3, 0.1));
+    dRunway = opIntersection(dRunway, runwayBox(pOrig));
+    float strRunway = 100;
     float finalDis = dUfoSpin;
+
+    res += runwayColor * strRunway / (dRunway * dRunway);
+    finalDis = min(finalDis, dRunway);
  
 
     return VolumetricResult(finalDis, res); 
@@ -207,10 +220,6 @@ float opSubtraction( float d1, float d2 )
 }
 
 
-float opIntersection( float d1, float d2 )
-{
-    return max(d1,d2);
-}
 
 float mountainH(vec3 p) // just the height
 {
@@ -250,10 +259,23 @@ DistanceInfo sunk(DistanceInfo a, DistanceInfo b, float k) {
     return res;
 }
 
+vec3 runwayPos = vec3(0, -5, 0);
+vec3 runwaySize = vec3(65, 1, 15);
+
+
+float runwayBox(in vec3 p) 
+{
+    vec3 b = runwaySize;
+    b.y = 999999;
+    p -= runwayPos;
+    float d = sdBox(p, b);
+    return d;
+}
+
 float runway(in vec3 p) 
 {
-    vec3 b = vec3(65, 1, 15);
-    p -= vec3(0, -5, 0);
+    vec3 b = runwaySize;
+    p -= runwayPos;
     float d = sdBox(p, b);
     return d;
 }
