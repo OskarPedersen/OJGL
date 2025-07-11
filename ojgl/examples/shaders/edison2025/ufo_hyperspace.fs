@@ -139,36 +139,52 @@ VolumetricResult evaluateLight(in vec3 p)
 
     float dHyperSum = 999999;
 
-    { // hyper 1
+   { // hyper 1
+   
+       vec3 pHyper = pOrig;
+        pHyper.y -= 1;
+       pHyper.yz *= rot(pHyper.x * 0.01);
+       float iHyper = pModPolar(pHyper.yz, 16);
+       pHyper -= vec3(0, 20, sin(pOrig.x + iTime * 60)*5);
+       float dHyper = sdCylinder(pHyper.zyx, 0.0);
+   
+       float hyperStr = 30 + 25*sin(iTime * 10);
+       vec3 hyperColor = vec3(0.01, 0.05, 1.0);
+       res += hyperColor * hyperStr / (dHyper * dHyper);
+   
+       dHyperSum = min(dHyperSum, dHyper);
+   }
+   
+   
+   { // hyper 2
+        vec3 pHyper = pOrig;
+        pHyper.y -= 1;
+       pHyper.yz *= rot(pHyper.x * 0.001);
+       float iHyper = pModPolar(pHyper.yz, 16);
+       pHyper -= vec3(0, 6 + sin(pOrig.x * 0.03 + iTime), -sin(pOrig.x + iTime * 60)*1.1);
+       float dHyper = sdCylinder(pHyper.zyx, 0.0);
+       //dHyper -= texture(inTexture0, (pOrig.yz)/90.0).x;
+       dHyper = max(0.01, dHyper);
+   
+       float hyperStr = 0.2;
+       vec3 hyperColor = vec3(0.01, 0.5, 1.0);
+       res += hyperColor * hyperStr / (dHyper);
+   
+       dHyperSum = min(dHyperSum, dHyper);
+   }
+
+    { // hyper 3
     
         vec3 pHyper = pOrig;
          pHyper.y -= 1;
-        pHyper.yz *= rot(pHyper.x * 0.01);
+        pHyper.yz *= rot(pHyper.x * 0.02);
         float iHyper = pModPolar(pHyper.yz, 16);
-        pHyper -= vec3(0, 20, sin(pOrig.x + iTime * 30)*5);
+        pHyper -= vec3(0, 100, sin(pOrig.x - iTime * 10)*5);
         float dHyper = sdCylinder(pHyper.zyx, 0.0);
 
         float hyperStr = 30;
-        vec3 hyperColor = vec3(0.01, 0.05, 1.0);
+        vec3 hyperColor = vec3(0.1, 0.05, 1.0);
         res += hyperColor * hyperStr / (dHyper * dHyper);
-
-        dHyperSum = min(dHyperSum, dHyper);
-    }
-
-
-    { // hyper 2
-         vec3 pHyper = pOrig;
-         pHyper.y -= 1;
-        pHyper.yz *= rot(pHyper.x * 0.001);
-        float iHyper = pModPolar(pHyper.yz, 16);
-        pHyper -= vec3(0, 6 + sin(pOrig.x * 0.03 + iTime), -sin(pOrig.x + iTime * 30)*1.1);
-        float dHyper = sdCylinder(pHyper.zyx, 0.0);
-        //dHyper -= texture(inTexture0, (pOrig.yz)/90.0).x;
-        dHyper = max(0.01, dHyper);
-
-        float hyperStr = 0.2;
-        vec3 hyperColor = vec3(0.01, 0.5, 1.0);
-        res += hyperColor * hyperStr / (dHyper);
 
         dHyperSum = min(dHyperSum, dHyper);
     }
