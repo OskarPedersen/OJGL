@@ -96,7 +96,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case runwayType:
             return vec3(1, 0.9, 0.8);
         case hangarType:
-            return vec3(1, 0.1, 0.9);
+            return vec3(1.0);
         case doorsType:
             return vec3(1, 0.9, 0.4);
         default:
@@ -276,6 +276,7 @@ float runway(in vec3 p)
 {
     vec3 b = runwaySize;
     p -= runwayPos;
+    p.y += 0.3*texture(inTexture0, (p.xz)/200.0).x;
     float d = sdBox(p, b);
     return d;
 }
@@ -285,6 +286,7 @@ vec3 hangarPos = vec3(40, -5, 33);
 float hangarBox(in vec3 p) {
    p -= hangarPos;
     float w = p.y;
+
    vec3 b = vec3(15 - w * 0.6 + 10, 15, 18);
   return sdBox(p, b);
 }
@@ -295,6 +297,7 @@ float hangar(in vec3 p)
 
     p -= hangarPos;
     p.y -= 7;
+
     p.z -= -10;
     float inside = sdBox(p, vec3(13, 6, 16));
     d = opSubtraction(inside, d);
@@ -315,6 +318,8 @@ float doors(in vec3 p)
 
     vec3 b = vec3(w*open, 13, 0.5);
     //p.x = abs(p.x + w) - w;
+     p.z -= 0.5*texture(inTexture0, (p.xy)/200.0).x;
+
     // TODO: can probably be done with abs and just one box
     float d1 = sdBox(p - vec3(40 + w*2 - w * open, -5, 17), b);
     float d2 = sdBox(p - vec3(40 - w*2 + w * open, -5, 17), b);
