@@ -105,6 +105,10 @@ namespace ojgl::resources {
           , "edison2025/ufo_hyperspace.fs"
           },
           {
+#include "shaders/edison2025/borgila_hyperspace.fs"
+          , "edison2025/borgila_hyperspace.fs"
+          },
+          {
 #include "shaders/edison2025/ufo_landing.fs"
           , "edison2025/ufo_landing.fs"
           },
