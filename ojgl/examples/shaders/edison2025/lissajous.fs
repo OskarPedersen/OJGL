@@ -5,6 +5,11 @@ uniform sampler2D feedbackTexture0;
 uniform float iTime;
 uniform float iPreviousTime;
 uniform vec2 iResolution;
+uniform float C_1_S;
+uniform float C_7_S;
+uniform float C_1_T;
+uniform float C_7_T;
+
 in vec2 fragCoord;
 out vec4 fragColor;
 
@@ -14,9 +19,10 @@ void main()
     float v = (fragCoord.y - 0.5);
     vec2 uv = vec2(u, v);
 
-    float k = 1.0;
-    float t0 = k * iTime;
-    float t1 = k * (iTime) + 0.3;
+    float k = 0.8;
+    float kTime = 0.3*C_7_T + iTime;
+    float t0 = k * kTime;
+    float t1 = k * (kTime) + 0.3;
 
     const int steps = 20;
 
