@@ -60,7 +60,7 @@ const float ufoPosD3 = 5;
 vec3 ufoPos()
 {
 
-    float t = mod(iTime, ufoPosD1 + ufoPosD2 + ufoPosD3);
+    float t = iTime; //mod(iTime, ufoPosD1 + ufoPosD2 + ufoPosD3);
 
 
     if (t < ufoPosD1) {
@@ -72,7 +72,7 @@ vec3 ufoPos()
     }
 
 
-    return vec3(0);
+    return vec3(40, 0, 30);
 
     //return vec3(-150, 30, 0); // above runway
     //return vec3(-40, 2, 0); // touch down
@@ -306,7 +306,7 @@ float hangar(in vec3 p)
 
 float doors(in vec3 p) 
 {
-    float t = mod(iTime, ufoPosD1 + ufoPosD2 + ufoPosD3);
+    float t = min(iTime,  ufoPosD1 + ufoPosD2 + ufoPosD3); //mod(iTime, ufoPosD1 + ufoPosD2 + ufoPosD3);
 
     float open = 1.0;
     if (t > ufoPosD1 + ufoPosD2) {
@@ -404,10 +404,16 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
 
 void main()
 {
+    const float camera1 = ufoPosD1 + ufoPosD2 - 1;
+    const float camera2 = camera1 + ufoPosD3;
 
     float u = (fragCoord.x - 0.5);
     float v = (fragCoord.y - 0.5) * iResolution.y / iResolution.x;
     float zoom = 1.0;
+
+    if (iTime > camera1) {
+        zoom = 1.5;
+    }
 
     u *= zoom;
     v *= zoom;
@@ -418,17 +424,27 @@ void main()
 
     float focus = 0.0;
 
-    { // set camera
-       // vec3 ufo = ufoPos();
-       // rayOrigin = vec3(ufo.x - 50, 5, ufo.z);
-       // vec3 tar = ufo;
-       // 
-       // vec3 dir = normalize(tar - rayOrigin);
-	   // vec3 right = normalize(cross(vec3(0, 1, 0), dir));
- 	   // vec3 up = cross(dir, right);
-       // 
-       // rayDirection = normalize(dir + right*u + up*v);
+    if (iTime < camera1) {
+        vec3 ufo = ufoPos();
+        rayOrigin = ufo + vec3(-15, 8, 0);
+        vec3 tar = rayOrigin + vec3(10, -3 ,0 );
+        
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+        
+        rayDirection = normalize(dir + right*u + up*v);
     
+    } else /*if (iTime < camera2) */{
+        vec3 ufo = ufoPos();
+        rayOrigin = vec3(62.094, 16.86, -25.4996);
+        vec3 tar = ufo;
+        
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+
+         rayDirection = normalize(dir + right*u + up*v);
     }
   
     
