@@ -204,6 +204,19 @@ VolumetricResult evaluateLight(in vec3 p)
     res += runwayColor * strRunway / (dRunway * dRunway);
     finalDis = min(finalDis, dRunway);
  
+    if (scenePart == 2.0) {
+        p = pOrig;
+        p = p.xzy;
+        p -= vec3(37, 15, 1);
+
+        float dLaser = sdVerticalCapsule(p - (vec3(0, 0, 0)), 8,  0.1);
+        float strLaser = 100;
+        vec3 laserColor = vec3(1.0, 0.05, 0.05);
+
+        res += laserColor * strLaser / (dLaser * dLaser);
+        finalDis = min(finalDis, dLaser);
+    }
+
 
     return VolumetricResult(finalDis, res); 
 }
@@ -404,11 +417,20 @@ float boatSplit(vec3 p, float dir)
     
     p.xz = p.zx;
 
-    p.z -= -35;
-    p.y -= 2;
+    //p.z -= -35;
+    //p.y -= 2;
 
-   float h = boat(p);
+    p -= vec3(10, 0, 33);
 
+    p *= 0.4;
+
+    float h = boat(p);
+
+    vec3 cannonPos = vec3(1.5, 0.5, 2.5);
+    float cannonOuter = sdCappedCylinder(p.yxz - cannonPos.yxz, vec2(0.4, 1.0));
+    float cannonInner = sdCappedCylinder(p.yxz - cannonPos.yxz, vec2(0.2, 100));
+    float cannon = opSubtraction(cannonInner, cannonOuter);
+    h = min(h, cannon);
 
     float d = sdBox(p - vec3(0, 0, dir*4.95), vec3(5));
     return max(d, h);
