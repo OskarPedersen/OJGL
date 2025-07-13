@@ -7,7 +7,8 @@ const float S_maxDistance = 650.0;
 const float S_distanceMultiplier = 0.7;
 const float S_minVolumetricJumpDistance = 0.005;
 float S_volumetricDistanceMultiplier = 0.5;
-const int S_reflectionJumps = 5;
+const int S_reflectionJumps = 3;
+float g_MountainHeight = 0.0;
 
 #define S_VOLUMETRIC 1
 #define S_REFLECTIONS 1
@@ -15,8 +16,8 @@ const int S_reflectionJumps = 5;
 
 #include "common/noise.fs"
 #include "common/primitives.fs"
-#include "common/raymarch_utils.fs"
 #include "common/utils.fs"
+#include "edison2025/ufo_raymarch_utils.fs"
 
 in vec2 fragCoord;
 out vec4 fragColor;
@@ -57,7 +58,7 @@ vec3 rayDirection;
 vec3 firstRayDirection;
 
 float mountain(vec3 p); // forward declare
-float mountainH(vec3 p); // forward declare
+
 
 float ufoSpeed = 10.0;
 
@@ -163,7 +164,7 @@ VolumetricResult evaluateLight(in vec3 p)
 
     vec3 laserFloorP = p.zyx;
 
-    float dm = mountainH(p);
+    float dm = g_MountainHeight;
     laserFloorP.y +=  dm;
     //laserFloorP.y += sin(p.x);;
     vec3 ufo = ufoPos();
@@ -280,7 +281,7 @@ float mountainH(vec3 p) // just the height
 
 float mountain(vec3 p)
 {
-    float h = mountainH(p);
+    float h = g_MountainHeight;
 	return p.y + h;
 }
 
@@ -293,7 +294,7 @@ float mountainLaser(vec3 p)
 {
     float dMountain = mountain(p);
     vec3 laserFloorP = p.zyx;
-    laserFloorP.y +=  mountainH(p) - 0.5;
+    laserFloorP.y += g_MountainHeight - 0.5;
     float dLaserFloor = sdCylinder(laserFloorP, 1.0);
 
     dLaserFloor = max(dLaserFloor, -p.x);
@@ -357,6 +358,11 @@ float boat(vec3 p) {
 
 float boatSplit(vec3 p, float dir)
 {
+    if (p.z < 0.5) {
+        dir = -1.0;
+    } else {
+        dir = 1.0;
+    }
     p.y += mod(boatSplitTime * 0.3, 5.0);
     p.z -= dir*5;
     p.zy *= rot(dir*boatSplitTime*0.1);
@@ -364,11 +370,9 @@ float boatSplit(vec3 p, float dir)
 
     p.xy *= rot(dir*boatSplitTime*0.3);
 
-   float h = boat(p);
-
-
+     float h = boat(p);
     float d = sdBox(p - vec3(0, 0, dir*4.95), vec3(5));
-    return max(d, h);
+    return h;
 }
 
 float ufo(in vec3 p)
@@ -391,73 +395,16 @@ DistanceInfo map(in vec3 p)
    DistanceInfo mountainDis = {mountainLaser(p), mountainType};
 
    DistanceInfo boatFrontDis = { boatSplit(p, 1.0), boatType};
-   DistanceInfo boatBackDis = { boatSplit(p, -1.0), boatType};
-   DistanceInfo boatDis = un(boatFrontDis, boatBackDis);
-
    DistanceInfo waterInfo = {water(p), waterType};
    DistanceInfo ufoInfo = {ufo(p), ufoType};
-   return un(un(ufoInfo, mountainDis), sunk(waterInfo, boatDis, 0.3));
-}
+   DistanceInfo d = un(waterInfo, un(ufoInfo, mountainDis)); 
 
-struct FullMarchResult {
-    vec3 col;
-    vec3 firstJumpPos;
-};
-
-FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
-{
-    float t = 0.0;
-    vec3 scatteredLight = vec3(0.0);
-    float transmittance = 1.0;
-    float reflectionModifier = 1.0;
-    vec3 resultColor = vec3(0.0);
-
-    vec3 firstJumpPos = vec3(0.0);
-
-    for (int jump = 0; jump < S_reflectionJumps; jump++) {
-        for (int steps = 0; steps < S_maxSteps; ++steps) {
-            vec3 p = rayOrigin + t * rayDirection;
-            
-            if (jump == 0) {
-                firstJumpPos = p;
-            }
-
-            DistanceInfo info = map(p);
-            float jumpDistance = info.distance * S_distanceMultiplier;
-
-            float fogAmount = getFogAmount(p);
-            VolumetricResult vr = evaluateLight(p);
-
-            float volumetricJumpDistance = max(S_minVolumetricJumpDistance, vr.distance * S_volumetricDistanceMultiplier);
-            jumpDistance = min(jumpDistance, volumetricJumpDistance);
-
-            vec3 lightIntegrated = vr.color - vr.color * exp(-fogAmount * jumpDistance);
-            scatteredLight += transmittance * lightIntegrated;	
-            transmittance *= exp(-fogAmount * jumpDistance);      
-
-            t += jumpDistance;
-            if (info.distance < (S_distanceEpsilon)) {
-                vec3 color = getColor(MarchResult(info.type, p, steps, transmittance, scatteredLight, jump, rayDirection));
-
-                t = 0.0;
-                rayDirection = reflect(rayDirection, normal(p));
-                rayOrigin = p + 0.1 * rayDirection;
-
-                resultColor = mix(resultColor, color, reflectionModifier);
-                reflectionModifier *= getReflectiveIndex(info.type);
-                break;
-
-            }
-
-            if (t > S_maxDistance || steps == S_maxDistance - 1) {
-                vec3 color = getColor(MarchResult(invalidType, p, steps, transmittance, scatteredLight, jump, rayDirection));
-                resultColor = mix(resultColor, color, reflectionModifier);
-                return FullMarchResult(resultColor, firstJumpPos);
-            }
-        }
+   // Fix this!
+    if (iTime > P_0 && iTime < P_1) {
+        d = sunk(boatFrontDis, d, 0.3);
     }
-
-    return FullMarchResult(resultColor, firstJumpPos);
+    
+    return d;
 }
 
 void main()
