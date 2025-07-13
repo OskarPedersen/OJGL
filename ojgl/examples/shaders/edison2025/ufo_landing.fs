@@ -207,10 +207,14 @@ VolumetricResult evaluateLight(in vec3 p)
     if (scenePart == 2.0) {
         p = pOrig;
         p = p.xzy;
-        p -= vec3(37, 15, 1);
+        p -= vec3(39.25, 15, 1.25);
 
-        float dLaser = sdVerticalCapsule(p - (vec3(0, 0, 0)), 8,  0.1);
-        float strLaser = 100;
+        float t = mod(iTime, 5);
+
+        float len = 2 + min(t, 2.0) * 10;
+
+        float dLaser = sdVerticalCapsule(p - (vec3(0, 0, 0)), len,  0.1);
+        float strLaser = 100 + max(0, t - 1.5) * 10000.0;
         vec3 laserColor = vec3(1.0, 0.05, 0.05);
 
         res += laserColor * strLaser / (dLaser * dLaser);
@@ -359,7 +363,7 @@ float doors(in vec3 p)
 }
 
 float boat(vec3 p) {
-    p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
+    //p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
     
     p.xz *= rot(PI);
     float ffz = p.z > 0.0 ? -4.0 : -7.0;
