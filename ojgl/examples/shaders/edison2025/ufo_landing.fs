@@ -370,18 +370,16 @@ float doors(in vec3 p)
     //p.x = abs(p.x + w) - w;
      p.z -= 0.5*texture(inTexture0, (p.xy)/200.0).x;
 
-    // TODO: can probably be done with abs and just one box
     float d1 = sdBox(p - vec3(40 + w*2 - w * open, -5, 17), b);
     float d2 = sdBox(p - vec3(40 - w*2 + w * open, -5, 17), b);
     //float d2 = sdBox(p - vec3(40 - w * open - w, -5, 17), b);
 
     return min(d1, d2);
-    //return d1;
+
 }
 
 float boat(vec3 p) {
-    //p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
-    
+  
     p.xz *= rot(PI);
     float ffz = p.z > 0.0 ? -4.0 : -7.0;
     float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);
@@ -406,12 +404,6 @@ float boat(vec3 p) {
     p3.z -= 3.6;
     float mast = sdCappedCylinder(p3, vec2(0.08, 2.2));
 
-
-    //vec3 p4 = p;
-    //p4.y -= 4.4;
-    //p4.y -= 0.9*smoothstep(0, 5, abs(p.z));
-    //p4.y -= -(3.0-abs(p.z*0.8)); *boatSplitTime*4.0; // make line fall down
-    //float line = sdBox(p4, vec3(0.01, 0.01, 3.6));
     
     vec3 p5 = p;
     p5.z = abs(p5.z);
@@ -420,7 +412,6 @@ float boat(vec3 p) {
     p5.zy *= rot(-1.1);
     float line2 = sdBox(p5, vec3(0.01, 0.01, 2.05));
 
-    //line = min(line, line2);
 
     float h = min(line2, min(mast, min(windows, hull)));
 
@@ -429,17 +420,8 @@ float boat(vec3 p) {
 
 float boatSplit(vec3 p, float dir)
 {
-   // p.y += mod(boatSplitTime * 0.3, 5.0);
-    //p.z -= dir*5;
-    //p.zy *= rot(dir*boatSplitTime*0.1);
-    //p.z += dir*5;
-
-    //p.xy *= rot(dir*boatSplitTime*0.3);
-    
     p.xz = p.zx;
 
-    //p.z -= -35;
-    //p.y -= 2;
 
     p -= vec3(10, 0, 33);
 
@@ -614,7 +596,7 @@ void main()
     
 
     firstRayDirection = rayDirection;
-    //vec3 color = march(rayOrigin, rayDirection);
+
     FullMarchResult res = march2(rayOrigin, rayDirection);
     vec3 color = res.col;
 
@@ -629,15 +611,6 @@ void main()
 
      color /= (color + vec3(1.0));
 
-
-     // focus / blur
-
-      //vec3 ufo = ufoPos();
-       //focus = abs(length(res.firstJumpPos - ufo)) * 0.005 + 0.01;
-      
-      //float t4 = max(0, iTime - P_3);
-      //focus = mix(focus, 1 - smoothstep(0, 1, t4), t4); // make clearer as ufo ascends
-      
 
     fragColor = vec4(pow(color, vec3(0.5)), clamp(focus, 0.001, 2.0));
 }

@@ -341,20 +341,23 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        auto blur1 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
-        blur1->setInputs(borgilaHyperSpace);
-        blur1->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
-            return { ojstd::make_shared<Uniform2f>("blurDir", 1.f, 0.f) };
-        });
+        auto radialBlur = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "common/radial_blur.fs");
+        radialBlur->setInputs(borgilaHyperSpace);
 
-        auto blur2 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
-        blur2->setInputs(blur1);
-        blur2->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
-            return { ojstd::make_shared<Uniform2f>("blurDir", 0.f, 1.f) };
-        });
+        //auto blur1 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
+        //blur1->setInputs(radialBlur);
+        //blur1->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
+        //    return { ojstd::make_shared<Uniform2f>("blurDir", 1.f, 0.f) };
+        //});
+
+        //auto blur2 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
+        //blur2->setInputs(blur1);
+        //blur2->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
+        //    return { ojstd::make_shared<Uniform2f>("blurDir", 0.f, 1.f) };
+        //});
 
         auto chrom = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/chrom_ab.fs");
-        chrom->setInputs(blur2);
+        chrom->setInputs(radialBlur);
         chrom->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
             Buffer::UniformVector vector;
             vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));
