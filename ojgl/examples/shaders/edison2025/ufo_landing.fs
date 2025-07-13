@@ -38,11 +38,14 @@ uniform float C_7_S_3;
 
 uniform float C_7_T; // "synth"
 
+uniform float scenePart;
+
 const int ufoType = 5;
 const int mountainType = 6;
 const int runwayType = 7;
 const int hangarType = 8;
 const int doorsType = 9;
+const int boatType = 10;
 
 vec3 cameraPosition;
 vec3 rayDirection;
@@ -59,6 +62,11 @@ const float ufoPosD3 = 5;
 
 vec3 ufoPos()
 {
+    vec3 endPos = vec3(40, 0, 30);
+
+    if (scenePart == 2.0) {
+        return endPos;
+    }
 
     float t = iTime; //mod(iTime, ufoPosD1 + ufoPosD2 + ufoPosD3);
 
@@ -68,11 +76,11 @@ vec3 ufoPos()
     } else if (t < ufoPosD1 + ufoPosD2) {
      return mix(vec3(-40, 2, 0), vec3(40, 1, 0), (t - ufoPosD1) / ufoPosD2);
     } else if (t < ufoPosD1 + ufoPosD2 + ufoPosD3) {
-     return mix(vec3(40, 1, 0), vec3(40, 0, 30), smoothstep(0, 1, (t - ufoPosD1 - ufoPosD2) / ufoPosD3));
+     return mix(vec3(40, 1, 0), endPos, smoothstep(0, 1, (t - ufoPosD1 - ufoPosD2) / ufoPosD3));
     }
 
 
-    return vec3(40, 0, 30);
+    return endPos;
 
     //return vec3(-150, 30, 0); // above runway
     //return vec3(-40, 2, 0); // touch down
@@ -99,6 +107,8 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
             return vec3(1.0);
         case doorsType:
             return vec3(1, 0.9, 0.4);
+        case boatType:
+            return 2.0*vec3(1, 1, 1);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -208,6 +218,8 @@ float getReflectiveIndex(int type) {
             return 0.1;
         case doorsType:
             return 0.1;
+        case boatType:
+            return 0.5;
         default:
            return 0.0;
     }
@@ -314,6 +326,10 @@ float doors(in vec3 p)
         open = max(0.0, max(1.0 - tt, tt - ufoPosD3 + 1));
     }
 
+    if (scenePart == 2.0) {
+        open = 0.1;
+    }
+
     float w = 6.5;
 
     vec3 b = vec3(w*open, 13, 0.5);
@@ -329,6 +345,76 @@ float doors(in vec3 p)
     //return d1;
 }
 
+float boat(vec3 p) {
+    p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
+    
+    p.xz *= rot(PI);
+    float ffz = p.z > 0.0 ? -4.0 : -7.0;
+    float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);
+    float fx = 0.971*smoothstep(3, 7, abs(p.z));
+    float fx2 = 1*smoothstep(-3.0, 2.0, p.y);
+    float fy = 0.5*smoothstep(3, 7, p.z);
+    
+    vec3 p1 = p;
+    p1 -= vec3(0, 0.4, 0);
+    float hull = sdBox(p1, vec3(2 - fx - fx2, 1.0 + fy, 7 / fz));
+
+    vec3 p2 = p;
+    p2.y -= 1.3;
+    float wfx = 0.9 * smoothstep(-0.8, 0.8, p2.y);
+    float wffy = p2.y < 0 ? 0 : 0.3; 
+    float wfy = wffy * smoothstep(2.9, 3.3, abs(p2.z));
+    float windows = sdBox(p2, vec3(1.2 - wfx, 0.3 - wfy, 3.3));
+
+    vec3 p3 = p;
+    p3.z = abs(p3.z);
+    p3.y -= 3;
+    p3.z -= 3.6;
+    float mast = sdCappedCylinder(p3, vec2(0.08, 2.2));
+
+
+    //vec3 p4 = p;
+    //p4.y -= 4.4;
+    //p4.y -= 0.9*smoothstep(0, 5, abs(p.z));
+    //p4.y -= -(3.0-abs(p.z*0.8)); *boatSplitTime*4.0; // make line fall down
+    //float line = sdBox(p4, vec3(0.01, 0.01, 3.6));
+    
+    vec3 p5 = p;
+    p5.z = abs(p5.z);
+    p5.z -= 4.6;
+    p5.y -= 3.2;
+    p5.zy *= rot(-1.1);
+    float line2 = sdBox(p5, vec3(0.01, 0.01, 2.05));
+
+    //line = min(line, line2);
+
+    float h = min(line2, min(mast, min(windows, hull)));
+
+    return h;
+}
+
+float boatSplit(vec3 p, float dir)
+{
+   // p.y += mod(boatSplitTime * 0.3, 5.0);
+    //p.z -= dir*5;
+    //p.zy *= rot(dir*boatSplitTime*0.1);
+    //p.z += dir*5;
+
+    //p.xy *= rot(dir*boatSplitTime*0.3);
+    
+    p.xz = p.zx;
+
+    p.z -= -35;
+    p.y -= 2;
+
+   float h = boat(p);
+
+
+    float d = sdBox(p - vec3(0, 0, dir*4.95), vec3(5));
+    return max(d, h);
+}
+
+
 DistanceInfo map(in vec3 p)
 {
    DistanceInfo ufoInfo = {ufo(p), ufoType};
@@ -338,7 +424,14 @@ DistanceInfo map(in vec3 p)
    DistanceInfo hangarInfo = {hangar(p), hangarType};
    DistanceInfo doorsInfo = {doors(p), doorsType};
 
-   return un(un(runwayInfo, un(hangarInfo, doorsInfo)), un(ufoInfo, mountainInfo));
+   DistanceInfo di = un(un(runwayInfo, un(hangarInfo, doorsInfo)), un(ufoInfo, mountainInfo));
+
+   if(scenePart == 2.0) {
+       DistanceInfo boatFrontDis = { boatSplit(p, 1.0), boatType };
+        di = un(di, boatFrontDis);
+   }
+
+   return di;
 }
 
 struct FullMarchResult {
@@ -405,16 +498,20 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
 void main()
 {
     const float camera1 = ufoPosD1 + ufoPosD2 - 1;
-    const float camera2 = camera1 + ufoPosD3;
+    const float camera2 = camera1 + ufoPosD3 - 2;
 
     float u = (fragCoord.x - 0.5);
     float v = (fragCoord.y - 0.5) * iResolution.y / iResolution.x;
     float zoom = 1.0;
 
-    if (iTime > camera1) {
-        zoom = 1.5;
+    if (scenePart == 1.0) {
+         if (iTime > camera1) {
+            zoom = 1.5;
+         }
+    } else { // part 2
+        zoom = 2.0;
     }
-
+    
     u *= zoom;
     v *= zoom;
 
@@ -424,27 +521,49 @@ void main()
 
     float focus = 0.0;
 
-    if (iTime < camera1) {
-        vec3 ufo = ufoPos();
-        rayOrigin = ufo + vec3(-15, 8, 0);
-        vec3 tar = rayOrigin + vec3(10, -3 ,0 );
+    if (scenePart == 1.0) {
+        if (iTime < camera1) {
+            vec3 ufo = ufoPos();
+            rayOrigin = ufo + vec3(-15, 8, 0);
+            vec3 tar = rayOrigin + vec3(10, -3 ,0 );
         
-        vec3 dir = normalize(tar - rayOrigin);
-	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
- 	    vec3 up = cross(dir, right);
+            vec3 dir = normalize(tar - rayOrigin);
+	        vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	        vec3 up = cross(dir, right);
         
-        rayDirection = normalize(dir + right*u + up*v);
+            rayDirection = normalize(dir + right*u + up*v);
     
-    } else /*if (iTime < camera2) */{
+        } else if (iTime < camera2) {
+            vec3 ufo = ufoPos();
+            rayOrigin = vec3(62.094, 16.86, -25.4996);
+            vec3 tar = ufo;
+        
+            vec3 dir = normalize(tar - rayOrigin);
+	        vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	        vec3 up = cross(dir, right);
+
+             rayDirection = normalize(dir + right*u + up*v);
+        } else {
+            vec3 ufo = ufoPos();
+            rayOrigin = vec3(40, 5, 38);
+            vec3 tar = rayOrigin + vec3(0, -0.2, -1);
+        
+            vec3 dir = normalize(tar - rayOrigin);
+	        vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	        vec3 up = cross(dir, right);
+
+             rayDirection = normalize(dir + right*u + up*v);
+        }
+    } else { // part 2
         vec3 ufo = ufoPos();
-        rayOrigin = vec3(62.094, 16.86, -25.4996);
-        vec3 tar = ufo;
+        rayOrigin = vec3(40, 5, 38);
+        vec3 tar = rayOrigin + vec3(0, -0.2, -1);
         
         vec3 dir = normalize(tar - rayOrigin);
 	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
  	    vec3 up = cross(dir, right);
 
-         rayDirection = normalize(dir + right*u + up*v);
+        rayDirection = normalize(dir + right*u + up*v);
     }
   
     
