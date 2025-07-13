@@ -60,6 +60,12 @@ const float ufoPosD1 = 3;
 const float ufoPosD2 = 4;
 const float ufoPosD3 = 5;
 
+const float laserPeakTime = 2.5;
+
+bool ufoVisible() {
+    return scenePart == 1.0 || (scenePart == 2.0 && iTime < laserPeakTime);
+}
+
 vec3 ufoPos()
 {
     vec3 endPos = vec3(40, 0, 30);
@@ -157,37 +163,43 @@ VolumetricResult evaluateLight(in vec3 p)
 
     p -= ufo;
 
+    float finalDis = 99999;
+    vec3 res = vec3(0);
 
-    float section = pModPolar(p.xz, 16);
+    if (ufoVisible()) {
+        float section = pModPolar(p.xz, 16);
     
-    float tilt = -p.x*0.35;
+        float tilt = -p.x*0.35;
     
-    float capsuleStr = 5;
-    if (mod(section, 4.0) == 0.0) {
-        capsuleStr = 5.0 + max(0, 10 - C_7_S_0 * 100);
-        tilt *= min(1, C_7_S_0 * 3.0);
+        float capsuleStr = 5;
+        if (mod(section, 4.0) == 0.0) {
+            capsuleStr = 5.0 + max(0, 10 - C_7_S_0 * 100);
+            tilt *= min(1, C_7_S_0 * 3.0);
 
-    } else if (mod(section, 4.0) == 1.0) {
-        capsuleStr = 5.0 + max(0, 10 - C_7_S_1 * 100);
-         tilt *= min(1, C_7_S_1 * 3.0);
+        } else if (mod(section, 4.0) == 1.0) {
+            capsuleStr = 5.0 + max(0, 10 - C_7_S_1 * 100);
+             tilt *= min(1, C_7_S_1 * 3.0);
 
-    } else if (mod(section, 4.0) == 2.0) {
-        capsuleStr = 5.0 + max(0, 10 - C_7_S_2 * 100);
-         tilt *= min(1, C_7_S_2 * 3.0);
+        } else if (mod(section, 4.0) == 2.0) {
+            capsuleStr = 5.0 + max(0, 10 - C_7_S_2 * 100);
+             tilt *= min(1, C_7_S_2 * 3.0);
 
-    } else if (mod(section, 4.0) == 3.0) {
-        capsuleStr = 5.0 + max(0, 10 - C_7_S_3 * 100);
-         tilt *= min(1, C_7_S_3 * 3.0);
+        } else if (mod(section, 4.0) == 3.0) {
+            capsuleStr = 5.0 + max(0, 10 - C_7_S_3 * 100);
+             tilt *= min(1, C_7_S_3 * 3.0);
+
+        }
+
+
+        p.y -= tilt;
+        float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
+    
+        vec3 color = vec3(0.1, 1, 1);
+        res = color * capsuleStr / (dUfoSpin * dUfoSpin);
+    
+        finalDis = dUfoSpin;
 
     }
-
-
-    p.y -= tilt;
-    float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
-
-
-    vec3 color = vec3(0.1, 1, 1);
-    vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
 
     vec3 runwayColor = vec3(1.0, 0.1, 0.7);
     p = pOrig;
@@ -199,7 +211,7 @@ VolumetricResult evaluateLight(in vec3 p)
     float dRunway = sdBox(p, vec3(0.1, 0.3, 0.1));
     dRunway = opIntersection(dRunway, runwayBox(pOrig));
     float strRunway = 100;
-    float finalDis = dUfoSpin;
+
 
     res += runwayColor * strRunway / (dRunway * dRunway);
     finalDis = min(finalDis, dRunway);
@@ -209,12 +221,12 @@ VolumetricResult evaluateLight(in vec3 p)
         p = p.xzy;
         p -= vec3(39.25, 15, 1.25);
 
-        float t = mod(iTime, 5);
+        float t = min(iTime, laserPeakTime*2.0-iTime);
 
         float len = 2 + min(t, 2.0) * 10;
 
         float dLaser = sdVerticalCapsule(p - (vec3(0, 0, 0)), len,  0.1);
-        float strLaser = 100 + max(0, t - 1.5) * 10000.0;
+        float strLaser = 100 + max(0, t - 1.5) * 100000.0;
         vec3 laserColor = vec3(1.0, 0.05, 0.05);
 
         res += laserColor * strLaser / (dLaser * dLaser);
@@ -450,8 +462,10 @@ DistanceInfo map(in vec3 p)
    DistanceInfo hangarInfo = {hangar(p), hangarType};
    DistanceInfo doorsInfo = {doors(p), doorsType};
 
-   DistanceInfo di = un(un(runwayInfo, un(hangarInfo, doorsInfo)), un(ufoInfo, mountainInfo));
-
+   DistanceInfo di = un(un(runwayInfo, un(hangarInfo, doorsInfo)), mountainInfo);
+   if (ufoVisible()) {
+        di = un(di, ufoInfo);
+   }
    if(scenePart == 2.0) {
        DistanceInfo boatFrontDis = { boatSplit(p, 1.0), boatType };
         di = un(di, boatFrontDis);
@@ -599,7 +613,14 @@ void main()
     FullMarchResult res = march2(rayOrigin, rayDirection);
     vec3 color = res.col;
 
+    if (scenePart == 2.0) {
+        const float fadeOutTime = 7;
+        if (iTime > fadeOutTime) {
+            float t = iTime - fadeOutTime;
+            color = mix(color, vec3(0), min(1, t)); 
+        }
 
+    }
 
      color /= (color + vec3(1.0));
 

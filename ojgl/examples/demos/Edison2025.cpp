@@ -251,7 +251,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(chrom, Duration::seconds(100), "ufo_hyperspace");
+        scenes.emplace_back(chrom, Duration::seconds(9), "ufo_hyperspace");
     }
 
     // Ufo landing part 1
@@ -309,7 +309,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(chrom, Duration::seconds(1000), "ufo_landing_part_1");
+        scenes.emplace_back(chrom, Duration::seconds(14), "ufo_landing_part_1");
     }
 
 
@@ -366,7 +366,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(chrom, Duration::seconds(100), "borgila_hyperspace");
+        scenes.emplace_back(chrom, Duration::seconds(9), "borgila_hyperspace");
     }
 
     // Ufo landing part 2
