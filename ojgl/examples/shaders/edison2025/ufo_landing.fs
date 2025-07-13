@@ -60,10 +60,12 @@ const float ufoPosD1 = 3;
 const float ufoPosD2 = 4;
 const float ufoPosD3 = 5;
 
+const float doorOpenTimePart2 = 2;
+const float waitForLaserTime = 2;
 const float laserPeakTime = 2.5;
 
 bool ufoVisible() {
-    return scenePart == 1.0 || (scenePart == 2.0 && iTime < laserPeakTime);
+    return scenePart == 1.0 || (scenePart == 2.0 && iTime < (laserPeakTime + doorOpenTimePart2 + waitForLaserTime));
 }
 
 vec3 ufoPos()
@@ -221,7 +223,8 @@ VolumetricResult evaluateLight(in vec3 p)
         p = p.xzy;
         p -= vec3(39.25, 15, 1.25);
 
-        float t = min(iTime, laserPeakTime*2.0-iTime);
+        float tt = iTime - doorOpenTimePart2 - waitForLaserTime;
+        float t = min(tt, laserPeakTime*2.0-tt);
 
         float len = 2 + min(t, 2.0) * 10;
 
@@ -356,7 +359,9 @@ float doors(in vec3 p)
     }
 
     if (scenePart == 2.0) {
-        open = 0.1;
+        float t = max(0, iTime - doorOpenTimePart2);
+        open = max(0.1, 1 - t);
+
     }
 
     float w = 6.5;
@@ -614,7 +619,7 @@ void main()
     vec3 color = res.col;
 
     if (scenePart == 2.0) {
-        const float fadeOutTime = 7;
+        const float fadeOutTime = doorOpenTimePart2 + waitForLaserTime + laserPeakTime * 2.0 + 1;
         if (iTime > fadeOutTime) {
             float t = iTime - fadeOutTime;
             color = mix(color, vec3(0), min(1, t)); 
