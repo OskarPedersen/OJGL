@@ -2,6 +2,7 @@
 #include "FreeCameraController.h"
 #include "TextRenderer.hpp"
 #include "music/Music.h"
+#include "utility/Log.h"
 
 namespace ojgl {
 
@@ -23,7 +24,7 @@ ojstd::shared_ptr<Texture> Edison2025::getText(const ojstd::string& text, const 
 }
 
 static const unsigned char song[] = {
-#include "songs/edison_2025_song.inc"
+#include "songs/test_song_2.inc"
 };
 
 const unsigned char* Edison2025::getSong() const
@@ -50,18 +51,15 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             Buffer::UniformVector vector;
             vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));
 
+            const int synt = 3;
             auto music = Music::instance();
             vector.push_back(ojstd::make_shared<Uniform1f>("C_1_S", music->syncChannels()[1].getTimeSinceAnyNote().toSeconds()));
             vector.push_back(ojstd::make_shared<Uniform1f>("C_6_S", music->syncChannels()[6].getTimeSinceAnyNote().toSeconds()));
-            vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S", music->syncChannels()[7].getTimeSinceAnyNote().toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_4_S", music->syncChannels()[synt].getTimeSinceAnyNote().toSeconds()));
 
-            vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S_0", music->syncChannels()[7].getTimeSinceLast(0).toSeconds()));
-            vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S_1", music->syncChannels()[7].getTimeSinceLast(1).toSeconds()));
-            vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S_2", music->syncChannels()[7].getTimeSinceLast(2).toSeconds()));
-            vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S_3", music->syncChannels()[7].getTimeSinceLast(3).toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_4_T", static_cast<float>(music->syncChannels()[synt].getTotalHits())));
 
-            vector.push_back(ojstd::make_shared<Uniform1f>("C_7_T", static_cast<float>(music->syncChannels()[7].getTotalHits())));
-
+            LOG_INFO(music->syncChannels()[synt].getTotalHits());
             return vector;
         });
 
@@ -315,8 +313,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
         scenes.emplace_back(chrom, Duration::seconds(14), "ufo_landing_part_1");
     }
 
-
-       // Borgila hyperspace
+    // Borgila hyperspace
     {
         auto noise = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/noise.fs");
         noise->setRenderOnce(true);
@@ -347,17 +344,17 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
         auto radialBlur = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "common/radial_blur.fs");
         radialBlur->setInputs(borgilaHyperSpace);
 
-        //auto blur1 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
-        //blur1->setInputs(radialBlur);
-        //blur1->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
-        //    return { ojstd::make_shared<Uniform2f>("blurDir", 1.f, 0.f) };
-        //});
+        // auto blur1 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
+        // blur1->setInputs(radialBlur);
+        // blur1->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
+        //     return { ojstd::make_shared<Uniform2f>("blurDir", 1.f, 0.f) };
+        // });
 
-        //auto blur2 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
-        //blur2->setInputs(blur1);
-        //blur2->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
-        //    return { ojstd::make_shared<Uniform2f>("blurDir", 0.f, 1.f) };
-        //});
+        // auto blur2 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
+        // blur2->setInputs(blur1);
+        // blur2->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
+        //     return { ojstd::make_shared<Uniform2f>("blurDir", 0.f, 1.f) };
+        // });
 
         auto chrom = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/chrom_ab.fs");
         chrom->setInputs(radialBlur);
@@ -457,7 +454,7 @@ void Edison2025::update(const Duration& relativeSceneTime, const Duration& elaps
     auto& camera = FreeCameraController::instance();
 
     if (currentScene == "borgila") {
-        if (currentTime < 10.0) {
+        if (currentTime < 9.0) {
             camera.set({ 8.28524f - 0.4f * currentTime, 3.61f, 2.728f }, 0.7f, 0.0219999f);
         } else if (currentTime < 15.0) {
             camera.set({ -106.815f + 0.3f * currentTime, 11.84f, -9.83466f + 0.3f * currentTime }, -0.976f, -0.0420001f);
