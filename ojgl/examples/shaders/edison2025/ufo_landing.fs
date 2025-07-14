@@ -93,7 +93,7 @@ vec3 ufoPos()
         return endPos;
     }
 
-    float t = iTime; //mod(iTime, ufoPosD1 + ufoPosD2 + ufoPosD3);
+    float t = iTime;
 
 
     if (t < ufoPosD1) {
@@ -106,11 +106,6 @@ vec3 ufoPos()
 
 
     return endPos;
-
-    //return vec3(-150, 30, 0); // above runway
-    //return vec3(-40, 2, 0); // touch down
-    //return vec3(40, 1, 0); // in front of hangar
-    //return vec3(40, 0, 30); // inside hangar
 }
 
 
@@ -148,7 +143,7 @@ vec3 getColor(in MarchResult result)
     vec3 color = vec3(0);
 
     
-    vec3 lightPosition = vec3(-100, 50, -10); //ufoPos();
+    vec3 lightPosition = vec3(-100, 50, -10);
     if (iTime < camera1 && scenePart == 1.0) {
         lightPosition = vec3(100, 50, -10);
     } else if (iTime > camera2 && scenePart == 1.0) {
@@ -174,11 +169,7 @@ vec3 getColor(in MarchResult result)
 
 float getFogAmount(in vec3 p)
 {
-    if (scenePart == 1.0) {
-        return 0.005; // 0.02;
-    } else {
-        return 0.005;
-    }
+    return 0.005;
 }
 
 VolumetricResult evaluateLight(in vec3 p)
@@ -236,7 +227,7 @@ VolumetricResult evaluateLight(in vec3 p)
     p.y -= -3.5;
     p.z = abs(p.z);
     p.z -= 12;
-    // vec2 pMod2(inout vec2 p, vec2 size)
+
    pMod1(p.x, 10);
     float dRunway = sdBox(p, vec3(0.1, 0.3, 0.1));
     dRunway = opIntersection(dRunway, runwayBox(pOrig));
@@ -295,15 +286,14 @@ float opSubtraction( float d1, float d2 )
 
 
 
-float mountainH(vec3 p) // just the height
+float mountainH(vec3 p)
 {
     p.x += 20;
     p.z += 100;
-    
 
 	float h = 5*texture(inTexture0, (p.xz)/200.0).x + 
-              100*pow(texture(inTexture0, (p.xz)/1000.0).x, 4);
-    
+     100*pow(texture(inTexture0, (p.xz)/1000.0).x, 4);
+
 	return - h + 10;
 }
 
@@ -399,7 +389,7 @@ float hangar(in vec3 p)
 
 float doors(in vec3 p) 
 {
-    float t = min(iTime,  ufoPosD1 + ufoPosD2 + ufoPosD3); //mod(iTime, ufoPosD1 + ufoPosD2 + ufoPosD3);
+    float t = min(iTime,  ufoPosD1 + ufoPosD2 + ufoPosD3);
 
     float open = 1.0;
     if (t > ufoPosD1 + ufoPosD2) {
