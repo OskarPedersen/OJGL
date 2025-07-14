@@ -57,7 +57,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
     switch (type) {
         case boatType:
-            return 2.0*vec3(1, 1, 1);
+            return 5.0*vec3(1, 1, 1);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -163,13 +163,24 @@ VolumetricResult evaluateLight(in vec3 p)
         pEngine = pEngine.yxz;
         pEngine.y -= -36;
         pEngine.x -= 2;
-        pEngine.z = abs(pEngine.z);
-        pEngine.z -= 0.7;
+        //pEngine.z = abs(pEngine.z);
+        const float engineW = 0.7;
+        pEngine.z -= engineW;
     
-        float w = 0.2;
-        float dEngine = sdCappedCylinder(pEngine, vec2(w, 0.5));
-         float engineStr = 1;
-        vec3 engineColor = vec3(1.0);
+        //float w = 0.2;
+        float w = 0.12 + sin(p.x* 1000) * 0.1;
+        //w -= (p.x + 36) * 0.08;
+        w -= 0.05*sin(pOrig.z * 1000.0 + iTime * 2000);
+
+        float dEngine1 = sdCappedCylinder(pEngine, vec2(w, 0.8));
+        pEngine.z += engineW * 2.0;
+        float dEngine2 = sdCappedCylinder(pEngine, vec2(w, 0.8));
+        float dEngine = min(dEngine1, dEngine2);
+
+         float engineStr =  10 + sin(iTime * 30) * 1; //1;
+
+        vec3 engineColor = mix(vec3(1.0, 0.1, 0.01), vec3(1.0, 0.0, 0.01), mod(p.z, 1.0));//vec3(1.0);
+
         res += engineColor * engineStr / (dEngine * dEngine);
 
         dHyperSum = min(dHyperSum, dEngine);
@@ -185,7 +196,7 @@ VolumetricResult evaluateLight(in vec3 p)
 float getReflectiveIndex(int type) {
     switch (type) {
         case boatType:
-            return 0.5;
+            return 0.0;
         default:
            return 0.0;
     }
