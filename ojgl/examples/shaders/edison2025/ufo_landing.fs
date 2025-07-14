@@ -248,7 +248,7 @@ VolumetricResult evaluateLight(in vec3 p)
         float len = 2 + min(t, 2.0) * 10;
 
         float dLaser = sdVerticalCapsule(p - (vec3(0, 0, 0)), len,  0.1);
-        float strLaser = 100 + max(0, t - 1.5) * 100000.0;
+        float strLaser = 100 + max(0, tt - 1.5) * 100000.0;
         vec3 laserColor = vec3(1.0, 0.05, 0.05);
 
         res += laserColor * strLaser / (dLaser * dLaser);
@@ -638,14 +638,15 @@ void main()
     FullMarchResult res = march2(rayOrigin, rayDirection);
     vec3 color = res.col;
 
-    if (scenePart == 2.0) {
-        const float fadeOutTime = doorOpenTimePart2 + waitForLaserTime + laserPeakTime * 2.0 + 1;
-        if (iTime > fadeOutTime) {
-            float t = iTime - fadeOutTime;
-            color = mix(color, vec3(0), min(1, t)); 
-        }
-
-    }
+    //if (scenePart == 2.0) {
+    //    //const float fadeOutTime = doorOpenTimePart2 + waitForLaserTime + laserPeakTime * 2.0 + 1;
+    //    const float fadeOutTime = doorOpenTimePart2 + waitForLaserTime + laserPeakTime + 1;
+    //    if (iTime > fadeOutTime) {
+    //        float t = iTime - fadeOutTime;
+    //        color = mix(color, vec3(1), min(1, t)); 
+    //    }
+    //
+    //}
 
      color /= (color + vec3(1.0));
 
