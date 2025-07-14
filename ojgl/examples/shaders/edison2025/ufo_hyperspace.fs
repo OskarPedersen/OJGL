@@ -148,8 +148,8 @@ VolumetricResult evaluateLight(in vec3 p)
        pHyper -= vec3(0, 20, sin(pOrig.x + iTime * 60)*5);
        float dHyper = sdCylinder(pHyper.zyx, 0.0);
    
-       float hyperStr = 30 + 25*sin(iTime * 10);
-       vec3 hyperColor = vec3(0.01, 0.05, 1.0);
+       float hyperStr = 3 + 2.5*sin(iTime * 10);
+       vec3 hyperColor = vec3(0.6, 0.3, 1.0);
        res += hyperColor * hyperStr / (dHyper * dHyper);
    
        dHyperSum = min(dHyperSum, dHyper);
@@ -167,7 +167,7 @@ VolumetricResult evaluateLight(in vec3 p)
        dHyper = max(0.01, dHyper);
    
        float hyperStr = 0.2;
-       vec3 hyperColor = vec3(0.01, 0.5, 1.0);
+       vec3 hyperColor = vec3(0.6, 0.3, 1.0);
        res += hyperColor * hyperStr / (dHyper);
    
        dHyperSum = min(dHyperSum, dHyper);
@@ -182,8 +182,8 @@ VolumetricResult evaluateLight(in vec3 p)
         pHyper -= vec3(0, 100, sin(pOrig.x - iTime * 10)*5);
         float dHyper = sdCylinder(pHyper.zyx, 0.0);
 
-        float hyperStr = 30;
-        vec3 hyperColor = vec3(0.1, 0.05, 1.0);
+        float hyperStr = 3;
+        vec3 hyperColor = vec3(0.6, 0.3, 1.0);
         res += hyperColor * hyperStr / (dHyper * dHyper);
 
         dHyperSum = min(dHyperSum, dHyper);
