@@ -7,7 +7,7 @@ const float S_maxDistance = 500.0;
 const float S_distanceMultiplier = 0.7;
 const float S_minVolumetricJumpDistance = 0.005;
 float S_volumetricDistanceMultiplier = 0.5;
-const int S_reflectionJumps = 5;
+const int S_reflectionJumps = 3;
 
 #define S_VOLUMETRIC 1
 #define S_REFLECTIONS 1
@@ -64,6 +64,9 @@ const float doorOpenTimePart2 = 2;
 const float waitForLaserTime = 2;
 const float laserPeakTime = 2.5;
 
+const float camera1 = ufoPosD1 + ufoPosD2 - 1;
+const float camera2 = camera1 + ufoPosD3 - 2;
+
 bool ufoVisible() {
     return scenePart == 1.0 || (scenePart == 2.0 && iTime < (laserPeakTime + doorOpenTimePart2 + waitForLaserTime));
 }
@@ -112,7 +115,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case runwayType:
             return vec3(1, 0.9, 0.8);
         case hangarType:
-            return vec3(1.0);
+            return mod(pos.z, 3.0) > 1.5 ? vec3(1.0) : vec3(0.5);
         case doorsType:
             return vec3(1, 0.9, 0.4);
         case boatType:
@@ -132,6 +135,11 @@ vec3 getColor(in MarchResult result)
 
     
     vec3 lightPosition = vec3(-100, 50, -10); //ufoPos();
+    if (iTime < camera1 && scenePart == 1.0) {
+        lightPosition = vec3(100, 50, -10);
+    } else if (iTime > camera2 && scenePart == 1.0) {
+        lightPosition = vec3(10, -5, -10);
+    }
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
     float diffuse = max(0., dot(invLight, normal));
@@ -152,7 +160,11 @@ vec3 getColor(in MarchResult result)
 
 float getFogAmount(in vec3 p)
 {
-    return 0.02;
+    if (scenePart == 1.0) {
+        return 0.005; // 0.02;
+    } else {
+        return 0.005;
+    }
 }
 
 VolumetricResult evaluateLight(in vec3 p)
@@ -250,8 +262,10 @@ float getReflectiveIndex(int type) {
             return 0.1;
         case doorsType:
             return 0.1;
+        case hangarType:
+            return 0;
         case boatType:
-            return 0.5;
+            return 0.1;
         default:
            return 0.0;
     }
@@ -332,6 +346,11 @@ float hangarBox(in vec3 p) {
     float w = p.y;
 
    vec3 b = vec3(15 - w * 0.6 + 10, 15, 18);
+
+  //p.x -= 0.5*texture(inTexture0, (p.yz)/200.0).x;
+  //p.y -= 0.5*texture(inTexture0, (p.xz)/200.0).x;
+  //p.z -= 0.5*texture(inTexture0, (p.xy)/200.0).x;
+
   return sdBox(p, b);
 }
 
@@ -343,6 +362,15 @@ float hangar(in vec3 p)
     p.y -= 7;
 
     p.z -= -10;
+    
+   float s = 0.1;
+   float r = 20.0;
+   //p.x -= s*texture(inTexture0, (p.yz)/r).x;
+   //p.y -= s*texture(inTexture0, (p.xz)/r).x;
+   //p.y -= (sin(p.x) + sin(p.z)) * 0.1;
+   //p.z -= s*texture(inTexture0, (p.xy)/r).x;
+
+
     float inside = sdBox(p, vec3(13, 6, 16));
     d = opSubtraction(inside, d);
     return d;
@@ -524,8 +552,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
 
 void main()
 {
-    const float camera1 = ufoPosD1 + ufoPosD2 - 1;
-    const float camera2 = camera1 + ufoPosD3 - 2;
+
 
     float u = (fragCoord.x - 0.5);
     float v = (fragCoord.y - 0.5) * iResolution.y / iResolution.x;
@@ -611,7 +638,9 @@ void main()
 
      color /= (color + vec3(1.0));
 
-
+     if (scenePart == 2.0) {
+        //focus = 0.1;
+     }
     fragColor = vec4(pow(color, vec3(0.5)), clamp(focus, 0.001, 2.0));
 }
 
