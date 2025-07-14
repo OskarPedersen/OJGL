@@ -30,14 +30,9 @@ uniform sampler2D inTexture1;
 
 uniform float C_1_S; // bass
 uniform float C_6_S; // "vocals"
-uniform float C_7_S; // "synth"
+uniform float C_4_S; // "synth"
 
-uniform float C_7_S_0;
-uniform float C_7_S_1;
-uniform float C_7_S_2;
-uniform float C_7_S_3;
-
-uniform float C_7_T; // "synth"
+uniform float C_4_T; // "synth"
 
 const int boatType = 1;
 const int mountainType = 2;
@@ -276,11 +271,11 @@ VolumetricResult evaluateLight(in vec3 p)
     li = clamp(li, 0, 5);
 
     float ls = 1.0;
-    float k = 1 + floor(mod(C_7_T, 4));
+    float k = 1 + floor(mod(C_4_T, 4));
     if (li == 0 || li == 5) {
         ls = 1 + 8*max(0.5 - C_1_S*3, 0);
     } else if (li == k) {
-        ls = 1 + 8*max(0.5 - C_7_S*3, 0);
+        ls = 1 + 8*max(0.5 - C_4_S*3, 0);
     }
     p.xz *= rot(boatRotation);
 
@@ -317,7 +312,7 @@ void main()
     cameraPosition = (iCameraMatrix * vec4(0.0, 0.0, 0.0, 1)).xyz;
     rayDirection = normalize(rayOrigin - cameraPosition);
 
-    if (iTime < 10.0) {
+    if (iTime < 9.0) {
         boatPosition = vec3(100.0);
     }
     else if (iTime < 15.0) {

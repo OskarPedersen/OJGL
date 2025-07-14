@@ -330,15 +330,18 @@ float ojText(vec3 p)
 }
 
 float ufo(vec3 p) {
-    float heading = -3.1415;
-    float l = 0;
-    if (iTime > 13.0) {
+    if (iTime > 15.0) {
+        float heading = -3.1415;
+        float l = 0;
         p -= vec3(-46.524 -l, 50.38, 121.575 + l);
+        float s = 0.9*smoothstep(18.0, 28.0, iTime);
+        float d2 = sdTorus(p - vec3(0, -3*s, 0), vec2(s*8.5, 0.5));
+        float d1 = length(p) - 2.0 * s;
+        return min(d1, d2);
+    } else {
+        return 100.0;
     }
-    float s = 0.9*smoothstep(18.0, 28.0, iTime);
-    float d2 = sdTorus(p - vec3(0, -3*s, 0), vec2(s*8.5, 0.5));
-    float d1 = length(p) - 2.0 * s;
-    return min(d1, d2);
+
 }
 
 DistanceInfo map(vec3 p)
