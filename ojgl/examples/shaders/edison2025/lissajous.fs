@@ -20,7 +20,7 @@ void main()
     vec2 uv = vec2(u, v);
 
     float k = 0.8;
-    float kTime = 0.3*C_7_T + iTime;
+    float kTime = 0.2*C_7_T + iTime;
     float t0 = k * kTime;
     float t1 = k * (kTime) + 0.3;
 
