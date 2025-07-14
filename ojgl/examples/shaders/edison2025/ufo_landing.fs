@@ -71,6 +71,20 @@ bool ufoVisible() {
     return scenePart == 1.0 || (scenePart == 2.0 && iTime < (laserPeakTime + doorOpenTimePart2 + waitForLaserTime));
 }
 
+vec3 ufoRot(in vec3 p) {
+    if (scenePart == 2.0) {
+        return p;
+    }
+    float rotEnd = ufoPosD1 + 0.5;
+    if (iTime < rotEnd) {
+        float s = 1.0 - smoothstep(rotEnd - 1.0, rotEnd, iTime);
+        p.yz *= rot(sin(iTime * 1.5) * 0.1 * s);
+
+        p.xy *= rot(0.3 * s);
+    }
+    return p;
+}
+
 vec3 ufoPos()
 {
     vec3 endPos = vec3(40, 0, 30);
@@ -119,7 +133,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case doorsType:
             return vec3(1, 0.9, 0.4);
         case boatType:
-            return 2.0*vec3(1, 1, 1);
+            return 20.0*vec3(1, 1, 1);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -181,6 +195,8 @@ VolumetricResult evaluateLight(in vec3 p)
     vec3 res = vec3(0);
 
     if (ufoVisible()) {
+        p = ufoRot(p);
+
         float section = pModPolar(p.xz, 16);
     
         float tilt = -p.x*0.35;
@@ -302,9 +318,14 @@ float mountain(vec3 p)
 	return d;
 }
 
+
+
 float ufo(in vec3 p)
 {
     p -= ufoPos();
+
+    p = ufoRot(p);
+
     float d2 = sdTorus(p - vec3(0, -3, 0), vec2(8.5, 0.5));
 
     float d1 = length(p) - (2.0 + max(0.5 - C_1_S*3, 0));
@@ -366,7 +387,7 @@ float hangar(in vec3 p)
    float s = 0.1;
    float r = 20.0;
    //p.x -= s*texture(inTexture0, (p.yz)/r).x;
-   //p.y -= s*texture(inTexture0, (p.xz)/r).x;
+   p.y -= s*texture(inTexture0, (p.xz)/r).x;
    //p.y -= (sin(p.x) + sin(p.z)) * 0.1;
    //p.z -= s*texture(inTexture0, (p.xy)/r).x;
 
@@ -563,7 +584,7 @@ void main()
             zoom = 1.5;
          }
     } else { // part 2
-        zoom = 2.0;
+        zoom = 1.6; //2.0;
     }
     
     u *= zoom;
