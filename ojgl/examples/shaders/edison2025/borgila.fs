@@ -67,7 +67,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case lissajousType:
             return vec3(0.0);
         default:
-           return 5*vec3(0, 0.0, 1);
+           return 4.5*vec3(0, 0.0, 1);
     }
 }
 
@@ -98,9 +98,10 @@ vec3 getColor(in MarchResult result)
         vec2 uv;
         uv.x = (yaw + PI) / (2.0 * PI);
         uv.y = (pitch + PI / 2.0) / PI;
-        float h = texture(inTexture1, uv * 5).x;
-        color = mix(color, color + 2*vec3(clamp(h, 0.0, 1.0)), h);
-        return result.scatteredLight + result.transmittance * mix(color, ao, aof);
+        float h = texture(inTexture1, uv * 5).x + 0.1*hash11(fragCoord.x+cos(fragCoord.y));
+        color = result.scatteredLight + result.transmittance * mix(color, ao, aof);
+        color = mix(color, color + 0.3*vec3(clamp(h, 0.0, 1.0)), h);
+        return color;
     } else {
         return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
 

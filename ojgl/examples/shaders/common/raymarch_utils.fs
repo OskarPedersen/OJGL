@@ -101,7 +101,7 @@ vec3 march(in vec3 rayOrigin, in vec3 rayDirection)
  #endif
             }
 
-            if (t > S_maxDistance || steps == S_maxDistance - 1) {
+            if (t > S_maxDistance || steps == S_maxSteps - 1) {
                 vec3 color = getColor(MarchResult(invalidType, p, steps, transmittance, scatteredLight, jump, rayDirection));
                 resultColor = mix(resultColor, color, reflectionModifier);
                 return resultColor;
