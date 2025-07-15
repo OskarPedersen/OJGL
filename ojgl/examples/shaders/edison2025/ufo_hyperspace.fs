@@ -145,6 +145,9 @@ VolumetricResult evaluateLight(in vec3 p)
 
 
     // C_1_T
+       float hyperStr1 = 5 ;
+       float hyperStr2 = 0.2;
+       float hyperStr3 = 3;
 
    { // hyper 1
    
@@ -156,9 +159,8 @@ VolumetricResult evaluateLight(in vec3 p)
        pHyper -= vec3(0, 20, sin(pOrig.x + iTime * 60)*5);
        float dHyper = sdCylinder(pHyper.zyx, 0.0);
    
-       float hyperStr = 5; //3 + 2.5*sin(iTime * 10);
        vec3 hyperColor = vec3(0.6, 0.3, 1.0);
-       res += hyperColor * hyperStr / (dHyper * dHyper);
+       res += hyperColor * hyperStr1 / (dHyper * dHyper);
    
        dHyperSum = min(dHyperSum, dHyper);
    }
@@ -174,9 +176,8 @@ VolumetricResult evaluateLight(in vec3 p)
        float dHyper = sdCylinder(pHyper.zyx, 0.0);
        dHyper = max(0.01, dHyper);
    
-       float hyperStr = 0.2;
        vec3 hyperColor = vec3(0.6, 0.3, 1.0);
-       res += hyperColor * hyperStr / (dHyper);
+       res += hyperColor * hyperStr2 / (dHyper);
    
        dHyperSum = min(dHyperSum, dHyper);
    }
@@ -190,9 +191,8 @@ VolumetricResult evaluateLight(in vec3 p)
         pHyper -= vec3(0, 100, sin(pOrig.x - iTime * 10)*5);
         float dHyper = sdCylinder(pHyper.zyx, 0.0);
     
-        float hyperStr = 3;
         vec3 hyperColor = vec3(0.6, 0.3, 1.0);
-        res += hyperColor * hyperStr / (dHyper * dHyper);
+        res += hyperColor * hyperStr3 / (dHyper * dHyper);
     
         dHyperSum = min(dHyperSum, dHyper);
     }
@@ -330,7 +330,7 @@ void main()
     
   
     vec3 ufo = ufoPos();
-    rayOrigin = vec3(ufo.x - 50, 5, ufo.z);
+    rayOrigin = vec3(ufo.x - 50 + sin(iTime) * 10, 5, ufo.z  + sin(iTime*0.04) * 50);
     vec3 tar = ufo;
 
 
