@@ -224,14 +224,15 @@ VolumetricResult evaluateLight(in vec3 p)
 
     vec3 runwayColor = vec3(1.0, 0.1, 0.7);
     p = pOrig;
-    p.y -= -3.5;
+    p.y -= -3.8;
     p.z = abs(p.z);
     p.z -= 12;
 
    pMod1(p.x, 10);
-    float dRunway = sdBox(p, vec3(0.1, 0.3, 0.1));
+   float h = 0.3 + C_1_S;
+    float dRunway = sdBox(p, vec3(0.1, h, 0.1));
     dRunway = opIntersection(dRunway, runwayBox(pOrig));
-    float strRunway = 100;
+    float strRunway = 100 - 120*C_1_S;
 
 
     res += runwayColor * strRunway / (dRunway * dRunway);
