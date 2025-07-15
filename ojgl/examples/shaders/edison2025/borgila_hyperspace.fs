@@ -7,7 +7,7 @@ const float S_maxDistance = 500.0;
 const float S_distanceMultiplier = 0.7;
 const float S_minVolumetricJumpDistance = 0.005;
 float S_volumetricDistanceMultiplier = 0.5;
-const int S_reflectionJumps = 5;
+const int S_reflectionJumps = 2;
 
 #define S_VOLUMETRIC 1
 #define S_REFLECTIONS 1
@@ -28,7 +28,7 @@ uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
 
 uniform float C_1_S; // bass
-uniform float C_6_S; // "vocals"
+uniform float C_3_S; // "vocals"
 uniform float C_7_S; // "synth"
 
 uniform float C_7_S_0;
@@ -57,7 +57,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
     switch (type) {
         case boatType:
-            return 5.0*vec3(1, 1, 1);
+            return 1.5*vec3(1, 1, 1);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -71,8 +71,8 @@ vec3 getColor(in MarchResult result)
 {
     vec3 color = vec3(0);
 
-    
-    vec3 lightPosition = ufoPos();
+
+    vec3 lightPosition = vec3(-65, 0, 0);
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
     float diffuse = max(0., dot(invLight, normal));
@@ -81,8 +81,7 @@ vec3 getColor(in MarchResult result)
     float k = max(0.0, dot(rayDirection, reflect(invLight, normal)));
     float spec = 1 * pow(k, 30.0);
     color += spec;
-
-    vec3 ao = vec3(float(result.steps) / 600);
+    vec3 ao = vec3(float(result.steps) / 200);
     if (result.type == invalidType) {
         return result.scatteredLight;
     } else {
@@ -107,22 +106,22 @@ VolumetricResult evaluateLight(in vec3 p)
 
 
  { // hyper 1
-   
+
        vec3 pHyper = pOrig;
         pHyper.y -= 1;
        pHyper.yz *= rot(pHyper.x * 0.01);
        float iHyper = pModPolar(pHyper.yz, 16);
        pHyper -= vec3(0, 20, sin(pOrig.x + iTime * 60)*5);
        float dHyper = sdCylinder(pHyper.zyx, 0.0);
-   
+
        float hyperStr = 3 + 2.5*sin(iTime * 10);
-       vec3 hyperColor = vec3(0.6, 0.3, 1.0);
+       vec3 hyperColor = 0.3*vec3(0.1, 0.3, 1.0);
        res += hyperColor * hyperStr / (dHyper * dHyper);
-   
+
        dHyperSum = min(dHyperSum, dHyper);
    }
-   
-   
+
+
    { // hyper 2
         vec3 pHyper = pOrig;
         pHyper.y -= 1;
@@ -132,16 +131,16 @@ VolumetricResult evaluateLight(in vec3 p)
        float dHyper = sdCylinder(pHyper.zyx, 0.0);
        //dHyper -= texture(inTexture0, (pOrig.yz)/90.0).x;
        dHyper = max(0.01, dHyper);
-   
+
        float hyperStr = 0.2;
-       vec3 hyperColor = vec3(0.6, 0.3, 1.0);
+       vec3 hyperColor = 1.5*vec3(0.2, 0.3, 1.0);
        res += hyperColor * hyperStr / (dHyper);
-   
+
        dHyperSum = min(dHyperSum, dHyper);
    }
 
     { // hyper 3
-    
+
         vec3 pHyper = pOrig;
          pHyper.y -= 1;
         pHyper.yz *= rot(pHyper.x * 0.02);
@@ -150,7 +149,7 @@ VolumetricResult evaluateLight(in vec3 p)
         float dHyper = sdCylinder(pHyper.zyx, 0.0);
 
         float hyperStr = 3;
-        vec3 hyperColor = vec3(0.6, 0.3, 1.0);
+        vec3 hyperColor = 0.1*vec3(0.6, 0.3, 1.0);
         res += hyperColor * hyperStr / (dHyper * dHyper);
 
         dHyperSum = min(dHyperSum, dHyper);
@@ -160,27 +159,28 @@ VolumetricResult evaluateLight(in vec3 p)
     { // Borgila engine
         // float sdCappedCylinder(vec3 p, vec2 h);
         vec3 pEngine = pOrig;
+
         pEngine = pEngine.yxz;
         pEngine.y -= -36;
         pEngine.x -= 2;
         //pEngine.z = abs(pEngine.z);
         const float engineW = 0.7;
         pEngine.z -= engineW;
-    
+
         //float w = 0.2;
         float w = 0.12 + sin(p.x* 1000) * 0.1;
         //w -= (p.x + 36) * 0.08;
-        w -= 0.05*sin(pOrig.z * 1000.0 + iTime * 2000);
+        w -= 0.05*sin(pOrig.z * 1000.0 + iTime * 2000) ;
 
-        float dEngine1 = sdCappedCylinder(pEngine, vec2(w, 0.8));
+        float depth = 0.8 + 0.8*max(0.5 - C_3_S*3, 0);
+        float dEngine1 = sdCappedCylinder(pEngine, vec2(w, depth));
         pEngine.z += engineW * 2.0;
-        float dEngine2 = sdCappedCylinder(pEngine, vec2(w, 0.8));
+        float dEngine2 = sdCappedCylinder(pEngine, vec2(w, depth));
         float dEngine = min(dEngine1, dEngine2);
 
-         float engineStr =  10 + sin(iTime * 30) * 1; //1;
+         float engineStr = 10 + sin(iTime * 30) * 1; //1;
 
-        vec3 engineColor = mix(vec3(1.0, 0.1, 0.01), vec3(1.0, 0.0, 0.01), mod(p.z, 1.0));//vec3(1.0);
-
+        vec3 engineColor = mix(vec3(1.0, 0.1, 0.01), vec3(1.0, 0.0, 0.01), mod(p.z, 1.0));//vec3(1.0);;
         res += engineColor * engineStr / (dEngine * dEngine);
 
         dHyperSum = min(dHyperSum, dEngine);
@@ -188,9 +188,9 @@ VolumetricResult evaluateLight(in vec3 p)
 
 
     float finalDis = dHyperSum;
- 
 
-    return VolumetricResult(finalDis, res); 
+
+    return VolumetricResult(finalDis, res);
 }
 
 float getReflectiveIndex(int type) {
@@ -233,22 +233,25 @@ DistanceInfo sunk(DistanceInfo a, DistanceInfo b, float k) {
 
 float boat(vec3 p) {
     p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
-    
-    p.xz *= rot(PI);
+
+    p.xz *= rot(0.1*cos(1.0*iTime));
+    p.xy *= rot(0.1*sin(0.45*iTime));
     float ffz = p.z > 0.0 ? -4.0 : -7.0;
     float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);
     float fx = 0.971*smoothstep(3, 7, abs(p.z));
     float fx2 = 1*smoothstep(-3.0, 2.0, p.y);
     float fy = 0.5*smoothstep(3, 7, p.z);
-    
+    float fx3 = 1.7*(1 - smoothstep(-2.0, 0.5, p.y));
     vec3 p1 = p;
     p1 -= vec3(0, 0.4, 0);
-    float hull = sdBox(p1, vec3(2 - fx - fx2, 1.0 + fy, 7 / fz));
+    float ff = 0.3;
+    p1.y += ff;
+    float hull = sdBox(p1, vec3(2 - fx - fx2 - fx3, 1.0 + ff + fy, 7 / fz));
 
     vec3 p2 = p;
     p2.y -= 1.3;
     float wfx = 0.9 * smoothstep(-0.8, 0.8, p2.y);
-    float wffy = p2.y < 0 ? 0 : 0.3; 
+    float wffy = p2.y < 0 ? 0 : 0.3;
     float wfy = wffy * smoothstep(2.9, 3.3, abs(p2.z));
     float windows = sdBox(p2, vec3(1.2 - wfx, 0.3 - wfy, 3.3));
 
@@ -264,7 +267,7 @@ float boat(vec3 p) {
     //p4.y -= 0.9*smoothstep(0, 5, abs(p.z));
     //p4.y -= -(3.0-abs(p.z*0.8)); *boatSplitTime*4.0; // make line fall down
     //float line = sdBox(p4, vec3(0.01, 0.01, 3.6));
-    
+
     vec3 p5 = p;
     p5.z = abs(p5.z);
     p5.z -= 4.6;
@@ -275,7 +278,6 @@ float boat(vec3 p) {
     //line = min(line, line2);
 
     float h = min(line2, min(mast, min(windows, hull)));
-
     return h;
 }
 
@@ -287,7 +289,7 @@ float boatSplit(vec3 p, float dir)
     //p.z += dir*5;
 
     //p.xy *= rot(dir*boatSplitTime*0.3);
-    
+
     p.xz = p.zx;
 
     p.z -= -35;
@@ -295,9 +297,18 @@ float boatSplit(vec3 p, float dir)
 
    float h = boat(p);
 
+    vec3 p2 = p;
+    // p2.yz *= rot(-0.3);
+    float d = sdBox(p2 - vec3(0, 0, dir*4.95), vec3(5));
+    d = max(d, h);
 
-    float d = sdBox(p - vec3(0, 0, dir*4.95), vec3(5));
-    return max(d, h);
+    vec3 p6 = p;
+    p6.x = abs(p6.x);
+    p6.z -= -0.3;
+    p6.y -= 0.0;
+    p6.x -= 0.7;
+    float engine = sdSphere(p6, 0.25);
+    return min(d, engine);
 }
 
 DistanceInfo map(in vec3 p)
@@ -324,7 +335,7 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
     for (int jump = 0; jump < S_reflectionJumps; jump++) {
         for (int steps = 0; steps < S_maxSteps; ++steps) {
             vec3 p = rayOrigin + t * rayDirection;
-            
+
             if (jump == 0) {
                 firstJumpPos = p;
             }
@@ -339,8 +350,8 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
             jumpDistance = min(jumpDistance, volumetricJumpDistance);
 
             vec3 lightIntegrated = vr.color - vr.color * exp(-fogAmount * jumpDistance);
-            scatteredLight += transmittance * lightIntegrated;	
-            transmittance *= exp(-fogAmount * jumpDistance);      
+            scatteredLight += transmittance * lightIntegrated;
+            transmittance *= exp(-fogAmount * jumpDistance);
 
             t += jumpDistance;
             if (info.distance < (S_distanceEpsilon)) {
@@ -383,11 +394,11 @@ void main()
 
     float focus = 0.0;
 
-    
-   
+
+
     vec3 ufo = ufoPos();
-    rayOrigin = vec3(ufo.x - 50, 5, ufo.z + sin(iTime)* 3);
-    vec3 tar = ufo;
+    rayOrigin = vec3(-50, 5 + 0.1*cos(3*iTime + sin(iTime)), -9 * smoothstep(3.0, 9.0, iTime));
+    vec3 tar = vec3(-35, 4, 0);
 
 
     vec3 dir = normalize(tar - rayOrigin);
@@ -395,7 +406,7 @@ void main()
  	vec3 up = cross(dir, right);
 
     rayDirection = normalize(dir + right*u + up*v);
-    
+
 
     firstRayDirection = rayDirection;
     //vec3 color = march(rayOrigin, rayDirection);
@@ -411,10 +422,10 @@ void main()
 
       //vec3 ufo = ufoPos();
        //focus = abs(length(res.firstJumpPos - ufo)) * 0.005 + 0.01;
-      
+
       //float t4 = max(0, iTime - P_3);
       //focus = mix(focus, 1 - smoothstep(0, 1, t4), t4); // make clearer as ufo ascends
-      
+
 
     fragColor = vec4(pow(color, vec3(0.5)), clamp(focus, 0.001, 2.0));
     fragColor.xyz *= smoothstep(0.0, 0.5, iTime);
