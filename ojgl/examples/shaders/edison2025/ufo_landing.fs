@@ -128,7 +128,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case doorsType:
             return vec3(1, 0.9, 0.4);
         case boatType:
-            return 20.0*vec3(1, 1, 1);
+            return 15.0*vec3(1, 1, 1);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -148,6 +148,8 @@ vec3 getColor(in MarchResult result)
         lightPosition = vec3(100, 50, -10);
     } else if (iTime > camera2 && scenePart == 1.0) {
         lightPosition = vec3(10, -5, -10);
+    } else if (scenePart == 2.0) {
+        lightPosition = ufoPos() + vec3(-50, 50, 40);
     }
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
@@ -463,12 +465,16 @@ float boat(vec3 p) {
     return h;
 }
 
+vec3 boatPos() {
+    return vec3(10, 0, 33 + 5*sin(iTime)); // TODO fix text using this
+}
+
 float boatSplit(vec3 p, float dir)
 {
     p.xz = p.zx;
 
 
-    p -= vec3(10, 0, 33);
+    p -= boatPos();
 
     p *= 0.4;
 
