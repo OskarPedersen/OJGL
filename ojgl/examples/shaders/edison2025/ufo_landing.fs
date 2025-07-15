@@ -419,7 +419,6 @@ float doors(in vec3 p)
 
 float boat(vec3 p) {
   
-    p.xz *= rot(PI);
     float ffz = p.z > 0.0 ? -4.0 : -7.0;
     float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);
     float fx = 0.971*smoothstep(3, 7, abs(p.z));
@@ -428,7 +427,13 @@ float boat(vec3 p) {
     
     vec3 p1 = p;
     p1 -= vec3(0, 0.4, 0);
-    float hull = sdBox(p1, vec3(2 - fx - fx2, 1.0 + fy, 7 / fz));
+
+    float fx3 = 1.7*(1 - smoothstep(-2.0, 0.5, p.y));
+    p1 -= vec3(0, 0.4, 0);
+    float ff = 0.3;
+    p1.y += ff;
+
+    float hull = sdBox(p1, vec3(2 - fx - fx2 - fx3, 1.0 + fy + ff, 7 / fz));
 
     vec3 p2 = p;
     p2.y -= 1.3;

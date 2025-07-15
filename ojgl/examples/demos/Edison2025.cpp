@@ -326,7 +326,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             auto music = Music::instance();
 
             vector.push_back(ojstd::make_shared<Uniform1f>("C_1_S", music->syncChannels()[1].getTimeSinceAnyNote().toSeconds()));
-            vector.push_back(ojstd::make_shared<Uniform1f>("C_6_S", music->syncChannels()[6].getTimeSinceAnyNote().toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_3_S", music->syncChannels()[3].getTimeSinceAnyNote().toSeconds()));
             vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S", music->syncChannels()[7].getTimeSinceAnyNote().toSeconds()));
 
             vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S_0", music->syncChannels()[7].getTimeSinceLast(0).toSeconds()));
