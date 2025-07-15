@@ -644,6 +644,11 @@ void main()
         //focus = 0.1;
      }
     fragColor = vec4(pow(color, vec3(0.5)), clamp(focus, 0.001, 2.0));
+
+    if(scenePart == 1.0) {
+        fragColor.xyz *= 1.0 - smoothstep(13.0, 13.5, iTime);
+    }
+
 }
 
 )""

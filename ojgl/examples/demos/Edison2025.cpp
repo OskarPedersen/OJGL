@@ -191,7 +191,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(chrom, Duration::milliseconds(static_cast<long>(1000.0 * (8.0 + 12.0 + 10.0 + 6.5 + 10.0 + 4.0))), "ufo_scenes");
+        scenes.emplace_back(chrom, Duration::milliseconds(static_cast<long>(1000.0 * (8.0 + 12.0 + 10.0 + 6.5 + 10.0 + 4.0 - 2.0))), "ufo_scenes");
     }
 
     // Ufo hyperspace
@@ -308,7 +308,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(chrom, Duration::seconds(14), "ufo_landing_part_1");
+        scenes.emplace_back(chrom, Duration::milliseconds(13500), "ufo_landing_part_1");
     }
 
     // Borgila hyperspace

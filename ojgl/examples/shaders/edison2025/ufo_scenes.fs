@@ -35,7 +35,7 @@ float P_1 = (P_0 + 12);
 float P_2 = (P_1 + 10);
 float P_25_D = 6.5;
 float P_25 = (P_2 + P_25_D);
-float P_3 = (P_25 + 10);
+float P_3 = (P_25 + 8);
 #define P_4 (P_3 + 4)
 
 uniform float C_1_S; // bass
@@ -91,7 +91,7 @@ vec3 ufoPos()
 
     } else {
         float t = iTime - P_3;
-        float t2 = iTime - P_25;;
+        float t2 = iTime - P_25;
         return vec3(t2 * ufoSpeed - 120 - (8 + 6.5)*ufoSpeed, 5 + t*t*t*t, 0);
     }
 }
