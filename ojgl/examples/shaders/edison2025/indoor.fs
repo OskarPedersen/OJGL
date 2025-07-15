@@ -85,7 +85,7 @@ float specularIndex(int type) {
 
 float getFogAmount(in vec3 p)
 {
-    return 0.001 + 0.002 * smoothstep(18, 23, iTime);
+    return 0.001;
 }
 
 vec3 getColor(in MarchResult result)
@@ -111,8 +111,11 @@ vec3 getColor(in MarchResult result)
         uv.x = (yaw + PI) / (2.0 * PI);
         uv.y = (pitch + PI / 2.0) / PI;
         float h = texture(inTexture4, uv * 5).x;
-        color = mix(color, color + 2*vec3(clamp(h, 0.0, 1.0)), h);
-        return result.scatteredLight + result.transmittance * mix(color, ao, aof);
+        
+        color = mix(color, ao, aof);
+        color *= 0.4*(1 - 0.5*smoothstep(18, 23, iTime));
+        color = mix(color, color + 0.3*vec3(clamp(h, 0.0, 1.0)), h);
+        return color;
     } else {
         return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
 
