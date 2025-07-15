@@ -49,6 +49,15 @@ uniform float C_7_S_3;
 
 uniform float C_7_T; // "synth"
 
+
+uniform float C_1_T;
+uniform float C_6_T;
+uniform float C_3_T;
+uniform float C_0_T;
+uniform float C_2_T;
+uniform float C_5_T;
+uniform float C_4_T;
+
 bool willHitText = false;
 
 const int boatType = 1;
@@ -204,6 +213,20 @@ VolumetricResult evaluateLight(in vec3 p)
 
     }
 
+
+
+    // uniform float C_1_T;
+    // uniform float C_6_T;
+    // uniform float C_3_T;
+    // uniform float C_0_T;
+    // uniform float C_2_T;
+    // uniform float C_5_T;
+    // uniform float C_4_T;
+
+    if (mod(C_4_T, 8.0) == mod(section + 7.0, 8.0) && iTime > P_25) {
+        //tilt = p.x*0.35;
+        capsuleStr = 12;
+    }
 
     p.y -= tilt;
     float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
