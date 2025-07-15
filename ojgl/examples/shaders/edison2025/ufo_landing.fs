@@ -233,7 +233,7 @@ VolumetricResult evaluateLight(in vec3 p)
     float dRunway = sdBox(p, vec3(0.1, h, 0.1));
     dRunway = opIntersection(dRunway, runwayBox(pOrig));
     float strRunway = 100 - 120*C_1_S;
-
+    strRunway = max(strRunway, 0);
 
     res += runwayColor * strRunway / (dRunway * dRunway);
     finalDis = min(finalDis, dRunway);
