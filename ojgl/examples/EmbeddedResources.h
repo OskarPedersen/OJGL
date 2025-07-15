@@ -77,6 +77,10 @@ namespace ojgl::resources {
           , "edison2025/chrom_ab.fs"
           },
           {
+#include "shaders/edison2025/chrom_ab_hyperspace.fs"
+          , "edison2025/chrom_ab_hyperspace.fs"
+          },
+          {
 #include "shaders/edison2025/blur1.fs"
           , "edison2025/blur1.fs"
           },
