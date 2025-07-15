@@ -187,6 +187,9 @@ float mountain(vec3 p)
 	float h = 4*texture(inTexture0, (p.xz )/90.0).x + 
               200*pow(texture(inTexture0, (p.xz)/1600.0).x, 4);
 
+    if (abs(p.x - boatPosition.x) < 2 && abs(p.z - boatPosition.z) < 10) {
+        h = 0;
+    }
 	return p.y - h + 10;
 }
 
@@ -320,7 +323,7 @@ void main()
         boatPosition = vec3(-25.6538, 0.0, -57.434);
         boatPosition += vec3(0.0, 0.0, 1.5*t);
     } else {
-        float t = iTime - 15;
+        float t = iTime - 16;
         boatPosition = vec3(-25.6426, 0.0, -19.0);
         boatPosition += vec3(0.0, 0.0, 0.5*t);
     }

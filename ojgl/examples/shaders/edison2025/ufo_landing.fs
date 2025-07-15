@@ -638,16 +638,6 @@ void main()
     FullMarchResult res = march2(rayOrigin, rayDirection);
     vec3 color = res.col;
 
-    //if (scenePart == 2.0) {
-    //    //const float fadeOutTime = doorOpenTimePart2 + waitForLaserTime + laserPeakTime * 2.0 + 1;
-    //    const float fadeOutTime = doorOpenTimePart2 + waitForLaserTime + laserPeakTime + 1;
-    //    if (iTime > fadeOutTime) {
-    //        float t = iTime - fadeOutTime;
-    //        color = mix(color, vec3(1), min(1, t)); 
-    //    }
-    //
-    //}
-
      color /= (color + vec3(1.0));
 
      if (scenePart == 2.0) {
