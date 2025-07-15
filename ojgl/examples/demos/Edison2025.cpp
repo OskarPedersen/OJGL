@@ -219,6 +219,12 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
 
             vector.push_back(ojstd::make_shared<Uniform1f>("C_7_T", static_cast<float>(music->syncChannels()[7].getTotalHits())));
 
+
+            //vector.push_back(ojstd::make_shared<Uniform1f>("C_1_S", music->syncChannels()[1].getTimeSinceAnyNote().toSeconds()));
+            //vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S", music->syncChannels()[7].getTimeSinceAnyNote().toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_1_T", static_cast<float>(music->syncChannels()[1].getTotalHits())));
+            //vector.push_back(ojstd::make_shared<Uniform1f>("C_7_T", static_cast<float>(music->syncChannels()[0].getTotalHits())));
+
             return vector;
         });
 
@@ -234,11 +240,11 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
              return { ojstd::make_shared<Uniform2f>("blurDir", 0.f, 1.f) };
          });*/
 
-        auto radialBlur = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "common/radial_blur.fs");
-        radialBlur->setInputs(ufoHyperSpace);
+        //auto radialBlur = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "common/radial_blur.fs");
+        //radialBlur->setInputs(ufoHyperSpace);
 
-        auto chrom = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/chrom_ab.fs");
-        chrom->setInputs(radialBlur);
+        auto chrom = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/chrom_ab_hyperspace.fs");
+        chrom->setInputs(ufoHyperSpace);
         chrom->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
             Buffer::UniformVector vector;
             vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));
@@ -246,6 +252,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             auto music = Music::instance();
 
             vector.push_back(ojstd::make_shared<Uniform1f>("C_1_S", music->syncChannels()[1].getTimeSinceAnyNote().toSeconds()));
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_1_T", static_cast<float>(music->syncChannels()[1].getTotalHits())));
 
             return vector;
         });

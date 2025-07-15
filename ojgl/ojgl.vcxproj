@@ -331,6 +331,9 @@
     <None Include="examples\shaders\edison2025\ufo_hyperspace.fs">
       <FileType>Document</FileType>
     </None>
+    <None Include="examples\shaders\edison2025\chrom_ab_hyperspace.fs">
+      <FileType>Document</FileType>
+    </None>
     <ClCompile Include="examples\TextRenderer.cpp" />
     <ClCompile Include="src\thirdparty\StbImage.cpp" />
     <ClCompile Include="src\music\Music.cpp" />

@@ -38,6 +38,9 @@ uniform float C_7_S_3;
 
 uniform float C_7_T; // "synth"
 
+
+uniform float C_1_T;
+
 const int ufoType = 5;
 
 vec3 cameraPosition;
@@ -139,36 +142,42 @@ VolumetricResult evaluateLight(in vec3 p)
 
     float dHyperSum = 999999;
 
+
+
+    // C_1_T
+       float hyperStr1 = 5 ;
+       float hyperStr2 = 0.2;
+       float hyperStr3 = 3;
+
    { // hyper 1
    
        vec3 pHyper = pOrig;
         pHyper.y -= 1;
        pHyper.yz *= rot(pHyper.x * 0.01);
        float iHyper = pModPolar(pHyper.yz, 16);
+       float drum = (60.0/80.0)*C_1_S;
        pHyper -= vec3(0, 20, sin(pOrig.x + iTime * 60)*5);
        float dHyper = sdCylinder(pHyper.zyx, 0.0);
    
-       float hyperStr = 3 + 2.5*sin(iTime * 10);
        vec3 hyperColor = vec3(0.6, 0.3, 1.0);
-       res += hyperColor * hyperStr / (dHyper * dHyper);
+       res += hyperColor * hyperStr1 / (dHyper * dHyper);
    
        dHyperSum = min(dHyperSum, dHyper);
    }
    
    
-   { // hyper 2
+   { // hyper 2 
         vec3 pHyper = pOrig;
         pHyper.y -= 1;
        pHyper.yz *= rot(pHyper.x * 0.001);
        float iHyper = pModPolar(pHyper.yz, 16);
-       pHyper -= vec3(0, 6 + sin(pOrig.x * 0.03 + iTime), -sin(pOrig.x + iTime * 60)*1.1);
+       float drum = (60.0/80.0)*C_1_S;
+       pHyper -= vec3(0, 6 + sin(pOrig.x * 0.03 + iTime), -(0.5 + 0.5*drum)*sin(pOrig.x + iTime * 60)*1.1);
        float dHyper = sdCylinder(pHyper.zyx, 0.0);
-       //dHyper -= texture(inTexture0, (pOrig.yz)/90.0).x;
        dHyper = max(0.01, dHyper);
    
-       float hyperStr = 0.2;
        vec3 hyperColor = vec3(0.6, 0.3, 1.0);
-       res += hyperColor * hyperStr / (dHyper);
+       res += hyperColor * hyperStr2 / (dHyper);
    
        dHyperSum = min(dHyperSum, dHyper);
    }
@@ -181,11 +190,10 @@ VolumetricResult evaluateLight(in vec3 p)
         float iHyper = pModPolar(pHyper.yz, 16);
         pHyper -= vec3(0, 100, sin(pOrig.x - iTime * 10)*5);
         float dHyper = sdCylinder(pHyper.zyx, 0.0);
-
-        float hyperStr = 3;
+    
         vec3 hyperColor = vec3(0.6, 0.3, 1.0);
-        res += hyperColor * hyperStr / (dHyper * dHyper);
-
+        res += hyperColor * hyperStr3 / (dHyper * dHyper);
+    
         dHyperSum = min(dHyperSum, dHyper);
     }
 
@@ -322,7 +330,7 @@ void main()
     
   
     vec3 ufo = ufoPos();
-    rayOrigin = vec3(ufo.x - 50, 5, ufo.z);
+    rayOrigin = vec3(ufo.x - 50 + sin(iTime) * 10, 5, ufo.z  + sin(iTime*0.04) * 50);
     vec3 tar = ufo;
 
 
