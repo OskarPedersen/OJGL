@@ -127,12 +127,6 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        experiment->setTextureCallback([this]([[maybe_unused]] float relativeSceneTime) {
-            ojstd::vector<ojstd::shared_ptr<Uniform1t>> vector;
-            vector.push_back(ojstd::make_shared<Uniform1t>("borgilaTexture", this->getText("BORGILA", "Arial Black")));
-            return vector;
-        });
-
         scenes.emplace_back(experiment, Duration::seconds(24), "indoor");
     }
 
@@ -191,7 +185,13 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(chrom, Duration::milliseconds(static_cast<long>(1000.0 * (8.0 + 12.0 + 10.0 + 6.5 + 10.0 + 4.0))), "ufo_scenes");
+        ufoScenes->setTextureCallback([this]([[maybe_unused]] float relativeSceneTime) {
+            ojstd::vector<ojstd::shared_ptr<Uniform1t>> vector;
+            vector.push_back(ojstd::make_shared<Uniform1t>("borgilaTexture", this->getText("BORGILA", "Arial Black")));
+            return vector;
+        });
+
+        scenes.emplace_back(ufoScenes, Duration::milliseconds(static_cast<long>(1000.0 * (8.0 + 12.0 + 10.0 + 6.5 + 10.0 + 4.0))), "ufo_scenes");
     }
 
     // Ufo hyperspace

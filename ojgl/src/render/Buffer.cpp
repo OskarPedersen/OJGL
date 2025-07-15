@@ -228,6 +228,7 @@ void Buffer::render(float relativeSceneTime, float absoluteTime)
     }
 
     if (_textureCallback) {
+        // LOG_INFO("Has textures: " << _textureCallback(relativeSceneTime).size());
         for (const auto& texture : _textureCallback(relativeSceneTime)) {
             GL_CHECK_ERROR(glUniform1i(glGetUniformLocation(_programID, texture->location().c_str()), currentTextureID));
             GL_CHECK_ERROR(glActiveTexture(GL_TEXTURE0 + currentTextureID));
@@ -348,7 +349,7 @@ void Buffer::loadShader()
     GL_CHECK_ERROR(glValidateProgram(_programID));
     GL_CHECK_LOG(glGetProgramiv(_programID, GL_VALIDATE_STATUS, &param), _programID, glGetProgramInfoLog, "Shader program is not valid!");
 
-    //Delete the shaders
+    // Delete the shaders
     GL_CHECK_ERROR(glDetachShader(_programID, vertID));
     GL_CHECK_ERROR(glDetachShader(_programID, fragID));
     GL_CHECK_ERROR(glDeleteShader(vertID));

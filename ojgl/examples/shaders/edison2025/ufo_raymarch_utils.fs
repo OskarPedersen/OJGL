@@ -96,4 +96,15 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
 
     return FullMarchResult(resultColor, firstJumpPos);
 }
+
+float uvBox(vec3 p, vec3 b, inout vec2 uv)
+{
+    vec3 d = abs(p) - b;
+    float dis = length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
+
+    uv = p.xy / (b.xy * 2) - 0.5;
+    uv.x*=-1;
+    return dis;
+}
+
 )""

@@ -26,6 +26,7 @@ uniform float iTime;
 
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
+uniform sampler2D borgilaTexture;
 uniform sampler2D inTexture0;
 uniform sampler2D inTexture1;
 
@@ -47,6 +48,8 @@ uniform float C_7_S_2;
 uniform float C_7_S_3;
 
 uniform float C_7_T; // "synth"
+
+bool willHitText = false;
 
 const int boatType = 1;
 const int mountainType = 2;
@@ -100,7 +103,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
     switch (type) {
         case boatType:
-            return 2.0*vec3(1, 1, 1);
+            return willHitText ? vec3(0.0) : 2.0*vec3(1, 1, 1);
         case mountainType: 
             return 0.0*vec3(0.2, 0.2, 0.1);
         case waterType:
@@ -309,8 +312,8 @@ float opIntersection( float d1, float d2 )
 }
 
 float boat(vec3 p) {
+    // return sdBox(p, vec3(2));
     p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
-    
     p.xz *= rot(PI);
     float ffz = p.z > 0.0 ? -4.0 : -7.0;
     float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);
@@ -401,11 +404,63 @@ DistanceInfo map(in vec3 p)
 
    // Fix this!
     if (iTime > P_0 && iTime < P_1) {
-        d = sunk(boatFrontDis, d, 0.3);
+        d = sunk(boatFrontDis, d, 0.15);
     }
     
     return d;
 }
+
+
+float borgilaText(vec3 p)
+{
+    if (p.y < 0.08) {
+        return 100;
+    }
+    float dir = -1.0;
+    p.y += mod(boatSplitTime * 0.3, 5.0);
+    p.z -= dir*5;
+    p.zy *= rot(dir*boatSplitTime*0.1);
+    p.z += dir*5;
+
+    p.xy *= rot(dir*boatSplitTime*0.3);
+
+    p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
+    p.xz *= rot(PI);
+    p = vec3(-p.z, p.y, p.x);
+    p.y -= 1.0;
+    p.z -= -0.6;
+    p.x -= -4;
+    vec2 uv;
+    float d =  uvBox(p, vec3(0.6, 0.25, 0.03), uv);
+    uv.x *=-1;
+    if ( d < 0.001) {
+        float s = texture(borgilaTexture, uv).x;
+        if (s > 0.2) { // If not on text
+            d = 100;
+        }
+	}
+    return d;
+}
+
+
+bool willHitBorgilaText(vec3 rayOrigin, vec3 rayDirection) {
+    float t = 0;
+    float lastJumpDistance = 10000;
+    for (int steps = 0; steps < 20; ++steps) {
+        vec3 p = rayOrigin + t * rayDirection;
+        float d = borgilaText(p);
+        if (d < S_distanceEpsilon) {
+            return true;
+        }
+        t += d;
+        if (d > lastJumpDistance) {
+            return false;
+        }
+        lastJumpDistance = d;
+    }
+    return false;
+}
+
 
 void main()
 {
@@ -439,7 +494,7 @@ void main()
     float focus = 0.0;
 
     
-  
+
     if (iTime < P_0) {
         vec3 ufo = ufoPos();
         rayOrigin = vec3(ufo.x - 200, 4, ufo.z);
@@ -499,7 +554,7 @@ void main()
     }
 
     firstRayDirection = rayDirection;
-    //vec3 color = march(rayOrigin, rayDirection);
+    willHitText = willHitBorgilaText(rayOrigin, rayDirection);
     FullMarchResult res = march2(rayOrigin, rayDirection);
     vec3 color = res.col;
 
