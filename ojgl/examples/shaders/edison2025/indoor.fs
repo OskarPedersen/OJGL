@@ -70,7 +70,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case ufoType:
             return vec3(5.0);
         default:
-           return 5*vec3(0, 0.0, 1);
+           return 7.0*vec3(0, 0.0, 1);
     }
 }
 
@@ -110,10 +110,10 @@ vec3 getColor(in MarchResult result)
         vec2 uv;
         uv.x = (yaw + PI) / (2.0 * PI);
         uv.y = (pitch + PI / 2.0) / PI;
-        float h = texture(inTexture4, uv * 5).x;
+        float h = texture(inTexture4, uv * 5).x + 0.05*hash11(fragCoord.x*fragCoord.y);
         
         color = mix(color, ao, aof);
-        color *= 0.4*(1 - 0.5*smoothstep(18, 23, iTime));
+        color *= 0.35*(1 - 0.6*smoothstep(18, 23, iTime));
         color = mix(color, color + 0.3*vec3(clamp(h, 0.0, 1.0)), h);
         return color;
     } else {
