@@ -379,12 +379,7 @@ float hangar(in vec3 p)
     
    float s = 0.1;
    float r = 20.0;
-   //p.x -= s*texture(inTexture0, (p.yz)/r).x;
    p.y -= s*texture(inTexture0, (p.xz)/r).x;
-   //p.y -= (sin(p.x) + sin(p.z)) * 0.1;
-   //p.z -= s*texture(inTexture0, (p.xy)/r).x;
-
-
     float inside = sdBox(p, vec3(13, 6, 16));
     d = opSubtraction(inside, d);
     return d;

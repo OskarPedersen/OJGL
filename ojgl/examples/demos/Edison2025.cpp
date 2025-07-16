@@ -67,7 +67,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(experiment, Duration::seconds(28), "borgila");
+        scenes.emplace_back(experiment, Duration::seconds(27), "borgila");
     }
 
     // indoor scene
@@ -127,7 +127,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(experiment, Duration::seconds(24), "indoor");
+        scenes.emplace_back(experiment, Duration::seconds(25), "indoor");
     }
 
     // Ufo scenes
@@ -156,7 +156,6 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S_3", music->syncChannels()[7].getTimeSinceLast(3).toSeconds()));
 
             vector.push_back(ojstd::make_shared<Uniform1f>("C_7_T", static_cast<float>(music->syncChannels()[7].getTotalHits())));
-
 
             vector.push_back(ojstd::make_shared<Uniform1f>("C_1_T", static_cast<float>(music->syncChannels()[1].getTotalHits())));
             vector.push_back(ojstd::make_shared<Uniform1f>("C_6_T", static_cast<float>(music->syncChannels()[6].getTotalHits())));
@@ -227,11 +226,10 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
 
             vector.push_back(ojstd::make_shared<Uniform1f>("C_7_T", static_cast<float>(music->syncChannels()[7].getTotalHits())));
 
-
-            //vector.push_back(ojstd::make_shared<Uniform1f>("C_1_S", music->syncChannels()[1].getTimeSinceAnyNote().toSeconds()));
-            //vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S", music->syncChannels()[7].getTimeSinceAnyNote().toSeconds()));
+            // vector.push_back(ojstd::make_shared<Uniform1f>("C_1_S", music->syncChannels()[1].getTimeSinceAnyNote().toSeconds()));
+            // vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S", music->syncChannels()[7].getTimeSinceAnyNote().toSeconds()));
             vector.push_back(ojstd::make_shared<Uniform1f>("C_1_T", static_cast<float>(music->syncChannels()[1].getTotalHits())));
-            //vector.push_back(ojstd::make_shared<Uniform1f>("C_7_T", static_cast<float>(music->syncChannels()[0].getTotalHits())));
+            // vector.push_back(ojstd::make_shared<Uniform1f>("C_7_T", static_cast<float>(music->syncChannels()[0].getTotalHits())));
 
             return vector;
         });
@@ -248,8 +246,8 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
              return { ojstd::make_shared<Uniform2f>("blurDir", 0.f, 1.f) };
          });*/
 
-        //auto radialBlur = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "common/radial_blur.fs");
-        //radialBlur->setInputs(ufoHyperSpace);
+        // auto radialBlur = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "common/radial_blur.fs");
+        // radialBlur->setInputs(ufoHyperSpace);
 
         auto chrom = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/chrom_ab_hyperspace.fs");
         chrom->setInputs(ufoHyperSpace);
@@ -482,15 +480,15 @@ void Edison2025::update(const Duration& relativeSceneTime, const Duration& elaps
         float elevation = -0.22f;
         Vector3f dv { speed * ojstd::sin(heading), 0.0, -speed * ojstd::cos(heading) * currentTime };
         cameraPosition += dv;
-        if (currentTime > 8.0f) {
-            float s = ojstd::smoothstep(8.0, 13.0, currentTime);
+        if (currentTime > 9.0f) {
+            float s = ojstd::smoothstep(9.0, 14.0, currentTime);
             cameraPosition.x -= 1.75f * s;
             cameraPosition.y -= 0.5f * s;
             cameraPosition.z += 2.9f * s;
             elevation -= 0.4f * s;
         }
-        if (currentTime > 18.0f) {
-            float s = ojstd::smoothstep(18.0, 20.0, currentTime);
+        if (currentTime > 19.0f) {
+            float s = ojstd::smoothstep(19.0, 21.0, currentTime);
             elevation += 0.7f * s;
             heading -= 0.25f * s;
         }
