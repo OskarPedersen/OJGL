@@ -57,7 +57,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
     switch (type) {
         case boatType:
-            return 1.5*vec3(1, 1, 1);
+            return 10*vec3(1, 1, 1);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -71,12 +71,11 @@ vec3 getColor(in MarchResult result)
 {
     vec3 color = vec3(0);
 
-
-    vec3 lightPosition = vec3(-65, 0, 0);
+    vec3 lightPosition = vec3(-40, 30, -10);
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
     float diffuse = max(0., dot(invLight, normal));
-    vec3 ambientColor = getAmbientColor(result.type, result.position, normal);
+    vec3 ambientColor = getAmbientColor(result. type, result.position, normal);
     color += ambientColor * (0.02 + 0.98*diffuse);
     float k = max(0.0, dot(rayDirection, reflect(invLight, normal)));
     float spec = 1 * pow(k, 30.0);

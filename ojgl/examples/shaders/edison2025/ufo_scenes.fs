@@ -294,11 +294,6 @@ float mountainH(vec3 p) // just the height
         p.z += 100;
     }
     
-    const float r = max(0, length(p.xz) - 60);
-    const float k = 40 * exp(-0.006*r);
-    if (p.y > k) {
-        return sdPlane(p, vec4(0, 1, 0, k));
-    }
 	float h = 4*texture(inTexture0, (p.xz)/90.0).x + 
               200*pow(texture(inTexture0, (p.xz)/1600.0).x, 4);
     
