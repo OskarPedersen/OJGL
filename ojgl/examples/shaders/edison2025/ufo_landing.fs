@@ -8,6 +8,7 @@ const float S_distanceMultiplier = 0.7;
 const float S_minVolumetricJumpDistance = 0.005;
 float S_volumetricDistanceMultiplier = 0.5;
 const int S_reflectionJumps = 3;
+float g_MountainHeight = 0.0;
 
 #define S_VOLUMETRIC 1
 #define S_REFLECTIONS 1
@@ -15,7 +16,7 @@ const int S_reflectionJumps = 3;
 
 #include "common/noise.fs"
 #include "common/primitives.fs"
-#include "common/raymarch_utils.fs"
+#include "edison2025/ufo_raymarch_utils.fs"
 #include "common/utils.fs"
 
 in vec2 fragCoord;
@@ -25,6 +26,7 @@ uniform float iTime;
 
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
+uniform sampler2D borgilaTexture;
 uniform sampler2D inTexture0;
 
 uniform float C_1_S; // bass
@@ -39,6 +41,8 @@ uniform float C_7_S_3;
 uniform float C_7_T; // "synth"
 
 uniform float scenePart;
+
+bool willHitText = false;
 
 const int ufoType = 5;
 const int mountainType = 6;
@@ -128,7 +132,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case doorsType:
             return vec3(1, 0.9, 0.4);
         case boatType:
-            return 15.0*vec3(1, 1, 1);
+            return willHitText ? vec3(0.0) : 15.0*vec3(1, 1, 1);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -358,13 +362,7 @@ vec3 hangarPos = vec3(40, -5, 33);
 float hangarBox(in vec3 p) {
    p -= hangarPos;
     float w = p.y;
-
    vec3 b = vec3(15 - w * 0.6 + 10, 15, 18);
-
-  //p.x -= 0.5*texture(inTexture0, (p.yz)/200.0).x;
-  //p.y -= 0.5*texture(inTexture0, (p.xz)/200.0).x;
-  //p.z -= 0.5*texture(inTexture0, (p.xy)/200.0).x;
-
   return sdBox(p, b);
 }
 
@@ -402,14 +400,10 @@ float doors(in vec3 p)
     }
 
     float w = 6.5;
-
     vec3 b = vec3(w*open, 13, 0.5);
-    //p.x = abs(p.x + w) - w;
      p.z -= 0.5*texture(inTexture0, (p.xy)/200.0).x;
-
     float d1 = sdBox(p - vec3(40 + w*2 - w * open, -5, 17), b);
     float d2 = sdBox(p - vec3(40 - w*2 + w * open, -5, 17), b);
-    //float d2 = sdBox(p - vec3(40 - w * open - w, -5, 17), b);
 
     return min(d1, d2);
 
@@ -425,14 +419,12 @@ float boat(vec3 p) {
     
     vec3 p1 = p;
     p1 -= vec3(0, 0.4, 0);
-
     float fx3 = 1.7*(1 - smoothstep(-2.0, 0.5, p.y));
     p1 -= vec3(0, 0.4, 0);
     float ff = 0.3;
     p1.y += ff;
 
     float hull = sdBox(p1, vec3(2 - fx - fx2 - fx3, 1.0 + fy + ff, 7 / fz));
-
     vec3 p2 = p;
     p2.y -= 1.3;
     float wfx = 0.9 * smoothstep(-0.8, 0.8, p2.y);
@@ -445,16 +437,12 @@ float boat(vec3 p) {
     p3.y -= 3;
     p3.z -= 3.6;
     float mast = sdCappedCylinder(p3, vec2(0.08, 2.2));
-
-    
     vec3 p5 = p;
     p5.z = abs(p5.z);
     p5.z -= 4.6;
     p5.y -= 3.2;
     p5.zy *= rot(-1.1);
     float line2 = sdBox(p5, vec3(0.01, 0.01, 2.05));
-
-
     float h = min(line2, min(mast, min(windows, hull)));
 
     return h;
@@ -467,14 +455,9 @@ vec3 boatPos() {
 float boatSplit(vec3 p, float dir)
 {
     p.xz = p.zx;
-
-
     p -= boatPos();
-
     p *= 0.4;
-
     float h = boat(p);
-
     vec3 cannonPos = vec3(1.5, 0.5, 2.5);
     float cannonOuter = sdCappedCylinder(p.yxz - cannonPos.yxz, vec2(0.4, 1.0));
     float cannonInner = sdCappedCylinder(p.yxz - cannonPos.yxz, vec2(0.2, 100));
@@ -507,65 +490,43 @@ DistanceInfo map(in vec3 p)
    return di;
 }
 
-struct FullMarchResult {
-    vec3 col;
-    vec3 firstJumpPos;
-};
-
-FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
+float borgilaText(vec3 p)
 {
-    float t = 0.0;
-    vec3 scatteredLight = vec3(0.0);
-    float transmittance = 1.0;
-    float reflectionModifier = 1.0;
-    vec3 resultColor = vec3(0.0);
-
-    vec3 firstJumpPos = vec3(0.0);
-
-    for (int jump = 0; jump < S_reflectionJumps; jump++) {
-        for (int steps = 0; steps < S_maxSteps; ++steps) {
-            vec3 p = rayOrigin + t * rayDirection;
-            
-            if (jump == 0) {
-                firstJumpPos = p;
-            }
-
-            DistanceInfo info = map(p);
-            float jumpDistance = info.distance * S_distanceMultiplier;
-
-            float fogAmount = getFogAmount(p);
-            VolumetricResult vr = evaluateLight(p);
-
-            float volumetricJumpDistance = max(S_minVolumetricJumpDistance, vr.distance * S_volumetricDistanceMultiplier);
-            jumpDistance = min(jumpDistance, volumetricJumpDistance);
-
-            vec3 lightIntegrated = vr.color - vr.color * exp(-fogAmount * jumpDistance);
-            scatteredLight += transmittance * lightIntegrated;	
-            transmittance *= exp(-fogAmount * jumpDistance);      
-
-            t += jumpDistance;
-            if (info.distance < (S_distanceEpsilon)) {
-                vec3 color = getColor(MarchResult(info.type, p, steps, transmittance, scatteredLight, jump, rayDirection));
-
-                t = 0.0;
-                rayDirection = reflect(rayDirection, normal(p));
-                rayOrigin = p + 0.1 * rayDirection;
-
-                resultColor = mix(resultColor, color, reflectionModifier);
-                reflectionModifier *= getReflectiveIndex(info.type);
-                break;
-
-            }
-
-            if (t > S_maxDistance || steps == S_maxDistance - 1) {
-                vec3 color = getColor(MarchResult(invalidType, p, steps, transmittance, scatteredLight, jump, rayDirection));
-                resultColor = mix(resultColor, color, reflectionModifier);
-                return FullMarchResult(resultColor, firstJumpPos);
-            }
+    float f = 1/0.4;
+    p.xz = p.zx;
+    p -= boatPos();
+    p.y -= 1.0 * f;
+    p.z -= 4.4 * f;
+    p.x -= -0.6 * f;
+    p = vec3(-p.z, p.y, p.x);
+    vec2 uv;
+    float d =  uvBox(p, vec3(0.6*f, 0.25*f, 0.03), uv);
+    uv.x *=-1;
+    if ( d < 0.001) {
+        float s = texture(borgilaTexture, uv).x;
+        if (s > 0.1) { // If not on text
+            d = 100;
         }
-    }
+	}
+    return d;
+}
 
-    return FullMarchResult(resultColor, firstJumpPos);
+bool willHitBorgilaText(vec3 rayOrigin, vec3 rayDirection) {
+    float t = 0;
+    float lastJumpDistance = 10000;
+    for (int steps = 0; steps < 20; ++steps) {
+        vec3 p = rayOrigin + t * rayDirection;
+        float d = borgilaText(p);
+        if (d < S_distanceEpsilon) {
+            return true;
+        }
+        t += d;
+        if (d > lastJumpDistance) {
+            return false;
+        }
+        lastJumpDistance = d;
+    }
+    return false;
 }
 
 void main()
@@ -637,25 +598,17 @@ void main()
 
         rayDirection = normalize(dir + right*u + up*v);
     }
-  
-    
-
     firstRayDirection = rayDirection;
 
+    willHitText = willHitBorgilaText(rayOrigin, rayDirection);
     FullMarchResult res = march2(rayOrigin, rayDirection);
     vec3 color = res.col;
 
      color /= (color + vec3(1.0));
-
-     if (scenePart == 2.0) {
-        //focus = 0.1;
-     }
     fragColor = vec4(pow(color, vec3(0.5)), clamp(focus, 0.001, 2.0));
 
     if(scenePart == 1.0) {
         fragColor.xyz *= 1.0 - smoothstep(13.0, 13.5, iTime);
     }
-
 }
-
 )""

@@ -413,6 +413,12 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
+        ufoLanding->setTextureCallback([this]([[maybe_unused]] float relativeSceneTime) {
+            ojstd::vector<ojstd::shared_ptr<Uniform1t>> vector;
+            vector.push_back(ojstd::make_shared<Uniform1t>("borgilaTexture", this->getText("BORGILA", "Arial Black")));
+            return vector;
+        });
+
         auto blur1 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
         blur1->setInputs(ufoLanding);
         blur1->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
