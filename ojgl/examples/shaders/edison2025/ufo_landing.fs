@@ -66,12 +66,15 @@ const float ufoPosD1 = 3;
 const float ufoPosD2 = 4;
 const float ufoPosD3 = 5;
 
+const float part2flybyEndTime = 7;
+
 const float doorOpenTimePart2 = 2;
 const float waitForLaserTime = 2;
-const float laserPeakTime = 2.5;
+const float laserPeakTime = 2.5 + part2flybyEndTime;
 
 const float camera1 = ufoPosD1 + ufoPosD2 - 1;
 const float camera2 = camera1 + ufoPosD3 - 2;
+
 
 bool ufoVisible() {
     return scenePart == 1.0 || (scenePart == 2.0 && iTime < (laserPeakTime + doorOpenTimePart2 + waitForLaserTime));
@@ -115,7 +118,11 @@ vec3 ufoPos()
 }
 
 vec3 boatPos() {
-    return vec3(10, 0, 33 + 5*sin(iTime));
+    if (iTime < part2flybyEndTime) {
+        return vec3(0, 100, 0);
+    } else {
+        return vec3(10, 0, 33 + 5*sin(iTime));
+    }
 }
 
 float opIntersection( float d1, float d2 )
@@ -293,22 +300,23 @@ VolumetricResult evaluateLight(in vec3 p)
         }
 
 
+        { // laser
+            p = pOrig;
+            p = p.xzy;
+            p -= vec3(39.25, 15, 1.25);
 
-        p = pOrig;
-        p = p.xzy;
-        p -= vec3(39.25, 15, 1.25);
+            float tt = iTime - doorOpenTimePart2 - waitForLaserTime - part2flybyEndTime;
+            float t = min(tt, laserPeakTime*2.0-tt);
 
-        float tt = iTime - doorOpenTimePart2 - waitForLaserTime;
-        float t = min(tt, laserPeakTime*2.0-tt);
+            float len = 2 + min(t, 2.0) * 10;
 
-        float len = 2 + min(t, 2.0) * 10;
+            float dLaser = sdVerticalCapsule(p - (vec3(0, 0, 0)), len,  0.1);
+            float strLaser = 100 + max(0, tt - 1.5) * 100000.0;
+            vec3 laserColor = vec3(1.0, 0.05, 0.05);
 
-        float dLaser = sdVerticalCapsule(p - (vec3(0, 0, 0)), len,  0.1);
-        float strLaser = 100 + max(0, tt - 1.5) * 100000.0;
-        vec3 laserColor = vec3(1.0, 0.05, 0.05);
-
-        res += laserColor * strLaser / (dLaser * dLaser);
-        finalDis = min(finalDis, dLaser);
+            res += laserColor * strLaser / (dLaser * dLaser);
+            finalDis = min(finalDis, dLaser);
+        }
     }
 
 
@@ -633,15 +641,26 @@ void main()
              rayDirection = normalize(dir + right*u + up*v);
         }
     } else { // part 2
-        vec3 ufo = ufoPos();
-        rayOrigin = vec3(40, 5, 38);
-        vec3 tar = rayOrigin + vec3(0, -0.2, -1);
+        if (iTime < part2flybyEndTime) {
+            vec3 boat = boatPos();
+            rayOrigin = boat + vec3(20, 20, 20);
+            vec3 tar = boat;
         
-        vec3 dir = normalize(tar - rayOrigin);
-	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
- 	    vec3 up = cross(dir, right);
+            vec3 dir = normalize(tar - rayOrigin);
+	        vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	        vec3 up = cross(dir, right);
 
-        rayDirection = normalize(dir + right*u + up*v);
+            rayDirection = normalize(dir + right*u + up*v);
+        } else {
+            rayOrigin = vec3(40, 5, 38);
+            vec3 tar = rayOrigin + vec3(0, -0.2, -1);
+        
+            vec3 dir = normalize(tar - rayOrigin);
+	        vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	        vec3 up = cross(dir, right);
+
+            rayDirection = normalize(dir + right*u + up*v);
+        }
     }
     firstRayDirection = rayDirection;
 
