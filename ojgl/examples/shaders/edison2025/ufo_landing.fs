@@ -459,10 +459,10 @@ float boatSplit(vec3 p, float dir)
     p *= 0.4;
     float h = boat(p);
     vec3 cannonPos = vec3(1.5, 0.5, 2.5);
-    float cannonOuter = sdCappedCylinder(p.yxz - cannonPos.yxz, vec2(0.4, 1.0));
-    float cannonInner = sdCappedCylinder(p.yxz - cannonPos.yxz, vec2(0.2, 100));
+    float cannonOuter = sdCappedCylinder(p.yxz - cannonPos.yxz, vec2(0.3, 1.0));
+    float cannonInner = sdCappedCylinder(p.yxz - cannonPos.yxz, vec2(0.15, 100));
     float cannon = opSubtraction(cannonInner, cannonOuter);
-    h = min(h, cannon);
+    h = smink(h, cannon, 0.5);
 
     float d = sdBox(p - vec3(0, 0, dir*4.95), vec3(5));
     return max(d, h);
