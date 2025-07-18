@@ -48,10 +48,10 @@ const float ufoPosD1 = 3;
 const float ufoPosD2 = 4;
 const float ufoPosD3 = 5;
 
-const float part2flybyEndTime = 7;
+const float part2flybyEndTime = 0; //7;
 
 const float doorOpenTimePart2 = 2;
-const float waitForLaserTime = 2;
+const float waitForLaserTime = 4;
 const float laserPeakTime = 2.5 + part2flybyEndTime;
 
 const float camera1 = ufoPosD1 + ufoPosD2 - 1;
