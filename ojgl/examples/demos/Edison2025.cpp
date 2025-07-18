@@ -291,6 +291,8 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
 
             vector.push_back(ojstd::make_shared<Uniform1f>("C_7_T", static_cast<float>(music->syncChannels()[7].getTotalHits())));
 
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_3_S", music->syncChannels()[3].getTimeSinceAnyNote().toSeconds()));
+
             vector.push_back(ojstd::make_shared<Uniform1f>("scenePart", 1.0f));
 
             return vector;
@@ -407,6 +409,8 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             vector.push_back(ojstd::make_shared<Uniform1f>("C_7_S_3", music->syncChannels()[7].getTimeSinceLast(3).toSeconds()));
 
             vector.push_back(ojstd::make_shared<Uniform1f>("C_7_T", static_cast<float>(music->syncChannels()[7].getTotalHits())));
+
+            vector.push_back(ojstd::make_shared<Uniform1f>("C_3_S", music->syncChannels()[3].getTimeSinceAnyNote().toSeconds()));
 
             vector.push_back(ojstd::make_shared<Uniform1f>("scenePart", 2.0f));
 

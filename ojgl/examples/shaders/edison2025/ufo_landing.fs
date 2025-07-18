@@ -40,6 +40,8 @@ uniform float C_7_S_3;
 
 uniform float C_7_T; // "synth"
 
+uniform float C_3_S; // "vocals"
+
 uniform float scenePart;
 
 bool willHitText = false;
@@ -112,6 +114,9 @@ vec3 ufoPos()
     return endPos;
 }
 
+vec3 boatPos() {
+    return vec3(10, 0, 33 + 5*sin(iTime));
+}
 
 float opIntersection( float d1, float d2 )
 {
@@ -245,6 +250,50 @@ VolumetricResult evaluateLight(in vec3 p)
     finalDis = min(finalDis, dRunway);
  
     if (scenePart == 2.0) {
+      
+        { // Borgila engine
+            // float sdCappedCylinder(vec3 p, vec2s h);
+            vec3 pEngine = pOrig;
+
+            //pEngine = pEngine.yxz;
+            //pEngine.y -= -36;
+            //pEngine.x -= 2;
+
+            pEngine.xyz = pEngine.zyx;
+
+            //pEngine = p.xzy;
+            pEngine -= boatPos() + vec3(1, 0, -2);//vec3(39.25, 10.25, 15);
+           // pEngine -= vec3(5, 30, 10); // works after flip
+
+            // vec3(10, 0, 33 + 5*sin(iTime));
+
+            //pEngine.z = abs(pEngine.z);
+            const float engineW = 0.7;
+            pEngine.z -= engineW;
+
+            
+            float w = 0.4 + sin(p.z* 1000) * 0.1;
+            
+            w -= 0.1*sin(pOrig.z * 1000.0 + iTime * 2000);
+
+            float depth = 1.2 + 0.8*max(0.5 - C_3_S*3, 0);
+
+            float dEngine1 = sdCappedCylinder(pEngine.xzy, vec2(w, depth));
+            pEngine.x += engineW * 2.0;
+            float dEngine2 = sdCappedCylinder(pEngine.xzy, vec2(w, depth));
+            float dEngine = min(dEngine1, dEngine2);
+
+             float engineStr = 100 + sin(iTime * 30) * 10; //1;
+
+            vec3 engineColor = mix(vec3(1.0, 0.1, 0.01), vec3(1.0, 0.0, 0.01), mod(p.z, 1.0));//vec3(1.0);;
+            res += engineColor * engineStr / (dEngine * dEngine);
+
+            //dHyperSum = min(dHyperSum, dEngine);
+            finalDis = min(finalDis, dEngine);
+        }
+
+
+
         p = pOrig;
         p = p.xzy;
         p -= vec3(39.25, 15, 1.25);
@@ -448,13 +497,9 @@ float boat(vec3 p) {
     return h;
 }
 
-vec3 boatPos() {
-    return vec3(10, 0, 33 + 5*sin(iTime)); // TODO fix text using this
-}
-
 float boatSplit(vec3 p, float dir)
 {
-    p.xz = p.zx;
+    p.xyz = p.zyx;
     p -= boatPos();
     p *= 0.4;
     float h = boat(p);
