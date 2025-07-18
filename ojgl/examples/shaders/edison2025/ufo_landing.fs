@@ -88,9 +88,9 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case runwayType:
             return vec3(1, 0.9, 0.8);
         case hangarType:
-            return vec3(0.5);
+            return vec3(0.0);
         case doorsType:
-            return vec3(1, 0.9, 0.4);
+            return 0*vec3(1, 0.9, 0.4);
         case boatType:
             return willHitText ? vec3(0.0) : 15.0*vec3(1, 1, 1);
         default:
