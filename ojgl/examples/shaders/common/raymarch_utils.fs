@@ -81,6 +81,7 @@ vec3 march(in vec3 rayOrigin, in vec3 rayDirection)
             float volumetricJumpDistance = max(S_minVolumetricJumpDistance, vr.distance * S_volumetricDistanceMultiplier);
             jumpDistance = min(jumpDistance, volumetricJumpDistance);
             vec3 lightIntegrated = vr.color - vr.color * exp(-fogAmount * jumpDistance);
+            lightIntegrated = max(vec3(0), lightIntegrated); // To fix the small black squares that could appear sometimes with bright volumetric light
             scatteredLight += transmittance * lightIntegrated;	
             transmittance *= exp(-fogAmount * jumpDistance);      
 #endif
