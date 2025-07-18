@@ -77,32 +77,13 @@ float ufoSpeed = 10.0;
 
 vec3 ufoPos()
 {
-    float timeBeforePart25 = (ojTime - P_0 - P_25_D);
-    if (ojTime < P_0) {
-        float y = 65 - smoothstep(-6, 6, ojTime) * 7 * 7;
-        //y = max(y, 18);
-        return vec3(-70, y, 100);
-
-    } else if (ojTime < P_1) {
+    if (ojTime < P_1) {
         float t = ojTime - P_0;
         return vec3(t * ufoSpeed - 70, 10, 0);
 
-    } else if (ojTime < P_2) {
+    } else {
          float t = ojTime - P_0;
         return vec3(t * ufoSpeed - 120, 13, 0);
-
-    } else if (ojTime < P_25) {
-        float t = (ojTime - P_2);
-        return vec3(t * ufoSpeed - 120, 13, 0);
-
-    } else if (ojTime < P_3) {
-        float t = ojTime - P_25;
-        return vec3(t * ufoSpeed - 120 - (8 + 6.5)*ufoSpeed, 5, 0);
-
-    } else {
-        float t = ojTime - P_3;
-        float t2 = ojTime - P_25;
-        return vec3(t2 * ufoSpeed - 120 - (8 + 6.5)*ufoSpeed, 5 + t*t*t*t, 0);
     }
 }
 
@@ -168,16 +149,22 @@ float getFogAmount(in vec3 p)
 
 VolumetricResult evaluateLight(in vec3 p)
 {
-    vec3 pStars = p;
+     vec3 pStars = p;
     vec2 iStars = pMod2(pStars.xz, vec2(50, 50));
     pStars.y -= 50 + sin(iStars.x * 10) * 10 + sin(iStars.y * 10) * 10;
     float dStars = length(pStars) - 0.1;
 
     vec3 pOrig = p;
 
+    vec3 laserFloorP = p.zyx;
+
+    float dm = g_MountainHeight;
+    laserFloorP.y +=  dm;
     //laserFloorP.y += sin(p.x);;
     vec3 ufo = ufoPos();
- 
+    float laserFloorDis = abs(ufo.x - pOrig.x);
+    float dLaserFloor = sdCylinder(laserFloorP, 0.05 + 0.3 * smoothstep(0, 10, laserFloorDis));
+    dLaserFloor = max(dLaserFloor,  p.x - ufo.x + 0.5); // cut off in front of UFO
     
     p -= ufo;
     
@@ -226,20 +213,32 @@ VolumetricResult evaluateLight(in vec3 p)
     p.y -= tilt;
     float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
 
+    bool showLaser = ojTime < P_25 && ojTime > P_0;
+
     vec3 color = vec3(0.1, 1, 1);
     vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
 
-    vec3 laserColor = vec3(1, 0.1, 0.1);
-    float laserStr = 50;
-    res += laserColor * laserStr / (dLaser * dLaser);
+    if (showLaser) {
+        vec3 laserColor = vec3(1, 0.1, 0.1);
+        float laserStr = 50;
+        res += laserColor * laserStr / (dLaser * dLaser);
+
+   
+        float laserFloorStr = 50; 
+        if (ojTime > P_1) { 
+            res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
+        }
+    }
 
 
-    float finalDis = dLaser;
-
+    float finalDis = dLaserFloor;
+    if (showLaser) {
+        //finalDis = min(finalDis, laserFloorDis); // think this one cuses the white AO wall, maybe something wrong with it
+        finalDis = min(finalDis, dLaser);
+    }
     finalDis = min(finalDis, dUfoSpin);
 
     return VolumetricResult(finalDis, res * smoothstep(1.0,5.0, ojTime)); 
-    //return VolumetricResult(dUfoSpin, res); 
 }
 
 float getReflectiveIndex(int type) {
