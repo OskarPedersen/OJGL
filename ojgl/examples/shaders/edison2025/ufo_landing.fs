@@ -487,7 +487,7 @@ float borgilaText(vec3 p)
     p -= boatPos();
     p.y -= 1.0 * f;
     p.z -= 4.4 * f;
-    p.x -= -0.6 * f;
+    p.x -= 0.5 * f;
     p = vec3(-p.z, p.y, p.x);
     vec2 uv;
     float d =  uvBox(p, vec3(0.6*f, 0.25*f, 0.03), uv);

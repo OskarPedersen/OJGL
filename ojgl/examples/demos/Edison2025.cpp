@@ -130,17 +130,34 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
         scenes.emplace_back(experiment, Duration::seconds(25), "indoor");
     }
 
+    struct UfoScene {
+        ojstd::string shader;
+        Duration duration;
+    };
+    ojstd::vector<UfoScene> ufoScenes = {
+        UfoScene {
+            "edison2025/ufo_scene_1.fs",
+            Duration::seconds(8) },
+        UfoScene {
+            "edison2025/ufo_scene_2.fs",
+            Duration::seconds(12) },
+        UfoScene {
+            "edison2025/ufo_scene_3.fs",
+            Duration::milliseconds(static_cast<long>(1000.0 * (10.0 + 6.5 + 10.0 + 4.0 - 2.0))) }
+    };
+
     // Ufo scenes
-    {
+
+    for (const auto& ufoScene : ufoScenes) {
         auto noise = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/noise.fs");
         noise->setRenderOnce(true);
         auto stars = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/stars.fs");
         stars->setRenderOnce(true);
 
-        auto ufoScenes = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/ufo_scenes.fs");
-        ufoScenes->setInputs(noise, stars);
+        auto ufoScenesScene = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", ufoScene.shader);
+        ufoScenesScene->setInputs(noise, stars);
 
-        ufoScenes->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
+        ufoScenesScene->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
             Buffer::UniformVector vector;
             vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));
 
@@ -167,14 +184,14 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        ufoScenes->setTextureCallback([this]([[maybe_unused]] float relativeSceneTime) {
+        ufoScenesScene->setTextureCallback([this]([[maybe_unused]] float relativeSceneTime) {
             ojstd::vector<ojstd::shared_ptr<Uniform1t>> vector;
             vector.push_back(ojstd::make_shared<Uniform1t>("borgilaTexture", this->getText("BORGILA", "Arial Black")));
             return vector;
         });
 
         auto blur1 = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/blur1.fs");
-        blur1->setInputs(ufoScenes);
+        blur1->setInputs(ufoScenesScene);
         blur1->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) -> Buffer::UniformVector {
             return { ojstd::make_shared<Uniform2f>("blurDir", 1.f, 0.f) };
         });
@@ -198,7 +215,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(chrom, Duration::milliseconds(static_cast<long>(1000.0 * (8.0 + 12.0 + 10.0 + 6.5 + 10.0 + 4.0 - 2.0))), "ufo_scenes");
+        scenes.emplace_back(chrom, ufoScene.duration, "ufo_scenes");
     }
 
     // Ufo hyperspace

@@ -22,8 +22,6 @@ float g_MountainHeight = 0.0;
 in vec2 fragCoord;
 out vec4 fragColor;
 
-uniform float iTime;
-
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D borgilaTexture;
@@ -76,36 +74,36 @@ float ufoSpeed = 10.0;
 
 vec3 ufoPos()
 {
-    float timeBeforePart25 = (iTime - P_0 - P_25_D);
-    if (iTime < P_0) {
-        float y = 65 - smoothstep(-6, 6, iTime) * 7 * 7;
+    float timeBeforePart25 = (ojTime - P_0 - P_25_D);
+    if (ojTime < P_0) {
+        float y = 65 - smoothstep(-6, 6, ojTime) * 7 * 7;
         //y = max(y, 18);
         return vec3(-70, y, 100);
 
-    } else if (iTime < P_1) {
-        float t = iTime - P_0;
+    } else if (ojTime < P_1) {
+        float t = ojTime - P_0;
         return vec3(t * ufoSpeed - 70, 10, 0);
 
-    } else if (iTime < P_2) {
-         float t = iTime - P_0;
+    } else if (ojTime < P_2) {
+         float t = ojTime - P_0;
         return vec3(t * ufoSpeed - 120, 13, 0);
 
-    } else if (iTime < P_25) {
-        float t = (iTime - P_2);
+    } else if (ojTime < P_25) {
+        float t = (ojTime - P_2);
         return vec3(t * ufoSpeed - 120, 13, 0);
 
-    } else if (iTime < P_3) {
-        float t = iTime - P_25;
+    } else if (ojTime < P_3) {
+        float t = ojTime - P_25;
         return vec3(t * ufoSpeed - 120 - (8 + 6.5)*ufoSpeed, 5, 0);
 
     } else {
-        float t = iTime - P_3;
-        float t2 = iTime - P_25;
+        float t = ojTime - P_3;
+        float t2 = ojTime - P_25;
         return vec3(t2 * ufoSpeed - 120 - (8 + 6.5)*ufoSpeed, 5 + t*t*t*t, 0);
     }
 }
 
-float boatSplitTime = max(0, iTime - 7.15 - P_0);
+float boatSplitTime = max(0, ojTime - 7.15 - P_0);
 
 
 vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
@@ -151,7 +149,7 @@ vec3 getColor(in MarchResult result)
         vec2 uv;
         uv.x = (yaw + PI) / (2.0 * PI);
         uv.y = (pitch + PI / 2.0) / PI;
-        float hf = iTime < P_0 ? 25 : 7;
+        float hf = ojTime < P_0 ? 25 : 7;
         float h = texture(inTexture1, uv * hf).x;
         color = mix(color, color + 11*vec3(clamp(h, 0.0, 1.0)), h);
         return result.scatteredLight + result.transmittance * mix(color, ao, aof);
@@ -162,7 +160,7 @@ vec3 getColor(in MarchResult result)
 
 float getFogAmount(in vec3 p)
 {
-    return 0.003 + 0.001*smoothstep(18, 20, iTime);
+    return 0.003 + 0.001*smoothstep(18, 20, ojTime);
 }
 
 VolumetricResult evaluateLight(in vec3 p)
@@ -223,7 +221,7 @@ VolumetricResult evaluateLight(in vec3 p)
     // uniform float C_5_T;
     // uniform float C_4_T;
 
-    if (mod(C_4_T, 8.0) == mod(section + 7.0, 8.0) && iTime > P_25) {
+    if (mod(C_4_T, 8.0) == mod(section + 7.0, 8.0) && ojTime > P_25) {
         //tilt = p.x*0.35;
         capsuleStr = 12;
     }
@@ -231,7 +229,7 @@ VolumetricResult evaluateLight(in vec3 p)
     p.y -= tilt;
     float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
 
-    bool showLaser = iTime < P_25 && iTime > P_0;
+    bool showLaser = ojTime < P_25 && ojTime > P_0;
 
     vec3 color = vec3(0.1, 1, 1);
     vec3 res = color * capsuleStr / (dUfoSpin * dUfoSpin);
@@ -243,7 +241,7 @@ VolumetricResult evaluateLight(in vec3 p)
 
    
         float laserFloorStr = 50; 
-        if (iTime > P_1) { 
+        if (ojTime > P_1) { 
             res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
         }
     }
@@ -256,7 +254,7 @@ VolumetricResult evaluateLight(in vec3 p)
     }
     finalDis = min(finalDis, dUfoSpin);
 
-    return VolumetricResult(finalDis, res * smoothstep(1.0,5.0, iTime)); 
+    return VolumetricResult(finalDis, res * smoothstep(1.0,5.0, ojTime)); 
     //return VolumetricResult(dUfoSpin, res); 
 }
 
@@ -283,13 +281,13 @@ float tunnel(in vec3 p)
 
 float water(in vec3 p)
 {
-    float d = sdPlane(p, vec4(0, 1, 0, 0)) + 0.002*noise_2(5*p.xz + iTime);
+    float d = sdPlane(p, vec4(0, 1, 0, 0)) + 0.002*noise_2(5*p.xz + ojTime);
     return d;
 }
 
 float mountainH(vec3 p) // just the height
 {
-    if (iTime > P_1) { // Shift mountains to something which works better for laser
+    if (ojTime > P_1) { // Shift mountains to something which works better for laser
         p.x += 20;
         p.z += 100;
     }
@@ -331,7 +329,7 @@ float opIntersection( float d1, float d2 )
 
 float boat(vec3 p) {
     // return sdBox(p, vec3(2));
-    p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
+    p -= vec3(0.03 * sin(ojTime), 0.06 * sin(ojTime + 3), 0.06 * sin(ojTime + 5));
     p.xz *= rot(PI);
     float ffz = p.z > 0.0 ? -4.0 : -7.0;
     float fz = 1.7 - 0.7 * smoothstep(ffz, 2.0, p.y);
@@ -420,10 +418,11 @@ DistanceInfo map(in vec3 p)
    DistanceInfo ufoInfo = {ufo(p), ufoType};
    DistanceInfo d = un(waterInfo, un(ufoInfo, mountainDis)); 
 
-   // Fix this!
-    if (iTime > P_0 && iTime < P_1) {
-        d = sunk(boatFrontDis, d, 0.15);
-    }
+    #ifdef SHOW_BOAT
+        if (ojTime > P_0 && ojTime < P_1) {
+            d = sunk(boatFrontDis, d, 0.15);
+        }
+    #endif
     
     return d;
 }
@@ -442,7 +441,7 @@ float borgilaText(vec3 p)
 
     p.xy *= rot(dir*boatSplitTime*0.3);
 
-    p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
+    p -= vec3(0.03 * sin(ojTime), 0.06 * sin(ojTime + 3), 0.06 * sin(ojTime + 5));
     p.xz *= rot(PI);
     p = vec3(-p.z, p.y, p.x);
     p.y -= 1.0;
@@ -483,13 +482,13 @@ bool willHitBorgilaText(vec3 rayOrigin, vec3 rayDirection) {
 void main()
 {
     const float transitionTime = 0.75;
-    float a = clamp(iTime - P_1 + transitionTime, 0, transitionTime) / transitionTime;
+    float a = clamp(ojTime - P_1 + transitionTime, 0, transitionTime) / transitionTime;
     if (a > fragCoord.x) {
-        //iTime += 10;
+        //ojTime += 10;
         P_1 -= transitionTime;
     }
 
-    float b = clamp(iTime - P_25 + transitionTime, 0, transitionTime) / transitionTime;
+    float b = clamp(ojTime - P_25 + transitionTime, 0, transitionTime) / transitionTime;
     if (b > 1 - fragCoord.x) {
         P_25 -= transitionTime;
     }
@@ -497,9 +496,9 @@ void main()
     float u = (fragCoord.x - 0.5);
     float v = (fragCoord.y - 0.5) * iResolution.y / iResolution.x;
     float zoom = 1.0;
-    if (iTime < P_0) {
-        zoom = 0.8 - 0.5*smoothstep(2, 4, iTime);
-    } else if (iTime > P_2 &&  iTime < P_25) {
+    if (ojTime < P_0) {
+        zoom = 0.8 - 0.5*smoothstep(2, 4, ojTime);
+    } else if (ojTime > P_2 &&  ojTime < P_25) {
         zoom = 0.8;
     }
     u *= zoom;
@@ -513,7 +512,7 @@ void main()
 
     
 
-    if (iTime < P_0) {
+    if (ojTime < P_0) {
         vec3 ufo = ufoPos();
         rayOrigin = vec3(ufo.x - 200, 4, ufo.z);
         vec3 tar = ufo;
@@ -525,7 +524,7 @@ void main()
 
         rayDirection = normalize(dir + right*u + up*v);
     
-    } else if (iTime < P_1) {
+    } else if (ojTime < P_1) {
         rayOrigin = vec3(9.1394, 2.31, -12.4126);
         vec3 tar = vec3(-2, 1, 1);
 
@@ -534,7 +533,7 @@ void main()
  	    vec3 up = cross(dir, right);
 
         rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < P_2) {
+    } else if (ojTime < P_2) {
         rayOrigin = vec3(15, 8.28, 20);
         vec3 tar = rayOrigin + vec3(0.5, 0, -0.5);
 
@@ -543,8 +542,8 @@ void main()
  	    vec3 up = cross(dir, right);
 
         rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < P_25) {
-        float spin = (iTime - P_2) * 0.2;
+    } else if (ojTime < P_25) {
+        float spin = (ojTime - P_2) * 0.2;
         float d = 60;
         rayOrigin = ufoPos() + vec3(d*sin(spin), 10, d*cos(spin));
         vec3 tar = ufoPos();
@@ -554,7 +553,7 @@ void main()
  	    vec3 up = cross(dir, right);
 
         rayDirection = normalize(dir + right*u + up*v);
-    } else if (iTime < P_4) { // part 3 and 4 in same case
+    } else if (ojTime < P_4) { // part 3 and 4 in same case
         S_volumetricDistanceMultiplier = 0.2; // lower is needed here to avoid artifacts
 
 
@@ -578,20 +577,20 @@ void main()
 
     // fade to black
     float transitionTimeFadeToBlack = 1.5;
-    float fade = clamp(iTime - P_4 + transitionTimeFadeToBlack, 0, transitionTimeFadeToBlack) / transitionTimeFadeToBlack;
-    if (iTime < P_4) {
+    float fade = clamp(ojTime - P_4 + transitionTimeFadeToBlack, 0, transitionTimeFadeToBlack) / transitionTimeFadeToBlack;
+    if (ojTime < P_4) {
         color = mix(color, vec3(0), fade);
     }
 
      color /= (color + vec3(1.0));
 
-     if (iTime < P_0) {
-        focus =  1.0 - smoothstep(3, 4, iTime);
-     } else if (iTime > P_25 ) { //for scene 3 & 4
+     if (ojTime < P_0) {
+        focus =  1.0 - smoothstep(3, 4, ojTime);
+     } else if (ojTime > P_25 ) { //for scene 3 & 4
         vec3 ufo = ufoPos();
          focus = abs(length(res.firstJumpPos - ufo)) * 0.005;// + 0.01;
         
-        float t4 = max(0, iTime - P_3);
+        float t4 = max(0, ojTime - P_3);
         focus = mix(focus, 1 - smoothstep(0, 1, t4), t4); // make clearer as ufo ascends
 
      } 
