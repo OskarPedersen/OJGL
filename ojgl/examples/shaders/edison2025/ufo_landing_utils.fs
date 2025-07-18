@@ -10,6 +10,7 @@ uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D borgilaTexture;
 uniform sampler2D inTexture0;
+uniform sampler2D inTexture1;
 
 uniform float C_1_S; // bass
 uniform float C_6_S; // "vocals"

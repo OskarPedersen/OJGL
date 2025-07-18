@@ -126,7 +126,16 @@ vec3 getColor(in MarchResult result)
 
     vec3 ao = vec3(float(result.steps) / 600);
     if (result.type == invalidType) {
-        return result.scatteredLight;
+        float pitch = asin(rayDirection.y);
+        float yaw = atan(rayDirection.z, rayDirection.x);
+
+        vec2 uv;
+        uv.x = (yaw + PI) / (2.0 * PI);
+        uv.y = (pitch + PI / 2.0) / PI;
+        float h = texture(inTexture1, uv * 5).x + 0.1*hash11(fragCoord.x+cos(fragCoord.y));
+        color = result.scatteredLight;
+        color = mix(color, color + 0.3*vec3(clamp(h, 0.0, 1.0)), h);
+        return color;
     } else {
         float shadow = shadowFunction(result.position, result.type);
         return result.scatteredLight + result.transmittance *  mix(color * shadow, ao, 0.75);
