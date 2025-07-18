@@ -140,13 +140,15 @@ vec3 getColor(in MarchResult result)
     color += ambientColor * (0.02 + 0.98*diffuse);
     float k = max(0.0, dot(rayDirection, reflect(invLight, normal)));
     float spec = 1 * pow(k, 30.0);
-    color += spec;
+    if (result.type != invalidType) {
+        color += spec;
+    }
     vec3 ao = vec3(float(result.steps) / 600);
     float aof = result.type == boatType ? 0.2 : 0.75;
     if (result.type == invalidType && result.jump == 0) {
         float pitch = asin(result.rayDirection.y);
         float yaw = atan(result.rayDirection.z, result.rayDirection.x);
-
+        
         vec2 uv;
         uv.x = (yaw + PI) / (2.0 * PI);
         uv.y = (pitch + PI / 2.0) / PI;
@@ -154,8 +156,8 @@ vec3 getColor(in MarchResult result)
         float h = texture(inTexture1, uv * hf).x;
         color = mix(color, color + 11*vec3(clamp(h, 0.0, 1.0)), h);
         return result.scatteredLight + result.transmittance * mix(color, ao, aof);
-        } else {
-            return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
+    } else {
+        return result.scatteredLight + result.transmittance *  mix(color, ao, aof);
     }
 }
 
