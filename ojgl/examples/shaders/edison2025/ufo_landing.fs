@@ -118,7 +118,7 @@ vec3 getColor(in MarchResult result)
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
     float diffuse = max(0., dot(invLight, normal));
-    vec3 ambientColor = getAmbientColor(result.type, result.position, normal);
+    vec3 ambientColor = 0.1*getAmbientColor(result.type, result.position, normal);
     color += ambientColor * (0.02 + 0.98*diffuse);
     float k = max(0.0, dot(rayDirection, reflect(invLight, normal)));
     float spec = 1 * pow(k, 30.0);
@@ -141,6 +141,13 @@ vec3 getColor(in MarchResult result)
         return result.scatteredLight + result.transmittance *  mix(color * shadow, ao, 0.75);
     }
 
+}
+
+float sdCapsule( vec3 p, vec3 a, vec3 b, float r )
+{
+  vec3 pa = p - a, ba = b - a;
+  float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );
+  return length( pa - ba*h ) - r;
 }
 
 float getFogAmount(in vec3 p)
@@ -198,7 +205,7 @@ VolumetricResult evaluateLight(in vec3 p)
 
     }
 
-    vec3 runwayColor = vec3(1.0, 0.1, 0.7);
+    vec3 runwayColor = vec3(1.0, 0.1, 0.2); //vec3(1.0, 0.1, 0.7);
     p = pOrig;
     p.y -= -3.8;
     p.z = abs(p.z);
@@ -213,7 +220,37 @@ VolumetricResult evaluateLight(in vec3 p)
 
     res += runwayColor * strRunway / (dRunway * dRunway);
     finalDis = min(finalDis, dRunway);
- 
+    
+    if (scenePart == 1.0) { // landing lights
+       vec3 landingColor = vec3(1.0, 0.1, 0.2); //vec3(1.0);
+       p = pOrig;
+       p.y -= -3.8;
+       //p.z = abs(p.z);
+       //p.z -= 12;
+
+       const float sections = 15;
+       float section = pMod1(p.x, sections);
+       if (floor(section + sections / 2) == floor(mod(iTime * 10, 15))) {
+           //float h = 0.3 + C_1_S;
+           //float dLanding1 = length(p) - 0.2;
+           //float dLanding2 = length(p - vec3(-3, 0, 1)) - 0.2;
+           //float dLanding3 = length(p - vec3(-3, 0, -1)) - 0.2;
+           //float dLanding = min(dLanding1, dLanding2);
+           //dLanding = min(dLanding, dLanding3);
+           float dLanding1 = sdCapsule(p, vec3(0, 0, 0), vec3(-3, 0, 1), 0.2);
+           float dLanding2 = sdCapsule(p, vec3(0, 0, 0), vec3(-3, 0, -1), 0.2);
+            float dLanding = min(dLanding1, dLanding2);
+
+           dLanding = opIntersection(dLanding, runwayBox(pOrig));
+           float strLanding = 10 ;
+           strLanding = max(strLanding, 0);
+
+           res += landingColor * strLanding / (dLanding * dLanding);
+           finalDis = min(finalDis, dLanding);
+       }
+    }
+
+
     if (scenePart == 2.0) {
       
         { // Borgila engine
@@ -276,7 +313,7 @@ float getReflectiveIndex(int type) {
         case mountainType:
             return 0;
         case runwayType:
-            return 0.1;
+            return 0;
         case doorsType:
             return 0.1;
         case hangarType:
@@ -466,7 +503,6 @@ float boatSplit(vec3 p, float dir)
     float d = sdBox(p - vec3(0, 0, dir*4.95), vec3(5));
     return max(d, h);
 }
-
 
 DistanceInfo map(in vec3 p)
 {
