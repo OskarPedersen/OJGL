@@ -4,6 +4,10 @@
 namespace ojgl::resources {
 // clang-format off
   ojstd::vector<ojstd::Pair<ojstd::string, ojstd::string>> shaders = {
+        {
+#include "shaders/edison2025/ufo_landing_utils.fs"
+          , "edison2025/ufo_landing_utils.fs"
+          },
           {
 #include "shaders/edison2025/ufo_raymarch_utils.fs"
           , "edison2025/ufo_raymarch_utils.fs"
@@ -124,6 +128,7 @@ namespace ojgl::resources {
 #include "shaders/edison2025/stars.fs"
           , "edison2025/stars.fs"
           },
+
 
   };
 // clang-format on
