@@ -25,12 +25,6 @@ namespace ojgl::resources {
   #include "shaders/common/primitives.fs"
           , "common/primitives.fs"
           },
-
-          {
-  #include "shaders/common/raymarch_settings.fs"
-          , "common/raymarch_settings.fs"
-          },
-
           {
   #include "shaders/common/raymarch_utils.fs"
           , "common/raymarch_utils.fs"
@@ -42,16 +36,6 @@ namespace ojgl::resources {
           },
 
           {
-  #include "shaders/common/fxaa.fs"
-          , "common/fxaa.fs"
-          },
-
-          {
-  #include "shaders/common/fxaa.vs"
-          , "common/fxaa.vs"
-          },
-
-          {
   #include "shaders/common/quad.vs"
           , "common/quad.vs"
           },
@@ -59,10 +43,6 @@ namespace ojgl::resources {
           {
 #include "shaders/common/radial_blur.fs"
           , "common/radial_blur.fs"
-          },
-          {
-  #include "shaders/common/fade.fs"
-          , "common/fade.fs"
           },
           {
 #include "shaders/edison2022/blur1.fs"
@@ -87,10 +67,6 @@ namespace ojgl::resources {
           {
 #include "shaders/edison2025/blur1.fs"
           , "edison2025/blur1.fs"
-          },
-          {
-#include "shaders/edison2025/experiment.fs"
-          , "edison2025/experiment.fs"
           },
           {
 #include "shaders/edison2025/lissajous.fs"
