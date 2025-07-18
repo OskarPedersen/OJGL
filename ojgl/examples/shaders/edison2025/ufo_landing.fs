@@ -42,6 +42,8 @@ uniform float C_7_S_3;
 
 uniform float C_7_T; // "synth"
 
+uniform float C_3_S; // "vocals"
+
 uniform float scenePart;
 
 bool willHitText = false;
@@ -66,12 +68,15 @@ const float ufoPosD1 = 3;
 const float ufoPosD2 = 4;
 const float ufoPosD3 = 5;
 
+const float part2flybyEndTime = 7;
+
 const float doorOpenTimePart2 = 2;
 const float waitForLaserTime = 2;
-const float laserPeakTime = 2.5;
+const float laserPeakTime = 2.5 + part2flybyEndTime;
 
 const float camera1 = ufoPosD1 + ufoPosD2 - 1;
 const float camera2 = camera1 + ufoPosD3 - 2;
+
 
 bool ufoVisible() {
     return scenePart == 1.0 || (scenePart == 2.0 && iTime < (laserPeakTime + doorOpenTimePart2 + waitForLaserTime));
@@ -114,6 +119,13 @@ vec3 ufoPos()
     return endPos;
 }
 
+vec3 boatPos() {
+    if (iTime < part2flybyEndTime) {
+        return vec3(0, 100, 0);
+    } else {
+        return vec3(10, 0, 33 + 5*sin(iTime));
+    }
+}
 
 float opIntersection( float d1, float d2 )
 {
@@ -274,21 +286,66 @@ VolumetricResult evaluateLight(in vec3 p)
     finalDis = min(finalDis, dRunway);
  
     if (scenePart == 2.0) {
-        p = pOrig;
-        p = p.xzy;
-        p -= vec3(39.25, 15, 1.25);
+      
+        { // Borgila engine
+            // float sdCappedCylinder(vec3 p, vec2s h);
+            vec3 pEngine = pOrig;
 
-        float tt = iTime - doorOpenTimePart2 - waitForLaserTime;
-        float t = min(tt, laserPeakTime*2.0-tt);
+            //pEngine = pEngine.yxz;
+            //pEngine.y -= -36;
+            //pEngine.x -= 2;
 
-        float len = 2 + min(t, 2.0) * 10;
+            pEngine.xyz = pEngine.zyx;
 
-        float dLaser = sdVerticalCapsule(p - (vec3(0, 0, 0)), len,  0.1);
-        float strLaser = 100 + max(0, tt - 1.5) * 100000.0;
-        vec3 laserColor = vec3(1.0, 0.05, 0.05);
+            //pEngine = p.xzy;
+            pEngine -= boatPos() + vec3(1, 0, -2);//vec3(39.25, 10.25, 15);
+           // pEngine -= vec3(5, 30, 10); // works after flip
 
-        res += laserColor * strLaser / (dLaser * dLaser);
-        finalDis = min(finalDis, dLaser);
+            // vec3(10, 0, 33 + 5*sin(iTime));
+
+            //pEngine.z = abs(pEngine.z);
+            const float engineW = 0.7;
+            pEngine.z -= engineW;
+
+            
+            float w = 0.4 + sin(p.z* 1000) * 0.1;
+            
+            w -= 0.1*sin(pOrig.z * 1000.0 + iTime * 2000);
+
+            float depth = 1.2 + 0.8*max(0.5 - C_3_S*3, 0);
+
+            float dEngine1 = sdCappedCylinder(pEngine.xzy, vec2(w, depth));
+            pEngine.x += engineW * 2.0;
+            float dEngine2 = sdCappedCylinder(pEngine.xzy, vec2(w, depth));
+            float dEngine = min(dEngine1, dEngine2);
+
+             float engineStr = 100 + sin(iTime * 30) * 10; //1;
+
+            vec3 engineColor = mix(vec3(1.0, 0.1, 0.01), vec3(1.0, 0.0, 0.01), mod(p.z, 1.0));//vec3(1.0);;
+            res += engineColor * engineStr / (dEngine * dEngine);
+
+            //dHyperSum = min(dHyperSum, dEngine);
+            finalDis = min(finalDis, dEngine);
+        }
+
+
+        { // laser
+            p = pOrig;
+            p = p.xzy;
+            p -= vec3(39.25, 15, 1.25);
+
+            float tt = iTime - doorOpenTimePart2 - waitForLaserTime - part2flybyEndTime;
+            float t = min(tt, laserPeakTime*2.0-tt);
+
+            float len = 2 + min(t, 2.0) * 10;
+
+            float dLaser = sdVerticalCapsule(p - (vec3(0, 0, 0)), len,  0.1);
+            float strLaser = 100 + max(0, tt - 1.5) * 100000.0;
+            vec3 laserColor = vec3(1.0, 0.05, 0.05);
+
+            res += laserColor * strLaser / (dLaser * dLaser);
+            finalDis = min(finalDis, dLaser);
+        }
     }
 
 
@@ -477,13 +534,9 @@ float boat(vec3 p) {
     return h;
 }
 
-vec3 boatPos() {
-    return vec3(10, 0, 33 + 5*sin(iTime)); // TODO fix text using this
-}
-
 float boatSplit(vec3 p, float dir)
 {
-    p.xz = p.zx;
+    p.xyz = p.zyx;
     p -= boatPos();
     p *= 0.4;
     float h = boat(p);
@@ -617,15 +670,26 @@ void main()
              rayDirection = normalize(dir + right*u + up*v);
         }
     } else { // part 2
-        vec3 ufo = ufoPos();
-        rayOrigin = vec3(40, 5, 38);
-        vec3 tar = rayOrigin + vec3(0, -0.2, -1);
+        if (iTime < part2flybyEndTime) {
+            vec3 boat = boatPos();
+            rayOrigin = boat + vec3(20, 20, 20);
+            vec3 tar = boat;
         
-        vec3 dir = normalize(tar - rayOrigin);
-	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
- 	    vec3 up = cross(dir, right);
+            vec3 dir = normalize(tar - rayOrigin);
+	        vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	        vec3 up = cross(dir, right);
 
-        rayDirection = normalize(dir + right*u + up*v);
+            rayDirection = normalize(dir + right*u + up*v);
+        } else {
+            rayOrigin = vec3(40, 5, 38);
+            vec3 tar = rayOrigin + vec3(0, -0.2, -1);
+        
+            vec3 dir = normalize(tar - rayOrigin);
+	        vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	        vec3 up = cross(dir, right);
+
+            rayDirection = normalize(dir + right*u + up*v);
+        }
     }
     firstRayDirection = rayDirection;
 
