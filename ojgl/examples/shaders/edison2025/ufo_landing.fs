@@ -67,7 +67,9 @@ vec3 boatPos() {
     if (iTime < part2flybyEndTime) {
         return vec3(0, 100, 0);
     } else {
-        return vec3(10, 0, 33 + 5*sin(iTime));
+        float start = doorOpenTimePart2 * 0.5;
+        float s = smoothstep(doorOpenTimePart2, doorOpenTimePart2 + waitForLaserTime - 0.5, iTime);
+        return vec3(10, 0, 33.75*s);
     }
 }
 
@@ -235,10 +237,10 @@ VolumetricResult evaluateLight(in vec3 p)
         }
 
 
-        { // laser
+        if (iTime > doorOpenTimePart2 + waitForLaserTime) { // laser
             p = pOrig;
             p = p.xzy;
-            p -= vec3(39.25, 15, 1.25);
+            p -= vec3(40, 15, 1.25);
 
             float tt = iTime - doorOpenTimePart2 - waitForLaserTime - part2flybyEndTime;
             float t = min(tt, laserPeakTime*2.0-tt);

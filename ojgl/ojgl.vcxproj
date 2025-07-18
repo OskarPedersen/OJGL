@@ -437,6 +437,8 @@
     <None Include="examples\shaders\edison2025\oj_text.fs" />
     <None Include="examples\shaders\edison2025\radar.fs" />
     <None Include="examples\shaders\edison2025\ufo_landing.fs" />
+    <None Include="examples\shaders\edison2025\ufo_landing_utils.fs" />
+    <None Include="examples\shaders\edison2025\ufo_raymarch_utils.fs" />
     <None Include="examples\shaders\edison2025\ufo_scenes.fs" />
     <None Include="examples\shaders\experiments\cachedGeometry.fs" />
     <None Include="examples\shaders\common\noise.fs" />
