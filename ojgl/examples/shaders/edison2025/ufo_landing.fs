@@ -4,10 +4,10 @@ const float S_distanceEpsilon = 1e-3;
 const float S_normalEpsilon = 5e-2;
 const int S_maxSteps = 600;
 const float S_maxDistance = 500.0;
-const float S_distanceMultiplier = 0.7;
+const float S_distanceMultiplier = 0.9;
 const float S_minVolumetricJumpDistance = 0.005;
-float S_volumetricDistanceMultiplier = 0.5;
-const int S_reflectionJumps = 3;
+float S_volumetricDistanceMultiplier = 0.8;
+const int S_reflectionJumps = 2;
 float g_MountainHeight = 0.0;
 
 #define S_VOLUMETRIC 1
@@ -16,8 +16,10 @@ float g_MountainHeight = 0.0;
 
 #include "common/noise.fs"
 #include "common/primitives.fs"
-#include "edison2025/ufo_raymarch_utils.fs"
 #include "common/utils.fs"
+#include "edison2025/ufo_raymarch_utils.fs"
+
+
 
 in vec2 fragCoord;
 out vec4 fragColor;
@@ -142,6 +144,32 @@ float hash(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
+float boatSplit(vec3 p, float dir);
+
+float shadowFunction(in vec3 hitPosition, int type)
+{
+    if (scenePart != 2.0 || type != runwayType) {
+        return 1.0;
+    }
+    float res = 1.0;
+    float k = 7.0;
+    float t = S_distanceEpsilon * 20.0;
+    vec3 dir = vec3(0, 1, 0);
+    float maxDistance = 2;
+    while (t < maxDistance) {
+        float h = boatSplit(hitPosition + dir * t, 1.0);
+
+        if(h < S_distanceEpsilon * 10)
+            return 0.0;
+        
+        res = min( res, k*h/t );
+
+        t += max(0.5, h);
+    }
+    return res;
+}
+
+
 vec3 getColor(in MarchResult result)
 {
     vec3 color = vec3(0);
@@ -168,7 +196,8 @@ vec3 getColor(in MarchResult result)
     if (result.type == invalidType) {
         return result.scatteredLight;
     } else {
-        return result.scatteredLight + result.transmittance *  mix(color, ao, 0.75);
+        float shadow = shadowFunction(result.position, result.type);
+        return result.scatteredLight + result.transmittance *  mix(color * shadow, ao, 0.75);
     }
 
 }
