@@ -127,8 +127,19 @@ namespace ojgl::resources {
           {
 #include "shaders/edison2025/stars.fs"
           , "edison2025/stars.fs"
+          },    
+         {
+#include "shaders/edison2025/ufo_scene_1.fs"
+          , "edison2025/ufo_scene_1.fs"
           },
-
+        {
+#include "shaders/edison2025/ufo_scene_2.fs"
+          , "edison2025/ufo_scene_2.fs"
+          },
+        {
+#include "shaders/edison2025/ufo_scene_3.fs"
+          , "edison2025/ufo_scene_3.fs"
+          },
 
   };
 // clang-format on
