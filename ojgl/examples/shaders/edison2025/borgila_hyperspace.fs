@@ -167,7 +167,8 @@ VolumetricResult evaluateLight(in vec3 p)
         pEngine.z -= engineW;
 
         //float w = 0.2;
-        float w = 0.12 + sin(p.x* 1000) * 0.1;
+        float tweak = 0.1 - 0.04*smoothstep(0, 5, iTime);
+        float w = 0.12 + sin(p.x* 1000) * tweak;
         //w -= (p.x + 36) * 0.08;
         w -= 0.05*sin(pOrig.z * 1000.0 + iTime * 2000) ;
 
