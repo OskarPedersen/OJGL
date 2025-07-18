@@ -143,7 +143,10 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             Duration::seconds(12) },
         UfoScene {
             "edison2025/ufo_scene_3.fs",
-            Duration::milliseconds(static_cast<long>(1000.0 * (10.0 + 6.5 + 10.0 + 4.0 - 2.0))) }
+            Duration::milliseconds(static_cast<long>(1000.0 * (10.0 + 6.5 + 10.0 + 4.0 - 2.0 - 12.0))) },
+        UfoScene {
+            "edison2025/ufo_scene_4.fs",
+            Duration::milliseconds(static_cast<long>(1000.0 * (12.0))) }
     };
 
     // Ufo scenes
