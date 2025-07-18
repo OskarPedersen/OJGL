@@ -88,9 +88,9 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case runwayType:
             return vec3(1, 0.9, 0.8);
         case hangarType:
-            return mod(pos.z, 3.0) > 1.5 ? vec3(1.0) : vec3(0.5);
+            return vec3(0.0);
         case doorsType:
-            return vec3(1, 0.9, 0.4);
+            return 0*vec3(1, 0.9, 0.4);
         case boatType:
             return willHitText ? vec3(0.0) : 15.0*vec3(1, 1, 1);
         default:
@@ -126,7 +126,16 @@ vec3 getColor(in MarchResult result)
 
     vec3 ao = vec3(float(result.steps) / 600);
     if (result.type == invalidType) {
-        return result.scatteredLight;
+        float pitch = asin(rayDirection.y);
+        float yaw = atan(rayDirection.z, rayDirection.x);
+
+        vec2 uv;
+        uv.x = (yaw + PI) / (2.0 * PI);
+        uv.y = (pitch + PI / 2.0) / PI;
+        float h = texture(inTexture1, uv * 5).x + 0.1*hash11(fragCoord.x+cos(fragCoord.y));
+        color = result.scatteredLight;
+        color = mix(color, color + 0.3*vec3(clamp(h, 0.0, 1.0)), h);
+        return color;
     } else {
         float shadow = shadowFunction(result.position, result.type);
         return result.scatteredLight + result.transmittance *  mix(color * shadow, ao, 0.75);
@@ -346,7 +355,8 @@ float runway(in vec3 p)
 {
     vec3 b = runwaySize;
     p -= runwayPos;
-    p.y += 0.3*texture(inTexture0, (p.xz)/200.0).x;
+    // p.y -= 0.1*noise_2(p.xz*4);
+    // p.y += 0.3*texture(inTexture0, (p.xz)/200.0).x;
     float d = sdBox(p, b);
     return d;
 }
@@ -371,8 +381,7 @@ float hangar(in vec3 p)
     
    float s = 0.1;
    float r = 20.0;
-   p.y -= s*texture(inTexture0, (p.xz)/r).x;
-    float inside = sdBox(p, vec3(13, 6, 16));
+    float inside = sdRoundBox(p, vec3(13, 6, 16), 0.1);
     d = opSubtraction(inside, d);
     return d;
 }
@@ -395,7 +404,7 @@ float doors(in vec3 p)
 
     float w = 6.5;
     vec3 b = vec3(w*open, 13, 0.5);
-     p.z -= 0.5*texture(inTexture0, (p.xy)/200.0).x;
+     p.z -= 0.2*texture(inTexture0, (p.xy)/200.0).x;
     float d1 = sdBox(p - vec3(40 + w*2 - w * open, -5, 17), b);
     float d2 = sdBox(p - vec3(40 - w*2 + w * open, -5, 17), b);
 
