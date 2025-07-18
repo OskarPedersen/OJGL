@@ -119,7 +119,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
         case ufoType:
             return vec3(1, 0, 1);
         default:
-           return 5*vec3(0, 0.0, 1);
+           return 0.1*vec3(0, 0.0, 1);
     }
 }
 
@@ -259,7 +259,7 @@ float mountainH(vec3 p) // just the height
 
 float mountain(vec3 p)
 {
-    float h = g_MountainHeight;
+    float h = mountainH(p);
 	return p.y + h;
 }
 
