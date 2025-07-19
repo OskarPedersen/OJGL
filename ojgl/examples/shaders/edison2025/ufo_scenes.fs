@@ -243,7 +243,7 @@ VolumetricResult evaluateLight(in vec3 p)
         res += laserColor * laserStr / (dLaser * dLaser);
 
    
-        float laserFloorStr = 50; 
+        float laserFloorStr = 50 - 50 * C_1_S; 
         if (ojTime > P_1) { 
             res += laserColor * laserFloorStr / (dLaserFloor * dLaserFloor);
         }
