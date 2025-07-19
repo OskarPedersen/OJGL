@@ -226,6 +226,14 @@ VolumetricResult evaluateLight(in vec3 p)
         if (iTime > doorOpenTimePart2 + waitForLaserTime) {
             p = po;
             p = p.xzy;
+
+        
+
+            float t2 = iTime * 3.0;
+            //p -= vec3(0.05 * sin(t2), 0.1 * sin(t2 + 3), 0.1 * sin(t2 + 5)).zyx;
+            p -= vec3(0.05 * sin(t2), 0.1 * sin(t2 + 3), 0.1 * sin(t2 + 5)).zxy;
+
+
             p -= vec3(40, 15, 1.25);
 
             float tt = iTime - doorOpenTimePart2 - waitForLaserTime - part2flybyEndTime;
@@ -433,6 +441,7 @@ float boatSplit(vec3 p, float dir)
 {
     p.xyz = p.zyx;
     p -= bp();
+    
     p *= 0.4;
     float h = boat(p);
     vec3 cannonPos = vec3(1.5, 0.5, 2.5);
