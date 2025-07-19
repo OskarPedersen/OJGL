@@ -113,7 +113,7 @@ VolumetricResult evaluateLight(in vec3 p)
        pHyper -= vec3(0, 20, sin(pOrig.x + iTime * 60)*5);
        float dHyper = sdCylinder(pHyper.zyx, 0.0);
 
-       float hyperStr = 3 + 2.5*sin(iTime * 10);
+       float hyperStr = 4 + 3.5*sin(iTime * 10);
        vec3 hyperColor = 0.3*vec3(0.1, 0.3, 1.0);
        res += hyperColor * hyperStr / (dHyper * dHyper);
 
@@ -131,7 +131,7 @@ VolumetricResult evaluateLight(in vec3 p)
        //dHyper -= texture(inTexture0, (pOrig.yz)/90.0).x;
        dHyper = max(0.01, dHyper);
 
-       float hyperStr = 0.2;
+       float hyperStr = 0.3;
        vec3 hyperColor = 1.5*vec3(0.2, 0.3, 1.0);
        res += hyperColor * hyperStr / (dHyper);
 
@@ -147,7 +147,7 @@ VolumetricResult evaluateLight(in vec3 p)
         pHyper -= vec3(0, 100, sin(pOrig.x - iTime * 10)*5);
         float dHyper = sdCylinder(pHyper.zyx, 0.0);
 
-        float hyperStr = 3;
+        float hyperStr = 6;
         vec3 hyperColor = 0.1*vec3(0.6, 0.3, 1.0);
         res += hyperColor * hyperStr / (dHyper * dHyper);
 
@@ -181,7 +181,7 @@ VolumetricResult evaluateLight(in vec3 p)
          float engineStr = 10 + sin(iTime * 30) * 1; //1;
 
         vec3 engineColor = mix(vec3(1.0, 0.1, 0.01), vec3(1.0, 0.0, 0.01), mod(p.z, 1.0));//vec3(1.0);;
-        res += engineColor * engineStr / (dEngine * dEngine);
+        res += engineColor * engineStr / (dEngine * dEngine * dEngine);
 
         dHyperSum = min(dHyperSum, dEngine);
     }

@@ -338,9 +338,20 @@ float ufo(vec3 p) {
         float l = 0;
         p -= vec3(-46.524 -l, 50.38, 121.575 + l);
         float s = 0.8*smoothstep(19.0, 28.0, iTime);
-        float d2 = sdTorus(p - vec3(0, -3*s, 0), vec2(s*8.5, 0.5));
-        float d1 = length(p) - 2.0 * s;
-        return min(d1, d2);
+        //float d2 = sdTorus(p - vec3(0, -3*s, 0), vec2(s*8.5, 0.5));
+        //float d1 = length(p) - 2.0 * s;
+        //return min(d1, d2);
+
+
+        
+
+        float d2 = sdTorus(p - vec3(0, -3*s, 0), vec2(8.5*s, 0.5));
+
+        float d1 = length(p) - 2.0*s;
+
+        float d3 = sdTorus(p - vec3(0, -0.5, 0), vec2(1.5*s, 0.5*s));
+
+        return min(d2, smink(d1, d3, 1.5));
     } else {
         return 100.0;
     }
