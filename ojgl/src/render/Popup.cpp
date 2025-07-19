@@ -114,7 +114,7 @@ popup::Data popup::show()
     // Create the window.
     auto style = WS_OVERLAPPED | WS_SYSMENU;
     style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
-    HWND hwnd = CreateWindowEx(0, CLASS_NAME.c_str(), "OJ",
+    HWND hwnd = CreateWindowEx(0, CLASS_NAME.c_str(), "OJ - Aurora Borgilis",
         style, CW_USEDEFAULT, CW_USEDEFAULT, width, height,
         NULL, NULL, hInstance, NULL);
 
