@@ -9,6 +9,13 @@ namespace ojgl {
 namespace {
     float previousTimes[] = { 0.0f, 0.0f };
     int previousTimeIndex = 0;
+
+    // clang-format off
+float xs[] = {0.0f, -0.9900000000000001f, -0.32010000000000016f, 0.9867990000000001f, -0.98013201f, -0.9279227199000006f, 0.9807207728010001f, -0.42920007652400916f, -0.99429200076524f, 0.9800570799923474f, };
+float ys[] = {0.0f, -0.594f, -0.9959399999999999f, -0.21180059999999978f, 0.9683580060000004f, 0.99968358006f, -0.14550251556060056f, -0.9914550251556061f, -0.6523998706108676f, 0.532209577843685f, };
+float ts[] = {0.0f, 1.16619037896906f, 1.9553125354047907f, 3.494800454681847f, 5.811786333427197f, 5.873287315050857f, 8.1216122423941f, 9.782456817738254f, 10.44811819681223f, 12.773842340959611f, };
+constexpr int N = 10;
+    // clang-format on
 }
 
 Edison2025::Edison2025()
@@ -115,6 +122,20 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
         ojText->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
             Buffer::UniformVector vector;
             vector.push_back(ojstd::make_shared<Uniform1f>("iPreviousTime", previousTimes[previousTimeIndex]));
+
+            float x = xs[N - 1];
+            float y = ys[N - 1];
+            float t = 0.7f * relativeSceneTime;
+            for (int i = 0; i < N - 1; i++) {
+                if (t >= ts[i] && t < ts[i + 1]) {
+                    float f = (t - ts[i]) / (ts[i + 1] - ts[i]);
+                    x = xs[i] + f * (xs[i + 1] - xs[i]);
+                    y = ys[i] + f * (ys[i + 1] - ys[i]);
+                    break;
+                }
+            }
+            vector.push_back(ojstd::make_shared<Uniform1f>("x", x));
+            vector.push_back(ojstd::make_shared<Uniform1f>("y", y));
             return vector;
         });
 
