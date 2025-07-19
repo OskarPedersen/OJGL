@@ -318,7 +318,7 @@ float ojText(vec3 p)
     p.z -= 1;
     p.x -= -2.0;
     vec2 uv;
-    float d =  uvBox(p, vec3(0.8, 0.8, 0.0), uv);
+    float d =  uvBox(p, vec3(0.98, 0.98, 0.0), uv);
     uv.x *=-1;
     if ( d < 0.01) {
         float s = texture(inTexture3, uv).x;
