@@ -131,7 +131,12 @@ vec3 bp() {
     } else {
         float start = doorOpenTimePart2 * 0.5;
         float s = smoothstep(doorOpenTimePart2, doorOpenTimePart2 + waitForLaserTime - 0.5, iTime);
-        return vec3(10, 0, 33.75*s);
+
+        float t = iTime * 3.0;
+        
+
+        //return vec3(10, 0, 33.75*s) + vec3(, , );
+        return vec3(10, 0, 33.75*s) + vec3(0.05 * sin(t), 0.1 * sin(t + 3), 0.1 * sin(t + 5));
     }
 }
 
