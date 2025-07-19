@@ -37,6 +37,7 @@ float P_3 = (P_25 + 8);
 #define P_4 (P_3 + 4)
 
 uniform float C_1_S; // bass
+uniform float C_5_S;
 uniform float C_6_S; // "vocals"
 uniform float C_7_S; // "synth"
 
@@ -225,6 +226,8 @@ VolumetricResult evaluateLight(in vec3 p)
         //tilt = p.x*0.35;
         capsuleStr = 12;
     }
+
+    capsuleStr = max(capsuleStr, 15 - 8*C_5_S);
 
     p.y -= tilt;
     float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
