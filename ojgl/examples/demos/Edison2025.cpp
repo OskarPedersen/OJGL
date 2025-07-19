@@ -24,7 +24,7 @@ ojstd::shared_ptr<Texture> Edison2025::getText(const ojstd::string& text, const 
 }
 
 static const unsigned char song[] = {
-#include "songs/test_song_2.inc"
+#include "songs/edison_2025_song.inc"
 };
 
 const unsigned char* Edison2025::getSong() const
