@@ -372,30 +372,16 @@ DistanceInfo map(vec3 p)
    return un(ufoInfo, un(screenInfo, un(hullInfo, un(waterInfo, un(box, sphereInfo)))));
 }
 
-struct Light {
-    float str;
-    float d;
-};
-
-Light lun(Light a, Light b) {
-    return a.d < b.d ? a : b;
-}
-
 VolumetricResult evaluateLight(in vec3 p)
 {
     p -= boatPosition;
     vec3 color = vec3(0.1, 0.9, 0.1);
-    Light d = {1.0, lissajous(p)};
-    Light dr = {1, radar(p)};
-    Light doj = {1.0, ojText(p)};
-    d = lun(d, dr);
-    d = lun(d, doj);
-
-    float str = lissajousStrength * d.str;
-    
+    float d = lissajous(p);
+    d = min(d, radar(p));
+    d = min(d, ojText(p));
+    float str = lissajousStrength;
     vec3 res = color * str / 0.001;
-
-    return VolumetricResult(d.d, res); 
+    return VolumetricResult(d, res); 
 }
 
 void main()
