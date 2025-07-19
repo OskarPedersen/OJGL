@@ -21,58 +21,6 @@ float g_MountainHeight = 0.0;
 #include "edison2025/ufo_raymarch_utils.fs"
 
 
-
-bool ufoVisible() {
-    return scenePart == 1.0 || (scenePart == 2.0 && iTime < (laserPeakTime + doorOpenTimePart2 + waitForLaserTime));
-}
-
-vec3 ufoRot(in vec3 p) {
-    if (scenePart == 2.0) {
-        return p;
-    }
-    float rotEnd = ufoPosD1 + 0.5;
-    if (iTime < rotEnd) {
-        float s = 1.0 - smoothstep(rotEnd - 1.0, rotEnd, iTime);
-        p.yz *= rot(sin(iTime * 1.5) * 0.1 * s);
-
-        p.xy *= rot(0.3 * s);
-    }
-    return p;
-}
-
-vec3 ufoPos()
-{
-    vec3 endPos = vec3(40, 0, 30);
-
-    if (scenePart == 2.0) {
-        return endPos;
-    }
-
-    float t = iTime;
-
-
-    if (t < ufoPosD1) {
-        return mix(vec3(-150, 30, 0), vec3(-40, 2, 0), (t) / ufoPosD1);
-    } else if (t < ufoPosD1 + ufoPosD2) {
-     return mix(vec3(-40, 2, 0), vec3(40, 1, 0), (t - ufoPosD1) / ufoPosD2);
-    } else if (t < ufoPosD1 + ufoPosD2 + ufoPosD3) {
-     return mix(vec3(40, 1, 0), endPos, smoothstep(0, 1, (t - ufoPosD1 - ufoPosD2) / ufoPosD3));
-    }
-
-
-    return endPos;
-}
-
-vec3 boatPos() {
-    if (iTime < part2flybyEndTime) {
-        return vec3(0, 100, 0);
-    } else {
-        float start = doorOpenTimePart2 * 0.5;
-        float s = smoothstep(doorOpenTimePart2, doorOpenTimePart2 + waitForLaserTime - 0.5, iTime);
-        return vec3(10, 0, 33.75*s);
-    }
-}
-
 float opIntersection( float d1, float d2 )
 {
     return max(d1,d2);
@@ -113,12 +61,12 @@ vec3 getColor(in MarchResult result)
     } else if (iTime > camera2 && scenePart == 1.0) {
         lightPosition = vec3(10, -5, -10);
     } else if (scenePart == 2.0) {
-        lightPosition = ufoPos() + vec3(-50, 50, 40);
+        lightPosition = ufoP() + vec3(-50, 50, 40);
     }
     vec3 normal = normal(result.position);
     vec3 invLight = normalize(lightPosition - result.position);
     float diffuse = max(0., dot(invLight, normal));
-    vec3 ambientColor = getAmbientColor(result.type, result.position, normal);
+    vec3 ambientColor = 0.1*getAmbientColor(result.type, result.position, normal);
     color += ambientColor * (0.02 + 0.98*diffuse);
     float k = max(0.0, dot(rayDirection, reflect(invLight, normal)));
     float spec = 1 * pow(k, 30.0);
@@ -143,6 +91,13 @@ vec3 getColor(in MarchResult result)
 
 }
 
+float sdc( vec3 p, vec3 a, vec3 b, float r )
+{
+  vec3 pa = p - a, ba = b - a;
+  float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );
+  return length( pa - ba*h ) - r;
+}
+
 float getFogAmount(in vec3 p)
 {
     return 0.005;
@@ -150,39 +105,39 @@ float getFogAmount(in vec3 p)
 
 VolumetricResult evaluateLight(in vec3 p)
 {
-    vec3 pOrig = p;
+    vec3 po = p;
 
     vec3 laserFloorP = p.zyx;
 
-    vec3 ufo = ufoPos();
+    vec3 ufo = ufoP();
 
     p -= ufo;
 
-    float finalDis = 99999;
+    float fd = 99999;
     vec3 res = vec3(0);
 
-    if (ufoVisible()) {
-        p = ufoRot(p);
+    if (ufoV()) {
+        p = ufoR(p);
 
-        float section = pModPolar(p.xz, 16);
+        float sec = pModPolar(p.xz, 16);
     
         float tilt = -p.x*0.35;
     
-        float capsuleStr = 5;
-        if (mod(section, 4.0) == 0.0) {
-            capsuleStr = 5.0 + max(0, 10 - C_7_S_0 * 100);
+        float cs = 5;
+        if (mod(sec, 4.0) == 0.0) {
+            cs = 5.0 + max(0, 10 - C_7_S_0 * 100);
             tilt *= min(1, C_7_S_0 * 3.0);
 
-        } else if (mod(section, 4.0) == 1.0) {
-            capsuleStr = 5.0 + max(0, 10 - C_7_S_1 * 100);
+        } else if (mod(sec, 4.0) == 1.0) {
+            cs = 5.0 + max(0, 10 - C_7_S_1 * 100);
              tilt *= min(1, C_7_S_1 * 3.0);
 
-        } else if (mod(section, 4.0) == 2.0) {
-            capsuleStr = 5.0 + max(0, 10 - C_7_S_2 * 100);
+        } else if (mod(sec, 4.0) == 2.0) {
+            cs = 5.0 + max(0, 10 - C_7_S_2 * 100);
              tilt *= min(1, C_7_S_2 * 3.0);
 
-        } else if (mod(section, 4.0) == 3.0) {
-            capsuleStr = 5.0 + max(0, 10 - C_7_S_3 * 100);
+        } else if (mod(sec, 4.0) == 3.0) {
+            cs = 5.0 + max(0, 10 - C_7_S_3 * 100);
              tilt *= min(1, C_7_S_3 * 3.0);
 
         }
@@ -192,14 +147,14 @@ VolumetricResult evaluateLight(in vec3 p)
         float dUfoSpin = sdVerticalCapsule(p.yxz - (vec3(0, 0, 0)), 8,  0.01);
     
         vec3 color = vec3(0.1, 1, 1);
-        res = color * capsuleStr / (dUfoSpin * dUfoSpin);
+        res = color * cs / (dUfoSpin * dUfoSpin);
     
-        finalDis = dUfoSpin;
+        fd = dUfoSpin;
 
     }
 
-    vec3 runwayColor = vec3(1.0, 0.1, 0.7);
-    p = pOrig;
+    vec3 rc = vec3(1.0, 0.1, 0.2);
+    p = po;
     p.y -= -3.8;
     p.z = abs(p.z);
     p.z -= 12;
@@ -207,28 +162,50 @@ VolumetricResult evaluateLight(in vec3 p)
    pMod1(p.x, 10);
    float h = 0.3 + C_1_S;
     float dRunway = sdBox(p, vec3(0.1, h, 0.1));
-    dRunway = opIntersection(dRunway, runwayBox(pOrig));
+    dRunway = opIntersection(dRunway, runwayBox(po));
     float strRunway = 100 - 120*C_1_S;
     strRunway = max(strRunway, 0);
 
-    res += runwayColor * strRunway / (dRunway * dRunway);
-    finalDis = min(finalDis, dRunway);
- 
+    res += rc * strRunway / (dRunway * dRunway);
+    fd = min(fd, dRunway);
+    
+    if (scenePart == 1.0) {
+       p = po;
+       p.y -= -3.8;
+
+
+       const float sections = 15;
+       float section = pMod1(p.x, sections);
+       if (floor(section + sections / 2) == floor(mod(iTime * 10, 15))) {
+           float dLanding1 = sdc(p, vec3(0, 0, 0), vec3(-3, 0, 1), 0.2);
+           float dLanding2 = sdc(p, vec3(0, 0, 0), vec3(-3, 0, -1), 0.2);
+            float dLanding = min(dLanding1, dLanding2);
+
+           dLanding = opIntersection(dLanding, runwayBox(po));
+           float strLanding = 10 ;
+           strLanding = max(strLanding, 0);
+
+           res += rc * strLanding / (dLanding * dLanding);
+           fd = min(fd, dLanding);
+       }
+    }
+
+
     if (scenePart == 2.0) {
       
-        { // Borgila engine
-            vec3 pEngine = pOrig;
+        {
+            vec3 pEngine = po;
 
             pEngine.xyz = pEngine.zyx;
 
-            pEngine -= boatPos() + vec3(1, 0, -2);
+            pEngine -= bp() + vec3(1, 0, -2);
             const float engineW = 0.7;
             pEngine.z -= engineW;
 
             
             float w = 0.4 + sin(p.z* 1000) * 0.1;
             
-            w -= 0.1*sin(pOrig.z * 1000.0 + iTime * 2000);
+            w -= 0.1*sin(po.z * 1000.0 + iTime * 2000);
 
             float depth = 1.2 + 0.8*max(0.5 - C_3_S*3, 0);
 
@@ -237,17 +214,17 @@ VolumetricResult evaluateLight(in vec3 p)
             float dEngine2 = sdCappedCylinder(pEngine.xzy, vec2(w, depth));
             float dEngine = min(dEngine1, dEngine2);
 
-             float engineStr = 100 + sin(iTime * 30) * 10; //1;
+             float engineStr = 100 + sin(iTime * 30) * 10;
 
             vec3 engineColor = mix(vec3(1.0, 0.1, 0.01), vec3(1.0, 0.0, 0.01), mod(p.z, 1.0));//vec3(1.0);;
             res += engineColor * engineStr / (dEngine * dEngine);
 
-            finalDis = min(finalDis, dEngine);
+            fd = min(fd, dEngine);
         }
 
 
-        if (iTime > doorOpenTimePart2 + waitForLaserTime) { // laser
-            p = pOrig;
+        if (iTime > doorOpenTimePart2 + waitForLaserTime) {
+            p = po;
             p = p.xzy;
             p -= vec3(40, 15, 1.25);
 
@@ -261,12 +238,12 @@ VolumetricResult evaluateLight(in vec3 p)
             vec3 laserColor = vec3(1.0, 0.05, 0.05);
 
             res += laserColor * strLaser / (dLaser * dLaser);
-            finalDis = min(finalDis, dLaser);
+            fd = min(fd, dLaser);
         }
     }
 
 
-    return VolumetricResult(finalDis, res); 
+    return VolumetricResult(fd, res); 
 }
 
 float getReflectiveIndex(int type) {
@@ -276,7 +253,7 @@ float getReflectiveIndex(int type) {
         case mountainType:
             return 0;
         case runwayType:
-            return 0.1;
+            return 0;
         case doorsType:
             return 0.1;
         case hangarType:
@@ -322,9 +299,9 @@ float mountain(vec3 p)
 
 float ufo(in vec3 p)
 {
-    p -= ufoPos();
+    p -= ufoP();
 
-    p = ufoRot(p);
+    p = ufoR(p);
 
     float d2 = sdTorus(p - vec3(0, -3, 0), vec2(8.5, 0.5));
 
@@ -355,8 +332,6 @@ float runway(in vec3 p)
 {
     vec3 b = runwaySize;
     p -= runwayPos;
-    // p.y -= 0.1*noise_2(p.xz*4);
-    // p.y += 0.3*texture(inTexture0, (p.xz)/200.0).x;
     float d = sdBox(p, b);
     return d;
 }
@@ -388,12 +363,12 @@ float hangar(in vec3 p)
 
 float doors(in vec3 p) 
 {
-    float t = min(iTime,  ufoPosD1 + ufoPosD2 + ufoPosD3);
+    float t = min(iTime,  ufoPD1 + ufoPD2 + ufoPD3);
 
     float open = 1.0;
-    if (t > ufoPosD1 + ufoPosD2) {
-        float tt = t - (ufoPosD1 + ufoPosD2);
-        open = max(0.0, max(1.0 - tt, tt - ufoPosD3 + 1));
+    if (t > ufoPD1 + ufoPD2) {
+        float tt = t - (ufoPD1 + ufoPD2);
+        open = max(0.0, max(1.0 - tt, tt - ufoPD3 + 1));
     }
 
     if (scenePart == 2.0) {
@@ -454,7 +429,7 @@ float boat(vec3 p) {
 float boatSplit(vec3 p, float dir)
 {
     p.xyz = p.zyx;
-    p -= boatPos();
+    p -= bp();
     p *= 0.4;
     float h = boat(p);
     vec3 cannonPos = vec3(1.5, 0.5, 2.5);
@@ -467,7 +442,6 @@ float boatSplit(vec3 p, float dir)
     return max(d, h);
 }
 
-
 DistanceInfo map(in vec3 p)
 {
    DistanceInfo ufoInfo = {ufo(p), ufoType};
@@ -478,7 +452,7 @@ DistanceInfo map(in vec3 p)
    DistanceInfo doorsInfo = {doors(p), doorsType};
 
    DistanceInfo di = un(un(runwayInfo, un(hangarInfo, doorsInfo)), mountainInfo);
-   if (ufoVisible()) {
+   if (ufoV()) {
         di = un(di, ufoInfo);
    }
    if(scenePart == 2.0) {
@@ -493,7 +467,7 @@ float borgilaText(vec3 p)
 {
     float f = 1/0.4;
     p.xz = p.zx;
-    p -= boatPos();
+    p -= bp();
     p.y -= 1.0 * f;
     p.z -= 4.4 * f;
     p.x -= 0.5 * f;
@@ -503,7 +477,7 @@ float borgilaText(vec3 p)
     uv.x *=-1;
     if ( d < 0.001) {
         float s = texture(borgilaTexture, uv).x;
-        if (s > 0.1) { // If not on text
+        if (s > 0.1) {
             d = 100;
         }
 	}
@@ -541,8 +515,8 @@ void main()
          if (iTime > camera1) {
             zoom = 1.5;
          }
-    } else { // part 2
-        zoom = 1.6; //2.0;
+    } else {
+        zoom = 1.6;
     }
     
     u *= zoom;
@@ -556,7 +530,7 @@ void main()
 
     if (scenePart == 1.0) {
         if (iTime < camera1) {
-            vec3 ufo = ufoPos();
+            vec3 ufo = ufoP();
             rayOrigin = ufo + vec3(-15, 8, 0);
             vec3 tar = rayOrigin + vec3(10, -3 ,0 );
         
@@ -567,7 +541,7 @@ void main()
             rayDirection = normalize(dir + right*u + up*v);
     
         } else if (iTime < camera2) {
-            vec3 ufo = ufoPos();
+            vec3 ufo = ufoP();
             rayOrigin = vec3(62.094, 16.86, -25.4996);
             vec3 tar = ufo;
         
@@ -577,7 +551,7 @@ void main()
 
              rayDirection = normalize(dir + right*u + up*v);
         } else {
-            vec3 ufo = ufoPos();
+            vec3 ufo = ufoP();
             rayOrigin = vec3(40, 5, 38);
             vec3 tar = rayOrigin + vec3(0, -0.2, -1);
         
@@ -587,9 +561,9 @@ void main()
 
              rayDirection = normalize(dir + right*u + up*v);
         }
-    } else { // part 2
+    } else {
         if (iTime < part2flybyEndTime) {
-            vec3 boat = boatPos();
+            vec3 boat = bp();
             rayOrigin = boat + vec3(20, 20, 20);
             vec3 tar = boat;
         
