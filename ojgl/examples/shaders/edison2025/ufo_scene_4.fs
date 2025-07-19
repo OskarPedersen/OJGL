@@ -289,7 +289,10 @@ float ufo(in vec3 p)
 
     float d3 = sdTorus(p - vec3(0, -0.5, 0), vec2(1.5, 0.5));
 
-    return min(d2, smink(d1, d3, 1.5));
+    p.xz *= rot(iTime * 2.0);
+    pModPolar(p.xz, 16);
+    float d4 = length(p - vec3(8.9, -3, 0)) - 0.3;
+    return min(smink(d2, d4, 0.7), smink(d1, d3, 1.5));
 }
 
 DistanceInfo sunk(DistanceInfo a, DistanceInfo b, float k) {
