@@ -379,6 +379,12 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
         auto borgilaHyperSpace = Buffer::construct(sceneSize.x, sceneSize.y, "common/quad.vs", "edison2025/borgila_hyperspace.fs");
         borgilaHyperSpace->setInputs(noise);
 
+        borgilaHyperSpace->setTextureCallback([this]([[maybe_unused]] float relativeSceneTime) {
+            ojstd::vector<ojstd::shared_ptr<Uniform1t>> vector;
+            vector.push_back(ojstd::make_shared<Uniform1t>("borgilaTexture", this->getText("BORGILA", "Arial Black")));
+            return vector;
+        });
+
         borgilaHyperSpace->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
             Buffer::UniformVector vector;
             vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));

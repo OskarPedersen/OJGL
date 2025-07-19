@@ -26,6 +26,7 @@ uniform float iTime;
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform sampler2D inTexture0;
+uniform sampler2D borgilaTexture;
 
 uniform float C_1_S; // bass
 uniform float C_3_S; // "vocals"
@@ -43,6 +44,7 @@ const int boatType = 6;
 vec3 cameraPosition;
 vec3 rayDirection;
 vec3 firstRayDirection;
+bool willHitText = false;
 
 
 float ufoSpeed = 10.0;
@@ -57,7 +59,7 @@ vec3 getAmbientColor(int type, vec3 pos, vec3 normal)
 {
     switch (type) {
         case boatType:
-            return 10*vec3(1, 1, 1);
+            return willHitText ? vec3(0.0) : 6*vec3(1, 1, 1);
         default:
            return 5*vec3(0, 0.0, 1);
     }
@@ -91,7 +93,7 @@ vec3 getColor(in MarchResult result)
 
 float getFogAmount(in vec3 p)
 {
-    return 0.01;
+    return 0.02;
 }
 
 VolumetricResult evaluateLight(in vec3 p)
@@ -113,7 +115,7 @@ VolumetricResult evaluateLight(in vec3 p)
        pHyper -= vec3(0, 20, sin(pOrig.x + iTime * 60)*5);
        float dHyper = sdCylinder(pHyper.zyx, 0.0);
 
-       float hyperStr = 4 + 3.5*sin(iTime * 10);
+       float hyperStr = (4 + 3.5*sin(iTime * 10))*0.2;
        vec3 hyperColor = 0.3*vec3(0.1, 0.3, 1.0);
        res += hyperColor * hyperStr / (dHyper * dHyper);
 
@@ -131,7 +133,7 @@ VolumetricResult evaluateLight(in vec3 p)
        //dHyper -= texture(inTexture0, (pOrig.yz)/90.0).x;
        dHyper = max(0.01, dHyper);
 
-       float hyperStr = 0.3;
+       float hyperStr = 0.05;
        vec3 hyperColor = 1.5*vec3(0.2, 0.3, 1.0);
        res += hyperColor * hyperStr / (dHyper);
 
@@ -147,7 +149,7 @@ VolumetricResult evaluateLight(in vec3 p)
         pHyper -= vec3(0, 100, sin(pOrig.x - iTime * 10)*5);
         float dHyper = sdCylinder(pHyper.zyx, 0.0);
 
-        float hyperStr = 6;
+        float hyperStr = 0.5;
         vec3 hyperColor = 0.1*vec3(0.6, 0.3, 1.0);
         res += hyperColor * hyperStr / (dHyper * dHyper);
 
@@ -196,7 +198,7 @@ VolumetricResult evaluateLight(in vec3 p)
 float getReflectiveIndex(int type) {
     switch (type) {
         case boatType:
-            return 0.0;
+            return 0.1;
         default:
            return 0.0;
     }
@@ -379,6 +381,70 @@ FullMarchResult march2(in vec3 rayOrigin, in vec3 rayDirection)
     return FullMarchResult(resultColor, firstJumpPos);
 }
 
+
+float uvBox(vec3 p, vec3 b, inout vec2 uv)
+{
+    vec3 d = abs(p) - b;
+    float dis = length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
+
+    uv = p.xy / (b.xy * 2) - 0.5;
+    uv.x*=-1;
+    return dis;
+}
+
+float borgilaText(vec3 p)
+{
+    
+    p.xz = p.zx;
+    
+    p.z -= -35;
+    p.y -= 2;
+    // p.xz *= rot(0.1*cos(1.0*iTime));
+    // p.xy *= rot(0.1*sin(0.45*iTime));
+    p -= vec3(0.03 * sin(iTime), 0.06 * sin(iTime + 3), 0.06 * sin(iTime + 5));
+    p.xz *= rot(0.1*cos(1.0*iTime));
+    p.xy *= rot(0.1*sin(0.45*iTime));
+
+    p = vec3(-p.z, p.y, p.x);
+    
+    p.y -= 1.0;
+    p.z -= -1;
+    p.x -= -4;
+    
+    
+    // return sdSphere(p, 0.5);
+    vec2 uv;
+    float d =  uvBox(p, vec3(0.6, 0.25, 0.03), uv);
+    // uv.x *=-1;
+    if ( d < 0.001) {
+        float s = texture(borgilaTexture, uv).x;
+        if (s > 0.2) { // If not on text
+            d = 100;
+        }
+	}
+    return d;
+}
+
+
+bool willHitBorgilaText(vec3 rayOrigin, vec3 rayDirection) {
+    float t = 0;
+    float lastJumpDistance = 10000;
+    for (int steps = 0; steps < 20; ++steps) {
+        vec3 p = rayOrigin + t * rayDirection;
+        float d = borgilaText(p);
+        if (d < S_distanceEpsilon) {
+            return true;
+        }
+        t += d;
+        if (d > lastJumpDistance) {
+            return false;
+        }
+        lastJumpDistance = d;
+    }
+    return false;
+}
+
+
 void main()
 {
 
@@ -395,11 +461,9 @@ void main()
 
     float focus = 0.0;
 
-
-
     vec3 ufo = ufoPos();
-    rayOrigin = vec3(-50, 5 + 0.1*cos(3*iTime + sin(iTime)), -9 * smoothstep(3.0, 9.0, iTime));
-    vec3 tar = vec3(-35, 4, 0);
+    rayOrigin = vec3(-50, 7 + 0.1*cos(3*iTime + sin(iTime)) +3 -5*smoothstep(0, 5, iTime), -15*smoothstep(0, 8, iTime));
+    vec3 tar = vec3(-30, 4, 0);
 
 
     vec3 dir = normalize(tar - rayOrigin);
@@ -411,6 +475,7 @@ void main()
 
     firstRayDirection = rayDirection;
     //vec3 color = march(rayOrigin, rayDirection);
+    willHitText = willHitBorgilaText(rayOrigin, rayDirection);
     FullMarchResult res = march2(rayOrigin, rayDirection);
     vec3 color = res.col;
 
