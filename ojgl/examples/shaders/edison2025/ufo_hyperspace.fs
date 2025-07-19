@@ -369,6 +369,10 @@ void main()
       
 
     fragColor = vec4(pow(color, vec3(0.5)), clamp(focus, 0.001, 2.0));
+
+    
+    fragColor.xyz *= 1.0 - smoothstep(8.75, 9.0, iTime);
+    
 }
 
 )""
