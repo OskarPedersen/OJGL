@@ -47,7 +47,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         _ASSERTE(ret == 1);
     }
 #endif
-    popup::Data popupData { 1280, 720, false };
+    popup::Data popupData = popup::show();
 
     bool saveFrames = false;
     const Vector2i windowSize(popupData.width, popupData.height);
