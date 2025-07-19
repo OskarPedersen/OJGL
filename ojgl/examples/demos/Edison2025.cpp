@@ -474,7 +474,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
             return vector;
         });
 
-        scenes.emplace_back(chrom, Duration::seconds(300), "ufo_landing_part_2");
+        scenes.emplace_back(chrom, Duration::seconds(10), "ufo_landing_part_2");
     }
 
     return scenes;
