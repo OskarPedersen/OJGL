@@ -231,7 +231,65 @@ VolumetricResult evaluateLight(in vec3 p)
     }
 
 
-    float finalDis = dLaserFloor;
+    p = pOrig;
+    float dir;
+    if (p.z < 0.5) {
+        dir = -1.0;
+    } else {
+        dir = 1.0;
+    }
+    p.y += mod(boatSplitTime * 0.3, 5.0);
+    p.z -= dir*5;
+    p.zy *= rot(dir*boatSplitTime*0.1);
+    p.z += dir*5;
+
+    p.xy *= rot(dir*boatSplitTime*0.3);
+
+    p -= vec3(0.03 * sin(ojTime), 0.06 * sin(ojTime + 3), 0.06 * sin(ojTime + 5));
+    vec3 po = p;
+
+    float dLights;    
+    p.xz *= rot(PI);
+
+    vec3 p2 = p;
+    p2.z = abs(p2.z);
+    p2.y -= 4.91;
+    p2.z -= 2.8;
+    p2.y -= -(3.0-abs(p.z*0.8))*boatSplitTime*4.0; // make line fall down
+    dLights = sdSphere(p2, 0.05);
+    
+    vec3 p3 = p;
+    p3.z = abs(p3.z);
+    p3.y -= 4.5;
+    p3.z -= 1.0;
+    p3.y -= -(3.0-abs(p.z*0.8))*boatSplitTime*4.0; // make line fall down
+    dLights = min(dLights, sdSphere(p3, 0.05));
+
+    float lStr = 1 - smoothstep(0.0, 0.3, boatSplitTime);
+    res += vec3(1.0, 1.0, 0.1) * lStr / (dLights * dLights);
+
+    vec3 p4 = p;
+    lStr = 1.0;
+    p4.z = abs(p4.z);
+    p4.y -= 3.5;
+    p4.z -= 4.44;
+    dLights = sdSphere(p4, 0.05);
+    int li = int(ceil((abs(p.z) - 1.5)/1.8));
+    if (p.z >= 0) {
+        li = 2 - li;
+    } else {
+        li += 3;
+    }
+    li = clamp(li, 0, 5);
+
+    float ls = 1.0;
+    if (li == 0 || li == 5) {
+        lStr = 1 + 8*max(0.5 - C_1_S*3, 0);
+    }
+
+    res += vec3(1.0, 1.0, 0.1) * lStr / (dLights * dLights);
+
+    float finalDis = min(dLights, dLaserFloor);
     if (showLaser) {
         //finalDis = min(finalDis, laserFloorDis); // think this one cuses the white AO wall, maybe something wrong with it
         finalDis = min(finalDis, dLaser);

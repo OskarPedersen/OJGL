@@ -504,7 +504,7 @@ ojstd::vector<Scene> Edison2025::buildSceneGraph(const Vector2i& sceneSize) cons
 
 ojstd::string Edison2025::getTitle() const
 {
-    return "Edison 2025";
+    return "Aurora Borgilis";
 }
 
 void Edison2025::update(const Duration& relativeSceneTime, const Duration& elapsedTime, const ojstd::string& currentScene) const
