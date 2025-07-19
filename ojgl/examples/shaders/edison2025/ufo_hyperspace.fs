@@ -96,7 +96,7 @@ vec3 getColor(in MarchResult result)
 
 float getFogAmount(in vec3 p)
 {
-    return 0.01;
+    return 0.005;
 }
 
 VolumetricResult evaluateLight(in vec3 p)
