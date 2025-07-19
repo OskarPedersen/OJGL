@@ -397,13 +397,17 @@ float boatSplit(vec3 p, float dir)
     return h;
 }
 
+
 float ufo(in vec3 p)
 {
     p -= ufoPos();
     float d2 = sdTorus(p - vec3(0, -3, 0), vec2(8.5, 0.5));
 
-    float d1 = length(p) - (2.0 + max(0.5 - C_1_S*3, 0));
-    return min(d1, d2);
+    float d1 = length(p) - (1.5 + max(0.5 - C_1_S*3, 0));
+
+    float d3 = sdTorus(p - vec3(0, -0.5, 0), vec2(1.5, 0.5));
+
+    return min(d2, smink(d1, d3, 1.5));
 }
 
 DistanceInfo sunk(DistanceInfo a, DistanceInfo b, float k) {
