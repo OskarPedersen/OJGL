@@ -7,10 +7,14 @@
 
 namespace ojgl {
 
-struct GameState {
+struct PlayerState {
     Vector3f playerPosition { 0.0f, 0.5f, 0.0f };
     Vector3f velocity { 0.0f, 0.0f, 0.0f };
     float heading = 0.0f;
+};
+
+struct GameState {
+    PlayerState player;
 
     static GameState& instance();
     void update(const Window& window);
