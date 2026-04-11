@@ -20,26 +20,60 @@ void GameState::update(const Window& window)
     float dt = (Timepoint::now() - _previousUpdateTime).toMilliseconds();
     _previousUpdateTime = Timepoint::now();
 
+
     auto downKeys = window.getDownKeys();
 
-    if (downKeys.contains(Window::KEY_W)) {
-        playerPosition.z += _moveSpeed * dt;
+    // Turning
+    if (downKeys.contains(Window::KEY_LEFT)) {
+        heading -= _turnSpeed * dt;
     }
-    if (downKeys.contains(Window::KEY_S)) {
-        playerPosition.z -= _moveSpeed * dt;
+    if (downKeys.contains(Window::KEY_RIGHT)) {
+        heading += _turnSpeed * dt;
     }
-    if (downKeys.contains(Window::KEY_A)) {
-        playerPosition.x -= _moveSpeed * dt;
+
+    // Thrust along heading direction
+    if (downKeys.contains(Window::KEY_SPACE)) {
+        velocity.x -= ojstd::sin(heading) * _thrustAccel * dt;
+        velocity.z -= ojstd::cos(heading) * _thrustAccel * dt;
     }
-    if (downKeys.contains(Window::KEY_D)) {
-        playerPosition.x += _moveSpeed * dt;
+
+    // Elevator: up/down arrows give vertical impulse
+    if (downKeys.contains(Window::KEY_UP)) {
+        velocity.y += _elevatorStrength * dt;
     }
-    if (downKeys.contains(Window::KEY_Z)) {
-        playerPosition.y += _moveSpeed * dt;
+    if (downKeys.contains(Window::KEY_DOWN)) {
+        velocity.y -= _elevatorStrength * dt;
     }
-    if (downKeys.contains(Window::KEY_X)) {
-        playerPosition.y -= _moveSpeed * dt;
+
+    // Gravity
+    velocity.y -= _gravity * dt;
+
+    // Hover force: spring pushes up when close to ground
+    float distAboveGround = playerPosition.y - _groundLevel;
+    if (distAboveGround < _hoverHeight) {
+        float penetration = _hoverHeight - distAboveGround;
+        velocity.y += penetration * _hoverStiffness * dt;
+        velocity.y *= (1.0f - ojstd::min(_hoverDamping * dt, 1.0f));
     }
+
+    // Hard floor
+    if (playerPosition.y < _groundLevel) {
+        playerPosition.y = _groundLevel;
+        if (velocity.y < 0.0f)
+            velocity.y = 0.0f;
+    }
+
+    // Drag
+    float hDrag = 1.0f - ojstd::min(_dragHorizontal * dt, 1.0f);
+    float vDrag = 1.0f - ojstd::min(_dragVertical * dt, 1.0f);
+    velocity.x *= hDrag;
+    velocity.z *= hDrag;
+    velocity.y *= vDrag;
+
+    // Integrate position
+    playerPosition.x += velocity.x * dt;
+    playerPosition.y += velocity.y * dt;
+    playerPosition.z += velocity.z * dt;
 }
 
 ojstd::vector<Scene> FzxGame::buildSceneGraph(const Vector2i& sceneSize) const
@@ -50,8 +84,9 @@ ojstd::vector<Scene> FzxGame::buildSceneGraph(const Vector2i& sceneSize) const
         game->setUniformCallback([]([[maybe_unused]] float relativeSceneTime) {
             Buffer::UniformVector vector;
             vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));
-            const auto& pos = GameState::instance().playerPosition;
-            vector.push_back(ojstd::make_shared<Uniform3fv>("iPlayerPosition", ojstd::vector<float>({ pos.x, pos.y, pos.z })));
+            const auto& state = GameState::instance();
+            vector.push_back(ojstd::make_shared<Uniform3fv>("iPlayerPosition", ojstd::vector<float>({ state.playerPosition.x, state.playerPosition.y, state.playerPosition.z })));
+            vector.push_back(ojstd::make_shared<Uniform1f>("iPlayerHeading", state.heading));
             return vector;
         });
 

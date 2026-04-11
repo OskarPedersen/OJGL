@@ -109,30 +109,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
             case Window::KEY_ESCAPE:
                 return 0;
 #ifdef _DEBUG
-            case Window::KEY_LEFT:
-                glState.changeTime(Duration::milliseconds(-5000));
-                break;
-
-            case Window::KEY_RIGHT:
-                glState.changeTime(Duration::milliseconds(5000));
-                break;
-
-            case Window::KEY_SPACE:
-                glState.togglePause();
-                break;
-
-            case Window::KEY_R:
-                glState.restart();
-                break;
-
-            case Window::KEY_UP:
-                glState.nextScene();
-                break;
-
-            case Window::KEY_DOWN:
-                glState.previousScene();
-                break;
-
             case Window::KEY_P:
                 captureFrame = true;
                 break;

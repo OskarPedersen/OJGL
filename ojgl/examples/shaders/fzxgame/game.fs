@@ -25,24 +25,39 @@ uniform float iTime;
 uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform vec3 iPlayerPosition;
+uniform float iPlayerHeading;
 
 const int playerType = 1;
 const int groundType = 2;
 const int pillarType = 3;
+const int towerType = 4;
 
 DistanceInfo map(in vec3 p)
 {
     DistanceInfo ground = { p.y + 1.0, groundType };
-    DistanceInfo player = { sdSphere(p - iPlayerPosition, 0.3), playerType };
-    pMod1(p.x, 10);
-    pMod1(p.z, 10);
-    DistanceInfo pillars = { sdSphere(p, 0.1), pillarType };
-    return un(ground, un(player, pillars));
+
+    vec3 pShip = p - iPlayerPosition;
+    pShip.xz *= rot(-iPlayerHeading);
+    DistanceInfo player = {sdRoundBox(pShip, vec3(0.4, 0.2, 1.0), 0.1), playerType };
+    
+    vec3 pPillar = p;
+    pMod1(pPillar.x, 10);
+    pMod1(pPillar.z, 10);
+    DistanceInfo pillars = { sdCappedCylinder(pPillar, vec2(0.1, 1.0)), pillarType };
+
+    vec3 pTower = p;
+    pMod1(pTower.x, 20);
+    DistanceInfo towers = { sdBox(pTower, vec3(2, 10, 2)), towerType };
+
+    return un(ground, un(player, un(pillars, towers)));
 }
 
 float getReflectiveIndex(int type)
 {
-    return type == groundType ? 0.2 : 0.0;
+    if (type == playerType) {
+        return 0.5;
+    }
+    return 0.0;
 }
 
 vec3 getColor(in MarchResult result)
@@ -53,6 +68,8 @@ vec3 getColor(in MarchResult result)
         return vec3(1, 0, 0);
     } else if (result.type == groundType) {
         return vec3(0, 0, 1);
+    }  else if (result.type == towerType) {
+        return vec3(0, 1, 1);
     }
 }
 
@@ -74,8 +91,11 @@ void main()
     // vec3 eye = (iCameraMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
     // vec3 rayDirection = normalize(rayOrigin - eye);
 
-    vec3 rayOrigin = iPlayerPosition + vec3(0, 1, -8);
-    vec3 tar = iPlayerPosition; //rayOrigin + vec3(10, -3 ,0 );
+    float sh = sin(iPlayerHeading);
+    float ch = cos(iPlayerHeading);
+    vec3 camOffset = vec3(8.0 * sh, 3.0, 8.0 * ch);
+    vec3 rayOrigin = iPlayerPosition + camOffset;
+    vec3 tar = iPlayerPosition + vec3(0.0, 0.5, 0.0);
         
     vec3 dir = normalize(tar - rayOrigin);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));
