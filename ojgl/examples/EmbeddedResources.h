@@ -379,6 +379,10 @@ namespace ojgl::resources {
 #include "shaders/edison2025/ufo_scene_4.fs"
           , "edison2025/ufo_scene_4.fs"
           },
+          {
+#include "shaders/fzxgame/game.fs"
+          , "fzxgame/game.fs"
+          },
   };
 // clang-format on
 }

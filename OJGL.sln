@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+# Visual Studio Version 18
+VisualStudioVersion = 18.4.11626.88 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ojgl", "ojgl\ojgl.vcxproj", "{340966A2-A0AD-4E81-9E82-D2D92359ACE9}"
 EndProject
@@ -22,18 +22,23 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Debug|x64.ActiveCfg = Debug|Win32
+		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Debug|x64.Build.0 = Debug|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Debug|x86.ActiveCfg = Debug|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Debug|x86.Build.0 = Debug|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.OptimizedDebug|x64.ActiveCfg = OptimizedDebug|Win32
+		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.OptimizedDebug|x64.Build.0 = OptimizedDebug|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.OptimizedDebug|x86.ActiveCfg = OptimizedDebug|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.OptimizedDebug|x86.Build.0 = OptimizedDebug|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Release|x64.ActiveCfg = Release|Win32
+		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Release|x64.Build.0 = Release|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Release|x86.ActiveCfg = Release|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Release|x86.Build.0 = Release|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Unicode Debug|x64.ActiveCfg = Unicode Debug|Win32
+		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Unicode Debug|x64.Build.0 = Unicode Debug|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Unicode Debug|x86.ActiveCfg = Unicode Debug|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Unicode Debug|x86.Build.0 = Unicode Debug|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Unicode Release|x64.ActiveCfg = Unicode Release|Win32
+		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Unicode Release|x64.Build.0 = Unicode Release|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Unicode Release|x86.ActiveCfg = Unicode Release|Win32
 		{340966A2-A0AD-4E81-9E82-D2D92359ACE9}.Unicode Release|x86.Build.0 = Unicode Release|Win32
 		{4E15033F-45F2-4765-926E-E86660EF6C85}.Debug|x64.ActiveCfg = Debug|Win32

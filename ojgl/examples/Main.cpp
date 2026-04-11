@@ -7,6 +7,7 @@
 #include "demos/Edison2022.h"
 #include "demos/Edison2025.h"
 #include "demos/Eldur.h"
+#include "demos/FzxGame.h"
 #include "demos/InnerSystemLab.h"
 #include "demos/QED.h"
 #include "demos/Template.h"
@@ -37,6 +38,7 @@ enum class DemoType {
     Edison2021,
     Edison2022,
     Edison2025,
+    FzxGame,
 };
 
 ojstd::shared_ptr<Demo> getDemo([[maybe_unused]] DemoType type)
@@ -58,6 +60,8 @@ ojstd::shared_ptr<Demo> getDemo([[maybe_unused]] DemoType type)
         return ojstd::make_shared<Edison2022>();
     case DemoType::Edison2025:
         return ojstd::make_shared<Edison2025>();
+    case DemoType::FzxGame:
+        return ojstd::make_shared<FzxGame>();
     }
     _ASSERTE(false);
     return nullptr;
@@ -84,7 +88,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     for (const auto& [content, path] : resources::shaders)
         ShaderReader::preLoad(path, content);
 
-    const auto demo = getDemo(DemoType::Edison2025);
+    const auto demo = getDemo(DemoType::FzxGame);
     Window window(windowSize, demo->getTitle(), fullScreen, showCursor);
     TextRenderer::instance().setHDC(window.hdcBackend());
 
@@ -99,6 +103,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         bool captureFrame = false;
 #endif
         window.getMessages();
+        GameState::instance().update(window);
         for (auto key : window.getPressedKeys()) {
             switch (key) {
             case Window::KEY_ESCAPE:
