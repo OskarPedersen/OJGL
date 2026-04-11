@@ -17,7 +17,7 @@ void GameState::update(const Window& window)
         _initialized = true;
     }
 
-    float dt = (Timepoint::now() - _previousUpdateTime).toMilliseconds();
+    float dtS = (Timepoint::now() - _previousUpdateTime).toSeconds();
     _previousUpdateTime = Timepoint::now();
 
 
@@ -31,55 +31,36 @@ void GameState::update(const Window& window)
 
     // Turning
     if (downKeys.contains(Window::KEY_LEFT)) {
-        player.heading -= _turnSpeed * dt;
+        player.headingRad -= _turnSpeedRadS * dtS;
     }
     if (downKeys.contains(Window::KEY_RIGHT)) {
-        player.heading += _turnSpeed * dt;
+        player.headingRad += _turnSpeedRadS * dtS;
     }
 
     // Thrust along heading direction
     if (downKeys.contains(Window::KEY_SPACE)) {
-        player.velocity.x -= ojstd::sin(player.heading) * _thrustAccel * dt;
-        player.velocity.z -= ojstd::cos(player.heading) * _thrustAccel * dt;
+        player.velocityMS.x -= ojstd::sin(player.headingRad) * _thrustAccelMS2 * dtS;
+        player.velocityMS.z -= ojstd::cos(player.headingRad) * _thrustAccelMS2 * dtS;
     }
 
-    // Elevator: up/down arrows give vertical impulse
-    if (downKeys.contains(Window::KEY_UP)) {
-        player.velocity.y += _elevatorStrength * dt;
-    }
-    if (downKeys.contains(Window::KEY_DOWN)) {
-        player.velocity.y -= _elevatorStrength * dt;
-    }
+    
 
     // Gravity
-    player.velocity.y -= _gravity * dt;
+    player.velocityMS.y -= _gravityMS2 * dtS;
 
-    // Hover force: spring pushes up when close to ground
-    float distAboveGround = player.playerPosition.y - _groundLevel;
-    if (distAboveGround < _hoverHeight) {
-        float penetration = _hoverHeight - distAboveGround;
-        player.velocity.y += penetration * _hoverStiffness * dt;
-        player.velocity.y *= (1.0f - ojstd::min(_hoverDamping * dt, 1.0f));
-    }
+    
 
     // Hard floor
-    if (player.playerPosition.y < _groundLevel) {
-        player.playerPosition.y = _groundLevel;
-        if (player.velocity.y < 0.0f)
-            player.velocity.y = 0.0f;
+    if (player.positionM.y < _groundLevelM) {
+        player.positionM.y = _groundLevelM;
+        if (player.velocityMS.y < 0.0f)
+            player.velocityMS.y = 0.0f;
     }
 
-    // Drag
-    float hDrag = 1.0f - ojstd::min(_dragHorizontal * dt, 1.0f);
-    float vDrag = 1.0f - ojstd::min(_dragVertical * dt, 1.0f);
-    player.velocity.x *= hDrag;
-    player.velocity.z *= hDrag;
-    player.velocity.y *= vDrag;
-
     // Integrate position
-    player.playerPosition.x += player.velocity.x * dt;
-    player.playerPosition.y += player.velocity.y * dt;
-    player.playerPosition.z += player.velocity.z * dt;
+    player.positionM.x += player.velocityMS.x * dtS;
+    player.positionM.y += player.velocityMS.y * dtS;
+    player.positionM.z += player.velocityMS.z * dtS;
 }
 
 ojstd::vector<Scene> FzxGame::buildSceneGraph(const Vector2i& sceneSize) const
@@ -91,9 +72,9 @@ ojstd::vector<Scene> FzxGame::buildSceneGraph(const Vector2i& sceneSize) const
             Buffer::UniformVector vector;
             vector.push_back(ojstd::make_shared<UniformMatrix4fv>("iCameraMatrix", FreeCameraController::instance().getCameraMatrix()));
             const auto& p = GameState::instance().player;
-            vector.push_back(ojstd::make_shared<Uniform3fv>("iPlayerPosition", ojstd::vector<float>({ p.playerPosition.x, p.playerPosition.y, p.playerPosition.z })));
-            vector.push_back(ojstd::make_shared<Uniform1f>("iPlayerHeading", p.heading));
-            float speed = ojstd::sqrt(static_cast<float>(p.velocity.x * p.velocity.x + p.velocity.z * p.velocity.z));
+            vector.push_back(ojstd::make_shared<Uniform3fv>("iPlayerPosition", ojstd::vector<float>({ p.positionM.x, p.positionM.y, p.positionM.z })));
+            vector.push_back(ojstd::make_shared<Uniform1f>("iPlayerHeading", p.headingRad));
+            float speed = ojstd::sqrt(static_cast<float>(p.velocityMS.x * p.velocityMS.x + p.velocityMS.z * p.velocityMS.z));
             vector.push_back(ojstd::make_shared<Uniform1f>("iPlayerSpeed", speed));
             return vector;
         });

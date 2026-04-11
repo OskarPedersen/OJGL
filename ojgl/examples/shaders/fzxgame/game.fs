@@ -94,7 +94,7 @@ void main()
 
     float sh = sin(iPlayerHeading);
     float ch = cos(iPlayerHeading);
-    float camDist = 8.0 + 12.0 * iPlayerSpeed;
+    float camDist = 8.0 + 0.1 * iPlayerSpeed;
     vec3 camOffset = vec3(camDist * sh, 3.0, camDist * ch);
     vec3 rayOrigin = iPlayerPosition + camOffset;
     vec3 tar = iPlayerPosition + vec3(0.0, 0.5, 0.0);

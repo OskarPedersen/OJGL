@@ -8,9 +8,9 @@
 namespace ojgl {
 
 struct PlayerState {
-    Vector3f playerPosition { 0.0f, 0.5f, 0.0f };
-    Vector3f velocity { 0.0f, 0.0f, 0.0f };
-    float heading = 0.0f;
+    Vector3f positionM { 10.0f, 10.5f, 0.0f };
+    Vector3f velocityMS { 0.0f, 0.0f, 0.0f };
+    float headingRad = 0.0f;
 };
 
 struct GameState {
@@ -20,16 +20,12 @@ struct GameState {
     void update(const Window& window);
 
 private:
-    static constexpr float _thrustAccel = 0.0005f;
-    static constexpr float _turnSpeed = 0.003f;
-    static constexpr float _elevatorStrength = 0.008f;
-    static constexpr float _gravity = 0.012f;
-    static constexpr float _groundLevel = 0.0f;
-    static constexpr float _hoverHeight = 0.3f;
-    static constexpr float _hoverStiffness = 0.03f;
-    static constexpr float _hoverDamping = 0.06f;
-    static constexpr float _dragHorizontal = 0.002f;
-    static constexpr float _dragVertical = 0.004f;
+    static constexpr float _thrustAccelMS2 = 10.5f;
+    static constexpr float _turnSpeedRadS = 3.0f;
+    static constexpr float _gravityMS2 = 9.81f;
+    static constexpr float _groundLevelM = 0.0f;
+
+    
     Timepoint _previousUpdateTime;
     bool _initialized = false;
 };
