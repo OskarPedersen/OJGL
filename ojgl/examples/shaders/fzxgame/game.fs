@@ -35,6 +35,7 @@ DistanceInfo map(in vec3 p)
     DistanceInfo ground = { p.y + 1.0, groundType };
     DistanceInfo player = { sdSphere(p - iPlayerPosition, 0.3), playerType };
     pMod1(p.x, 10);
+    pMod1(p.z, 10);
     DistanceInfo pillars = { sdSphere(p, 0.1), pillarType };
     return un(ground, un(player, pillars));
 }
@@ -73,8 +74,8 @@ void main()
     // vec3 eye = (iCameraMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
     // vec3 rayDirection = normalize(rayOrigin - eye);
 
-    vec3 rayOrigin = iPlayerPosition + vec3(-15, 8, 0);
-    vec3 tar = rayOrigin + vec3(10, -3 ,0 );
+    vec3 rayOrigin = iPlayerPosition + vec3(0, 1, -8);
+    vec3 tar = iPlayerPosition; //rayOrigin + vec3(10, -3 ,0 );
         
     vec3 dir = normalize(tar - rayOrigin);
 	vec3 right = normalize(cross(vec3(0, 1, 0), dir));

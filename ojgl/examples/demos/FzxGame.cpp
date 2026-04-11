@@ -23,10 +23,10 @@ void GameState::update(const Window& window)
     auto downKeys = window.getDownKeys();
 
     if (downKeys.contains(Window::KEY_W)) {
-        playerPosition.z -= _moveSpeed * dt;
+        playerPosition.z += _moveSpeed * dt;
     }
     if (downKeys.contains(Window::KEY_S)) {
-        playerPosition.z += _moveSpeed * dt;
+        playerPosition.z -= _moveSpeed * dt;
     }
     if (downKeys.contains(Window::KEY_A)) {
         playerPosition.x -= _moveSpeed * dt;
