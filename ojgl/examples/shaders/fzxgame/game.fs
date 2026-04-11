@@ -26,6 +26,7 @@ uniform vec2 iResolution;
 uniform mat4 iCameraMatrix;
 uniform vec3 iPlayerPosition;
 uniform float iPlayerHeading;
+uniform float iPlayerSpeed;
 
 const int playerType = 1;
 const int groundType = 2;
@@ -93,7 +94,8 @@ void main()
 
     float sh = sin(iPlayerHeading);
     float ch = cos(iPlayerHeading);
-    vec3 camOffset = vec3(8.0 * sh, 3.0, 8.0 * ch);
+    float camDist = 8.0 + 12.0 * iPlayerSpeed;
+    vec3 camOffset = vec3(camDist * sh, 3.0, camDist * ch);
     vec3 rayOrigin = iPlayerPosition + camOffset;
     vec3 tar = iPlayerPosition + vec3(0.0, 0.5, 0.0);
         

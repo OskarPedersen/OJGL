@@ -87,6 +87,8 @@ ojstd::vector<Scene> FzxGame::buildSceneGraph(const Vector2i& sceneSize) const
             const auto& state = GameState::instance();
             vector.push_back(ojstd::make_shared<Uniform3fv>("iPlayerPosition", ojstd::vector<float>({ state.playerPosition.x, state.playerPosition.y, state.playerPosition.z })));
             vector.push_back(ojstd::make_shared<Uniform1f>("iPlayerHeading", state.heading));
+            float speed = ojstd::sqrt(static_cast<float>(state.velocity.x * state.velocity.x + state.velocity.z * state.velocity.z));
+            vector.push_back(ojstd::make_shared<Uniform1f>("iPlayerSpeed", speed));
             return vector;
         });
 

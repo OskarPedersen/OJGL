@@ -16,7 +16,7 @@ struct GameState {
     void update(const Window& window);
 
 private:
-    static constexpr float _thrustAccel = 0.0015f;
+    static constexpr float _thrustAccel = 0.0005f;
     static constexpr float _turnSpeed = 0.003f;
     static constexpr float _elevatorStrength = 0.008f;
     static constexpr float _gravity = 0.012f;
