@@ -145,7 +145,7 @@ DistanceInfo robotArm(in vec3 p)
     dJoint = min(dJoint, sdRoundCone(qq - vec3(0.00, 0.01, 0.0), 0.025, 0.005, fLength*2));
     
 
-    return un(DistanceInfo(dBody, armBodyType), DistanceInfo(dJoint, armJointType));
+    return un(DistanceInfo(dBody, armBodyType), DistanceInfo(dJoint, armJointType)); 
 }
 
 float udRoundBox( vec3 p, vec3 b, float r )
@@ -158,16 +158,22 @@ DistanceInfo oskar(in vec3 p) {
     if (phase >= 2 ) {
         vec3 q = p;
         q.x = mod(q.x, 5) - 2.5;
-        float d = udRoundBox(q - vec3(0, 4, 0), vec3(1, 1, 1), 0.5);
+        q.z = mod(q.z, 5) - 2.5;
+        q.y += sin(floor(p.x / 5)) * 3;
+        float s = 1 + sin(p.x) * 0.3;
+        float r = 0.5;
+        float d = udRoundBox(q - vec3(0, 4, 0), vec3(s), r);
         return DistanceInfo(d, oskarType);
     } else if (phase >= 1 ) {
         vec3 q = p;
         q.x = mod(q.x, 5) - 2.5;
+        q.z = mod(q.z, 5) - 2.5;
         float d = sdSphere(q - vec3(0, 2, 0), 0.5);
         return DistanceInfo(d, oskarType);
     } else {
         vec3 q = p;
         q.x = mod(q.x, 5) - 2.5;
+        q.z = mod(q.z, 5) - 2.5;
         float d = sdTorus(q - vec3(0, 2, 0), vec2(1, 0.5));
         return DistanceInfo(d, oskarType);
     }
@@ -203,6 +209,9 @@ float getReflectiveIndex(int type)
     if (type == armJointType) {
         return 0.25;
     }
+    if (type == oskarType) {
+        return 0.5;
+    }
     return 0.0;
 }
 
@@ -225,14 +234,14 @@ vec3 getColor(in MarchResult result)
     vec3 halfDir = normalize(invLight + viewDir);
     float specular = pow(max(0.0, dot(normal, halfDir)), 32.0);
 
-    if (result.type == sphereType) {
+    if (result.type == sphereType || result.type == oskarType) {
         float pulse = exp(-mBassdrum * 6.0);
         vec3 metalColor = 0.5*vec3(0.2, 0.5, 0.9);
         gFresnel = pow(1.0 - max(0.0, dot(normal, viewDir)), 4.0);
         vec3 baseColor = metalColor * diffuse * (1.0 + 2.0 * pulse);
         vec3 tintedSpecular = specular * mix(vec3(1.0), metalColor, 0.6); 
         return baseColor + 2.0 * gFresnel * mix(vec3(0.6, 0.8, 1.0), metalColor, 0.4) + tintedSpecular;
-    } else if (result.type == armBodyType) {
+    } else if (result.type == armBodyType ) {
         vec3 bodyColor = 0.8*vec3(0.2, 0.5, 0.9);
         gFresnel = 0.3 * pow(1.0 - max(0.0, dot(normal, viewDir)), 4.0);
         return bodyColor * (0.06 + diffuse) + 0.8 * specular * mix(vec3(1.0), bodyColor, 0.3) + gFresnel * vec3(1.0, 0.55, 0.25);
