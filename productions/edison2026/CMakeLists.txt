@@ -6,6 +6,7 @@ ojgl_add_demo(
     MUSIC "${CMAKE_CURRENT_SOURCE_DIR}/music/song.asm"
     SHADERS
         cube.fs
+        oskar.fs
         blur1.fs
     COMMON_SHADERS
         primitives.fs

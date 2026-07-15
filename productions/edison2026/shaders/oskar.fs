@@ -34,6 +34,7 @@ const int sphereType = 1;
 const int roomType = 2;
 const int armBodyType = 3;
 const int armJointType = 4;
+const int oskarType = 5;
 
 vec3 gEye;
 float gFresnel = 0.0;
@@ -147,9 +148,37 @@ DistanceInfo robotArm(in vec3 p)
     return un(DistanceInfo(dBody, armBodyType), DistanceInfo(dJoint, armJointType));
 }
 
+float udRoundBox( vec3 p, vec3 b, float r )
+{
+  return length(max(abs(p)-b,0.0))-r;
+}
+
+DistanceInfo oskar(in vec3 p) {
+    float phase = mod(mBassdrumTot, 3);
+    if (phase >= 2 ) {
+        vec3 q = p;
+        q.x = mod(q.x, 5) - 2.5;
+        float d = udRoundBox(q - vec3(0, 4, 0), vec3(1, 1, 1), 0.5);
+        return DistanceInfo(d, oskarType);
+    } else if (phase >= 1 ) {
+        vec3 q = p;
+        q.x = mod(q.x, 5) - 2.5;
+        float d = sdSphere(q - vec3(0, 2, 0), 0.5);
+        return DistanceInfo(d, oskarType);
+    } else {
+        vec3 q = p;
+        q.x = mod(q.x, 5) - 2.5;
+        float d = sdTorus(q - vec3(0, 2, 0), vec2(1, 0.5));
+        return DistanceInfo(d, oskarType);
+    }
+
+
+}
+
 DistanceInfo map(in vec3 p)
 {
-    return un(scene1(p), un(robotArm(p), room(p)));
+    return un(room(p), oskar(p));
+    //return un(scene1(p), un(robotArm(p), room(p)));
 }
 
 const float roomEdgeBevel = 2.7;
