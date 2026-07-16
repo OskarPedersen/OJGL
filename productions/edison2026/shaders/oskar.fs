@@ -35,6 +35,7 @@ const int roomType = 2;
 const int armBodyType = 3;
 const int armJointType = 4;
 const int oskarType = 5;
+const int screenType = 6;
 
 vec3 gEye;
 float gFresnel = 0.0;
@@ -171,6 +172,8 @@ float llt(vec3 p)
     float d = sdHexPrism((p - vec3(0.0, 1.5, 0.0)).xzy, vec2(w, 1.5));
     float res = d;
     
+    p.xz *= rot(iTime * 1.5);
+
     { // top ? 
         float w = 0.2;
         w -= abs(p.y - 3.3) * 0.1;
@@ -213,15 +216,27 @@ float missile(vec3 p) {
     return d;
 }
 
+float opSubtraction( float d1, float d2 )
+{
+    return max(-d1,d2);
+}
+
+
+float opIntersection( float d1, float d2 )
+{
+    return max(d1,d2);
+}
+
 DistanceInfo oskar(in vec3 p) {
     float phase = mod(mBassdrumTot, 4);
-    if (phase >= 3 ) { // waves
+    if (phase >= 3 ) { // waves w rocket
         float d1 = p.y - 3 + sin(p.x + iTime * 5) +  0.1 * sin(p.x * 3 + iTime * 3);
         float d2 = missile(p);
         return DistanceInfo(smink(d1, d2, 1.8), oskarType);
-    } else if (phase >= 2 ) {
-        float d = llt(p);
-        return DistanceInfo(d, oskarType);
+    } else if (phase >= 2 ) { // llt
+        float d1 = llt(p);
+        float d2 = sdSphere(p, 7.0);
+        return DistanceInfo(min(d1, d2), oskarType);
 
 
     } else if (phase >= 1 ) { // tower w spheres
@@ -232,12 +247,14 @@ DistanceInfo oskar(in vec3 p) {
         float d1 = sdSphere(q , 0.5);
         float d2 = sdCylinder(p.xzy, 1.5);
         return DistanceInfo(min(d1, d2), oskarType);
-    } else {
-        vec3 q = p;
-        q.x = mod(q.x, 5) - 2.5;
-        q.z = mod(q.z, 5) - 2.5;
-        float d = sdTorus(q - vec3(0, 2, 0), vec2(1, 0.5));
-        return DistanceInfo(d, oskarType);
+    } else { // screen
+        vec3 o = p;
+        vec2 a = pMod2(p.xz, vec2(3));
+        float d1 = sdBox(p, vec3(1.2, 0.1, 1.2));
+
+        float d2 = sdBox(o, vec3(16.5));
+        float d = opIntersection(d1, d2);
+        return DistanceInfo(d, screenType);
     }
 
 
@@ -274,6 +291,9 @@ float getReflectiveIndex(int type)
     if (type == oskarType) {
         return 0.5;
     }
+    if (type == screenType) {
+        return 0.5;
+    }
     return 0.0;
 }
 
@@ -303,6 +323,38 @@ vec3 getColor(in MarchResult result)
         vec3 baseColor = metalColor * diffuse * (1.0 + 2.0 * pulse);
         vec3 tintedSpecular = specular * mix(vec3(1.0), metalColor, 0.6); 
         return baseColor + 2.0 * gFresnel * mix(vec3(0.6, 0.8, 1.0), metalColor, 0.4) + tintedSpecular;
+    } else if (result.type == screenType) {
+        float pulse = exp(-mBassdrum * 6.0);
+        vec2 copy = result.position.xz;
+        vec2 a = pMod2(copy, vec2(3));
+        //vec3 color = vec3(a.x, a.y, 0.0);
+        vec3 color = vec3(0.0);
+        // -5 to 5
+        float x = a.x + 5.0;
+        float z = a.y + 5.0;
+        vec3 c1 = vec3(0.3, 0.8, 0.8);
+        vec3 c2 = vec3(0.2, 0.3, 0.6);
+        if (mod(iTime, 0.2) > 0.1) {
+            c2 = vec3(0.3, 0.8, 0.8);
+            c1 = vec3(0.2, 0.3, 0.6);
+        }
+        if (x == 0 || x == 10 || z == 0 || z == 10) {
+            color = c1;
+        } else if (x == 1 || x == 9 || z == 1 || z == 9) {
+             color = c2;
+        } else if (x == 2 || x == 8 || z == 2 || z == 8) {
+            color = c1;
+        } else if (x == 3 || x == 7 || z == 3 || z == 7) {
+            color = c2;
+        } else if (x == 4 || x == 6 || z == 4 || z == 6) {
+            color = c1;
+        } else {
+            color = c2;
+        }
+        gFresnel = pow(1.0 - max(0.0, dot(normal, viewDir)), 4.0);
+        vec3 baseColor = color * diffuse * (1.0 + 2.0 * pulse);
+        vec3 tintedSpecular = specular * mix(vec3(1.0), color, 0.6); 
+        return baseColor + 2.0 * gFresnel * mix(vec3(0.6, 0.8, 1.0), color, 0.4) + tintedSpecular;
     } else if (result.type == armBodyType ) {
         vec3 bodyColor = 0.8*vec3(0.2, 0.5, 0.9);
         gFresnel = 0.3 * pow(1.0 - max(0.0, dot(normal, viewDir)), 4.0);
