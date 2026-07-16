@@ -233,11 +233,11 @@ DistanceInfo oskar(in vec3 p) {
         float d1 = p.y - 3 + sin(p.x + iTime * 5) +  0.1 * sin(p.x * 3 + iTime * 3);
         float d2 = missile(p);
         return DistanceInfo(smink(d1, d2, 1.8), oskarType);
+
     } else if (phase >= 2 ) { // llt
         float d1 = llt(p);
         float d2 = sdSphere(p, 7.0);
         return DistanceInfo(min(d1, d2), oskarType);
-
 
     } else if (phase >= 1 ) { // tower w spheres
         vec3 q = p;
@@ -247,17 +247,17 @@ DistanceInfo oskar(in vec3 p) {
         float d1 = sdSphere(q , 0.5);
         float d2 = sdCylinder(p.xzy, 1.5);
         return DistanceInfo(min(d1, d2), oskarType);
+
     } else { // screen
         vec3 o = p;
         vec2 a = pMod2(p.xz, vec2(3));
+        p.y -= (4.0 - 0.5*(abs(a.x) + abs(a.y)))*mHihat + 0.1;
         float d1 = sdBox(p, vec3(1.2, 0.1, 1.2));
 
         float d2 = sdBox(o, vec3(16.5));
         float d = opIntersection(d1, d2);
         return DistanceInfo(d, screenType);
     }
-
-
 }
 
 DistanceInfo map(in vec3 p)
@@ -334,7 +334,7 @@ vec3 getColor(in MarchResult result)
         float z = a.y + 5.0;
         vec3 c1 = vec3(0.3, 0.8, 0.8);
         vec3 c2 = vec3(0.2, 0.3, 0.6);
-        if (mod(iTime, 0.2) > 0.1) {
+        if (mod(mHihatTot, 2.0) >= 1.0) {
             c2 = vec3(0.3, 0.8, 0.8);
             c1 = vec3(0.2, 0.3, 0.6);
         }
