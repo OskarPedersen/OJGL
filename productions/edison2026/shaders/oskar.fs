@@ -3,7 +3,7 @@ const float S_distanceEpsilon = 1e-2;
 const float S_normalEpsilon = 1e-3;
 const int S_maxSteps = 400;
 const float S_maxDistance = 100.0;
-const float S_distanceMultiplier = 0.5;
+const float S_distanceMultiplier = 1.0;
 const float S_minVolumetricJumpDistance = 0.02;
 const float S_volumetricDistanceMultiplier = 0.75;
 const int S_reflectionJumps = 2;
@@ -260,11 +260,6 @@ DistanceInfo oskar(in vec3 p) {
         // four band and swap on bassdrum
          phase = mod(fragCoord.y * 4.0 + mBassdrumTot, 4.0);
     }
-    
-
-
-
-
 
     if (phase >= 3 ) { // waves w rocket
         float d1 = p.y - 3 + sin(p.x + mBassdrumTot * 5) +  0.1 * sin(p.x * 3 + mBassdrumTot * 3);
