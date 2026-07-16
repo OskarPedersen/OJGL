@@ -153,6 +153,44 @@ float udRoundBox( vec3 p, vec3 b, float r )
   return length(max(abs(p)-b,0.0))-r;
 }
 
+float llt(vec3 p) 
+{
+    p *= 0.3;
+
+    pModPolar(p.xz, 6);
+    p.x -= 3;
+	
+    // base ?
+    float w = 0.2;
+    if (p.y < 0.5) {
+    	w += 0.4 * (0.5 - p.y);
+    }
+    if (p.y > 2.7) {
+    	w -= (p.y - 2.7) * 0.5;
+    }
+    float d = sdHexPrism((p - vec3(0.0, 1.5, 0.0)).xzy, vec2(w, 1.5));
+    float res = d;
+    
+    { // top ? 
+        float w = 0.2;
+        w -= abs(p.y - 3.3) * 0.1;
+        float a = 0.2;
+        if (p.x < 0.0) {
+        	a -= abs(p.y - 3.3) * 0.1;
+        }
+
+    	float d = sdBox(p - vec3(0.0, 3.3, 0.0), vec3(a, 0.3, w));
+    	res = min(d, res);
+    }
+    { // barrell ?
+        float d = sdCappedCylinder((p - vec3(0.5, 3.3, 0.0)).yxz, vec2(0.05, 0.3));
+        d = max(d, -sdCappedCylinder((p - vec3(0.5, 3.3, 0.0)).yxz, vec2(0.03, 0.8)));
+        res = min(d, res);
+    
+    }
+    return res.x;
+}
+
 float missile(vec3 p) {
     p *= 0.2;
     vec2 b = pMod2(p.xz, vec2(3));
@@ -182,14 +220,10 @@ DistanceInfo oskar(in vec3 p) {
         float d2 = missile(p);
         return DistanceInfo(smink(d1, d2, 1.8), oskarType);
     } else if (phase >= 2 ) {
-        vec3 q = p;
-        q.x = mod(q.x, 5) - 2.5;
-        q.z = mod(q.z, 5) - 2.5;
-        q.y += sin(floor(p.x / 5)) * 3;
-        float s = 1 + sin(p.x) * 0.3;
-        float r = 0.5;
-        float d = udRoundBox(q - vec3(0, 4, 0), vec3(s), r);
+        float d = llt(p);
         return DistanceInfo(d, oskarType);
+
+
     } else if (phase >= 1 ) { // tower w spheres
         vec3 q = p;
         float b = pMod1(q.y, 2);
