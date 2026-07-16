@@ -228,28 +228,33 @@ float opIntersection( float d1, float d2 )
     return max(d1,d2);
 }
 
-float gU = 0.0;
-float gV = 0.0;
 
 DistanceInfo oskar(in vec3 p) {
 
     // static phase
     float phase = 0.0;
 
-    // switch phase on bassdrum
-    // phase = mod(mBassdrumTot, 4);
+    if (iTime < 10.0) {
+         // switch phase on bassdrum
+        phase = mod(mBassdrumTot, 4);
+    } else if (iTime < 15) {
+        // four corners
+        phase = fragCoord.x > 0.5 ? (fragCoord.y > 0.5 ? 0.0 : 1.0) : (fragCoord.y > 0.5 ? 2.0 : 3.0);
+    } else if (iTime < 16) {
+        // L-R swipe
+        phase = fragCoord.x > mod(iTime, 1.0) ? 0.0 : 1.0;
+    } else if (iTime < 20.0) {
+        // dual band
+        phase = mod(fragCoord.x + fragCoord.y, 0.5) > 0.25 ? 0.0 : 2.0;
+        phase += mod(mBassdrumTot, 2);
+    } else if (iTime < 25) {
+        // four band and swap on bassdrum
+         phase = mod(fragCoord.y * 4.0 + mBassdrumTot, 4.0);
+    }
     
-    // four corners
-    //phase = fragCoord.x > 0.5 ? (fragCoord.y > 0.5 ? 0.0 : 1.0) : (fragCoord.y > 0.5 ? 2.0 : 3.0);
 
-    // L-R swipe
-    // phase = fragCoord.x > mod(iTime, 1.0) ? 0.0 : 1.0;
 
-    // dual band
-    // phase = mod(fragCoord.x + fragCoord.y, 0.5) > 0.25 ? 0.0 : 1.0;
 
-    // four band and swap on bassdrum
-    phase = mod(fragCoord.y * 4.0 + mBassdrumTot, 4.0);
 
 
     if (phase >= 3 ) { // waves w rocket
