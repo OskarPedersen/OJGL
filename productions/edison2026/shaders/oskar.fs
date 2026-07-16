@@ -229,25 +229,34 @@ float opIntersection( float d1, float d2 )
 }
 
 
+float OP1 = 10.0;
+float OP2 = 15.0;
+float OP3 = 16.0;
+float OP4 = 20.0;
+float OP5 = 25.0;
+
 DistanceInfo oskar(in vec3 p) {
 
     // static phase
     float phase = 0.0;
 
-    if (iTime < 10.0) {
+    if (iTime < OP1) {
          // switch phase on bassdrum
         phase = mod(mBassdrumTot, 4);
-    } else if (iTime < 15) {
+    } else if (iTime < OP2) {
         // four corners
-        phase = fragCoord.x > 0.5 ? (fragCoord.y > 0.5 ? 0.0 : 1.0) : (fragCoord.y > 0.5 ? 2.0 : 3.0);
-    } else if (iTime < 16) {
+        phase = fragCoord.x > 0.5 ? (fragCoord.y > 0.5 ? 0.0 : 2.0) : (fragCoord.y > 0.5 ? 3.0 : 1.0);
+    } else if (iTime < OP3) {
         // L-R swipe
-        phase = fragCoord.x > mod(iTime, 1.0) ? 0.0 : 1.0;
-    } else if (iTime < 20.0) {
+        phase = fragCoord.x > mod(iTime, 1.0) ? 2.0 : 1.0;
+    } else if (iTime < OP4) {
         // dual band
-        phase = mod(fragCoord.x + fragCoord.y, 0.5) > 0.25 ? 0.0 : 2.0;
-        phase += mod(mBassdrumTot, 2);
-    } else if (iTime < 25) {
+        if (mod(mBassdrumTot, 2) >= 1) {
+            phase = mod(fragCoord.x + fragCoord.y, 0.5) > 0.25 ? 1.0 : 3.0;
+        } else {
+            phase = mod(fragCoord.x + fragCoord.y, 0.5) > 0.25 ? 3.0 : 1.0;
+        }
+    } else if (iTime < OP5) {
         // four band and swap on bassdrum
          phase = mod(fragCoord.y * 4.0 + mBassdrumTot, 4.0);
     }
@@ -421,6 +430,60 @@ void main()
     vec3 rayOrigin = (iCameraMatrix * vec4(u, v, -1.0, 1.0)).xyz;
     gEye = (iCameraMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
     vec3 rayDirection = normalize(rayOrigin - gEye);
+
+    if (iTime < OP1) {
+        rayOrigin = vec3(15, 38, 15);
+        gEye = rayOrigin; // TODO is this correct?
+        //vec3 tar = rayOrigin + vec3(1, 1 , 0);
+        vec3 tar = vec3(0, iTime * 3.0, 0);
+        
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+        
+        rayDirection = normalize(dir + right*u + up*v);
+    } else if (iTime < OP2) {
+        rayOrigin = vec3(15 * sin(iTime * 0.25), 38, 15 * cos(iTime * 0.25));
+        gEye = rayOrigin; // TODO is this correct?
+        vec3 tar = vec3(0, 20, 0);
+        
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+        
+        rayDirection = normalize(dir + right*u + up*v);
+    } else if (iTime < OP3) {
+        rayOrigin = vec3(15 * sin(iTime * 0.25), 38 - (iTime - OP2) * 3, 15 * cos(iTime * 0.25));
+        gEye = rayOrigin; // TODO is this correct?
+        vec3 tar = rayOrigin + vec3(1, -1, 1);
+        
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+        
+        rayDirection = normalize(dir + right*u + up*v);
+    } else if (iTime < OP4) {
+        rayOrigin = vec3(-10, 4, 13);
+        gEye = rayOrigin; // TODO is this correct?
+        vec3 tar = vec3(0, 30, 0);
+        
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+        
+        rayDirection = normalize(dir + right*u + up*v);
+    } else if (iTime < OP5) {
+        rayOrigin = vec3(-19, 9, 11);
+        gEye = rayOrigin; // TODO is this correct?
+        vec3 tar = vec3(0, 9, 0);
+        
+        vec3 dir = normalize(tar - rayOrigin);
+	    vec3 right = normalize(cross(vec3(0, 1, 0), dir));
+ 	    vec3 up = cross(dir, right);
+        
+        rayDirection = normalize(dir + right*u + up*v);
+    }
+
 
     vec3 color = march(rayOrigin, rayDirection);
 
