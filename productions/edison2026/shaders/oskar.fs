@@ -3,7 +3,7 @@ const float S_distanceEpsilon = 1e-2;
 const float S_normalEpsilon = 1e-3;
 const int S_maxSteps = 400;
 const float S_maxDistance = 100.0;
-const float S_distanceMultiplier = 0.9;
+const float S_distanceMultiplier = 0.5;
 const float S_minVolumetricJumpDistance = 0.02;
 const float S_volumetricDistanceMultiplier = 0.75;
 const int S_reflectionJumps = 2;
@@ -154,8 +154,11 @@ float udRoundBox( vec3 p, vec3 b, float r )
 }
 
 DistanceInfo oskar(in vec3 p) {
-    float phase = mod(mBassdrumTot, 3);
-    if (phase >= 2 ) {
+    float phase = mod(mBassdrumTot, 4);
+    if (phase >= 3 ) {
+        float d = p.y - 3 + sin(p.x + iTime * 5) +  0.1 * sin(p.x * 3 + iTime * 3);
+        return DistanceInfo(d, oskarType);
+    } else if (phase >= 2 ) {
         vec3 q = p;
         q.x = mod(q.x, 5) - 2.5;
         q.z = mod(q.z, 5) - 2.5;
@@ -166,10 +169,18 @@ DistanceInfo oskar(in vec3 p) {
         return DistanceInfo(d, oskarType);
     } else if (phase >= 1 ) {
         vec3 q = p;
-        q.x = mod(q.x, 5) - 2.5;
-        q.z = mod(q.z, 5) - 2.5;
-        float d = sdSphere(q - vec3(0, 2, 0), 0.5);
-        return DistanceInfo(d, oskarType);
+         float b = pMod1(q.y, 2);
+        //q.x = mod(q.x, 5) - 2.5;
+        //q.y = mod(q.y, 5) - 2.5;
+        //q.z = mod(q.z, 5) - 2.5;
+        float a = pModPolar(q.xz, 12);
+        q -= vec3(2 +  max(0, sin(iTime * 8 + b)), 0, 0);
+        // float pMod1(inout float p, float size)
+       // float b = pMod1(q.y, 5);s
+       //q.y = mod(q.y, 5) - 2.5;
+        float d1 = sdSphere(q , 0.5);
+        float d2 = sdCylinder(p.xzy, 1.5);
+        return DistanceInfo(min(d1, d2), oskarType);
     } else {
         vec3 q = p;
         q.x = mod(q.x, 5) - 2.5;
