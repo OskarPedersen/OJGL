@@ -153,11 +153,34 @@ float udRoundBox( vec3 p, vec3 b, float r )
   return length(max(abs(p)-b,0.0))-r;
 }
 
+float missile(vec3 p) {
+    p *= 0.2;
+    vec2 b = pMod2(p.xz, vec2(3));
+    p.y -= mod((b.x + b.y)*6.0 + iTime * 10.0, 10.0);
+
+    float w = 0.2 - 0.03 * smoothstep(1.4, 1.6, p.y);
+    if (p.y > 1.7) {
+     	w -= 0.2 * (p.y - 1.7);
+    }
+   
+    float d = sdCappedCylinder(p, vec2(w, 2));
+    float ds = sdSphere(p - vec3(0, 2.0, 0.0), 0.11);
+    d = min(ds, d);
+    float bw = 0.1;
+    if (p.y < -2.05) {
+    	bw += 0.6 * (-p.y - 2.05);
+    }
+    float bot = sdCappedCylinder(p - vec3(0,-2.05,0), vec2(bw, 0.1));
+    d = min(bot, d);
+    return d;
+}
+
 DistanceInfo oskar(in vec3 p) {
     float phase = mod(mBassdrumTot, 4);
-    if (phase >= 3 ) {
-        float d = p.y - 3 + sin(p.x + iTime * 5) +  0.1 * sin(p.x * 3 + iTime * 3);
-        return DistanceInfo(d, oskarType);
+    if (phase >= 3 ) { // waves
+        float d1 = p.y - 3 + sin(p.x + iTime * 5) +  0.1 * sin(p.x * 3 + iTime * 3);
+        float d2 = missile(p);
+        return DistanceInfo(smink(d1, d2, 1.8), oskarType);
     } else if (phase >= 2 ) {
         vec3 q = p;
         q.x = mod(q.x, 5) - 2.5;
@@ -167,17 +190,11 @@ DistanceInfo oskar(in vec3 p) {
         float r = 0.5;
         float d = udRoundBox(q - vec3(0, 4, 0), vec3(s), r);
         return DistanceInfo(d, oskarType);
-    } else if (phase >= 1 ) {
+    } else if (phase >= 1 ) { // tower w spheres
         vec3 q = p;
-         float b = pMod1(q.y, 2);
-        //q.x = mod(q.x, 5) - 2.5;
-        //q.y = mod(q.y, 5) - 2.5;
-        //q.z = mod(q.z, 5) - 2.5;
+        float b = pMod1(q.y, 2);
         float a = pModPolar(q.xz, 12);
         q -= vec3(2 +  max(0, sin(iTime * 8 + b)), 0, 0);
-        // float pMod1(inout float p, float size)
-       // float b = pMod1(q.y, 5);s
-       //q.y = mod(q.y, 5) - 2.5;
         float d1 = sdSphere(q , 0.5);
         float d2 = sdCylinder(p.xzy, 1.5);
         return DistanceInfo(min(d1, d2), oskarType);
