@@ -7,6 +7,7 @@ ojgl_add_demo(
     SHADERS
         cube.fs
         oskar.fs
+        oskar_intro.fs
         blur1.fs
     COMMON_SHADERS
         primitives.fs
