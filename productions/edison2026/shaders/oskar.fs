@@ -172,7 +172,7 @@ float llt(vec3 p)
     float d = sdHexPrism((p - vec3(0.0, 1.5, 0.0)).xzy, vec2(w, 1.5));
     float res = d;
     
-    p.xz *= rot(iTime * 1.5);
+    p.xz *= rot(mHihat * 1.5);
 
     { // top ? 
         float w = 0.2;
@@ -197,7 +197,8 @@ float llt(vec3 p)
 float missile(vec3 p) {
     p *= 0.2;
     vec2 b = pMod2(p.xz, vec2(3));
-    p.y -= mod((b.x + b.y)*6.0 + iTime * 10.0, 10.0);
+    //p.y -= mod((b.x + b.y)*6.0 + iTime * 10.0, 10.0);
+    p.y -= mod((b.x + b.y)*6.0 + mStrings * 10.0, 10.0);
 
     float w = 0.2 - 0.03 * smoothstep(1.4, 1.6, p.y);
     if (p.y > 1.7) {
@@ -227,23 +228,45 @@ float opIntersection( float d1, float d2 )
     return max(d1,d2);
 }
 
+float gU = 0.0;
+float gV = 0.0;
+
 DistanceInfo oskar(in vec3 p) {
-    float phase = mod(mBassdrumTot, 4);
+
+    // static phase
+    float phase = 0.0;
+
+    // switch phase on bassdrum
+    // phase = mod(mBassdrumTot, 4);
+    
+    // four corners
+    //phase = fragCoord.x > 0.5 ? (fragCoord.y > 0.5 ? 0.0 : 1.0) : (fragCoord.y > 0.5 ? 2.0 : 3.0);
+
+    // L-R swipe
+    // phase = fragCoord.x > mod(iTime, 1.0) ? 0.0 : 1.0;
+
+    // dual band
+    // phase = mod(fragCoord.x + fragCoord.y, 0.5) > 0.25 ? 0.0 : 1.0;
+
+    // four band and swap on bassdrum
+    phase = mod(fragCoord.y * 4.0 + mBassdrumTot, 4.0);
+
+
     if (phase >= 3 ) { // waves w rocket
-        float d1 = p.y - 3 + sin(p.x + iTime * 5) +  0.1 * sin(p.x * 3 + iTime * 3);
+        float d1 = p.y - 3 + sin(p.x + mBassdrumTot * 5) +  0.1 * sin(p.x * 3 + mBassdrumTot * 3);
         float d2 = missile(p);
         return DistanceInfo(smink(d1, d2, 1.8), oskarType);
 
     } else if (phase >= 2 ) { // llt
         float d1 = llt(p);
-        float d2 = sdSphere(p, 7.0);
+        float d2 = sdSphere(p, 7.0 - mBassdrum);
         return DistanceInfo(min(d1, d2), oskarType);
 
     } else if (phase >= 1 ) { // tower w spheres
         vec3 q = p;
         float b = pMod1(q.y, 2);
         float a = pModPolar(q.xz, 12);
-        q -= vec3(2 +  max(0, sin(iTime * 8 + b)), 0, 0);
+        q -= vec3(2 +  max(0, sin((mBassdrum) * 8 + b)), 0, 0);
         float d1 = sdSphere(q , 0.5);
         float d2 = sdCylinder(p.xzy, 1.5);
         return DistanceInfo(min(d1, d2), oskarType);
