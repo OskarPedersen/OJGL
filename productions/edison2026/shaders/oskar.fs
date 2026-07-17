@@ -334,6 +334,58 @@ float getReflectiveIndex(int type)
     return 0.0;
 }
 
+float hash( in vec2 p ) {
+	float h = dot(p,vec2(127.1,311.7));	
+    return fract(sin(h)*43758.5453123);
+}
+
+float noise( in vec2 p ) {
+    vec2 i = floor( p );
+    vec2 f = fract( p );	
+	vec2 u = f*f*(3.0-2.0*f);
+    return mix( mix( hash( i + vec2(0.0,0.0) ), 
+                     hash( i + vec2(1.0,0.0) ), u.x),
+                mix( hash( i + vec2(0.0,1.0) ), 
+                     hash( i + vec2(1.0,1.0) ), u.x), u.y);
+}
+
+float noiseOctave(in vec2 p, int octaves, float persistence)
+{
+	float n = 0.;
+	float amplitude = 1.;
+	float frequency = 1.;
+	float maxValue = 0.;
+
+	for(int i = 0; i < octaves; i++)
+	{
+		n += noise((p+float(i)) * frequency) * amplitude;
+		maxValue += amplitude;
+		amplitude *= persistence;
+		frequency *= 2.0;
+	}
+	return n / maxValue; 
+}
+
+// https://www.shadertoy.com/view/XsSfDG
+vec3 rust(in vec2 uv )
+{
+	//vec2 uv = fragCoord.xy / iResolution.xy;
+    
+    float n = noiseOctave(uv * 4., 10, 0.7);
+    float gs = 0.5 + 0.5 * sin(uv.x * 50.0 + n * 60.0);
+    
+    
+    
+    vec3 blue = vec3(.25, .8, 1.);
+    vec3 rust = vec3(1., .7, .15);
+    
+    vec3 color = mix(rust, blue, 0.8 * gs);
+    float n2 = noiseOctave(uv * 100., 10, 0.7);
+    color = mix(color, vec3(n2 * 0.5 + 0.25), 0.3);
+    
+	return color;
+}
+
 vec3 getColor(in MarchResult result)
 {
     if (result.jump == 0) {
@@ -369,11 +421,12 @@ vec3 getColor(in MarchResult result)
         // -5 to 5
         float x = a.x + 5.0;
         float z = a.y + 5.0;
-        vec3 c1 = vec3(0.3, 0.8, 0.8);
-        vec3 c2 = vec3(0.2, 0.3, 0.6);
+        vec3 c1 = rust(result.position.xz * 0.01);
+        vec3 c2 =vec3(1) - c1;
         if (mod(mHihatTot, 2.0) >= 1.0) {
-            c2 = vec3(0.3, 0.8, 0.8);
-            c1 = vec3(0.2, 0.3, 0.6);
+            vec3 tmp = c1;
+            c1 = c2;
+            c2 = tmp;
         }
 
         float xm = 11-x - 2;
@@ -414,6 +467,8 @@ vec3 getColor(in MarchResult result)
         } else {
             color = c2;
         }
+
+        //color = mix(color, rust(result.position.xz * 0.01), 0.9);
 
         gFresnel = pow(1.0 - max(0.0, dot(normal, viewDir)), 4.0);
         vec3 baseColor = color * diffuse * (1.0 + 2.0 * pulse);
