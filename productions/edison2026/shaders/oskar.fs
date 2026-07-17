@@ -370,19 +370,46 @@ vec3 getColor(in MarchResult result)
             c2 = vec3(0.3, 0.8, 0.8);
             c1 = vec3(0.2, 0.3, 0.6);
         }
-        if (x == 0 || x == 10 || z == 0 || z == 10) {
-            color = c1;
-        } else if (x == 1 || x == 9 || z == 1 || z == 9) {
-             color = c2;
-        } else if (x == 2 || x == 8 || z == 2 || z == 8) {
-            color = c1;
-        } else if (x == 3 || x == 7 || z == 3 || z == 7) {
-            color = c2;
-        } else if (x == 4 || x == 6 || z == 4 || z == 6) {
+
+        float xm = 11-x - 2;
+        float zm = z - 2;
+        if (
+            (xm == 1 && zm == 0) ||
+            (xm == 2 && zm == 0) ||
+            (xm == 3 && zm == 0) ||
+
+            (xm == 0 && zm == 1) ||
+            (xm == 0 && zm == 2) ||
+            (xm == 0 && zm == 3) ||
+            (xm == 0 && zm == 4) ||
+            (xm == 0 && zm == 5) ||
+            (xm == 4 && zm == 1) ||
+            (xm == 4 && zm == 2) ||
+            (xm == 4 && zm == 3) ||
+            (xm == 4 && zm == 4) ||
+            (xm == 4 && zm == 5) ||
+
+            (xm == 1 && zm == 6) ||
+            (xm == 2 && zm == 6) ||
+            (xm == 3 && zm == 6) ||
+
+            (xm == 8 && zm == 0) ||
+            (xm == 8 && zm == 1) ||
+            (xm == 8 && zm == 2) ||
+            (xm == 8 && zm == 3) ||
+            (xm == 8 && zm == 4) ||
+            (xm == 8 && zm == 5) ||
+
+            (xm == 6 && zm == 6) ||
+            (xm == 7 && zm == 6) ||
+            (xm == 8 && zm == 6)
+
+            ) {
             color = c1;
         } else {
             color = c2;
         }
+
         gFresnel = pow(1.0 - max(0.0, dot(normal, viewDir)), 4.0);
         vec3 baseColor = color * diffuse * (1.0 + 2.0 * pulse);
         vec3 tintedSpecular = specular * mix(vec3(1.0), color, 0.6); 
