@@ -3,10 +3,10 @@ const float S_distanceEpsilon = 1e-2;
 const float S_normalEpsilon = 1e-3;
 const int S_maxSteps = 400;
 const float S_maxDistance = 100.0;
-const float S_distanceMultiplier = 1.0;
+const float S_distanceMultiplier = 0.5;
 const float S_minVolumetricJumpDistance = 0.02;
 const float S_volumetricDistanceMultiplier = 0.75;
-const int S_reflectionJumps = 2;
+const int S_reflectionJumps = 4;
 
 #define S_VOLUMETRIC 0
 #define S_REFLECTIONS 1
@@ -265,11 +265,16 @@ DistanceInfo oskar(in vec3 p) {
         float d1 = p.y - 3 + sin(p.x + mBassdrumTot * 5) +  0.1 * sin(p.x * 3 + mBassdrumTot * 3);
         float d2 = missile(p);
         return DistanceInfo(smink(d1, d2, 1.8), oskarType);
-
+        //return DistanceInfo(min(d1, d2), oskarType);
     } else if (phase >= 2 ) { // llt
         float d1 = llt(p);
-        float d2 = sdSphere(p, 7.0 - mBassdrum);
-        return DistanceInfo(min(d1, d2), oskarType);
+        float d2 = sdSphere(p, 5.5 - mBassdrum*0.7);
+
+        p.xz *= rot(PI / 6);
+        pModPolar(p.xz, 6);
+        float r = 1.0 + 0.3 + sin(length(p.xz) - iTime*3)*0.3;
+        float d3 = sdCylinder(p.zyx- vec3(0, 0, 0), r);
+        return DistanceInfo(smink(d1, smink(d2, d3, 1.0), 0.1), oskarType);
 
     } else if (phase >= 1 ) { // tower w spheres
         vec3 q = p;
